@@ -35,6 +35,14 @@ type ChildProfile = {
   completedLessons?: number[];
   bestAccuracy?: number;
   courseCompleted?: boolean;
+  gradeBand?: "primary" | "secondary";
+  subjects?: string[];
+  keyboardSettings?: {
+    world: number;
+    hands: boolean;
+    sound: boolean;
+    bigText: boolean;
+  };
 };
 
 type CourseLesson = {
@@ -247,7 +255,9 @@ export default function Home() {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("8");
   const [childAvatar, setChildAvatar] = useState("🌟");
+  const [childGradeBand, setChildGradeBand] = useState<"primary" | "secondary">("primary");
   const [profileBusy, setProfileBusy] = useState(false);
+  const [settingsBusy, setSettingsBusy] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
@@ -387,6 +397,9 @@ export default function Home() {
       streak: 0,
       completedLessons: [],
       activeCourse: "lumitype",
+      gradeBand: childGradeBand,
+      subjects: ["typing"],
+      keyboardSettings: { world: 0, hands: true, sound: true, bigText: false },
       createdAt: serverTimestamp(),
     });
     await loadChildren(account.uid);
@@ -422,8 +435,25 @@ export default function Home() {
   }
 
   function enterChildSpace(child: ChildProfile) {
+    const preferences = child.keyboardSettings || { world: 0, hands: true, sound: true, bigText: false };
+    setWorld(preferences.world);
+    setHands(preferences.hands);
+    setSound(preferences.sound);
+    setBigText(preferences.bigText);
     setActiveChild(child);
     setFamilyOpen(false);
+  }
+
+  async function saveStudentSettings() {
+    if (!account || !activeChild) return;
+    setSettingsBusy(true);
+    const keyboardSettings = { world, hands, sound, bigText };
+    await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { keyboardSettings });
+    const updatedChild = { ...activeChild, keyboardSettings };
+    setActiveChild(updatedChild);
+    setChildren((currentChildren) => currentChildren.map((child) => child.id === activeChild.id ? updatedChild : child));
+    setSettingsBusy(false);
+    setSettingsOpen(false);
   }
 
   function startChildLesson() {
@@ -569,7 +599,7 @@ export default function Home() {
         <div className="practice-shell">
           <div className="practice-top">
             <span className="lesson-pill">{t.lesson}</span>
-            <div className="practice-actions"><button onClick={() => setSettingsOpen(true)}>⚙ {t.settings}</button><button onClick={resetPractice}>↻ {t.reset}</button></div>
+            <div className="practice-actions"><button onClick={resetPractice}>↻ {t.reset}</button></div>
           </div>
           <div className={`typing-prompt ${bigText ? "large" : ""}`}>{typed >= target.length ? <b className="complete">{t.done}</b> : renderedTarget}</div>
           <input autoComplete="off" autoCapitalize="off" aria-label={t.practiceHint} className="typing-capture" value="" onKeyDown={handleKey} onChange={() => {}} placeholder={lang === "es" ? "Haz clic aquí y comienza a escribir…" : "Click here and start typing…"}/>
@@ -596,7 +626,7 @@ export default function Home() {
 
       <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a><p>© 2026 Lumiya Academy · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
 
-      {settingsOpen && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">LUMIYA</span><h2>{t.panelTitle}</h2><p>{t.panelSub}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{t.sound}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button className="button primary panel-save" onClick={() => setSettingsOpen(false)}>{t.close}</button></aside></div>}
+      {settingsOpen && activeChild && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">{activeChild.name.toUpperCase()}</span><h2>{lang === "es" ? "Configurar su teclado" : "Keyboard settings"}</h2><p>{lang === "es" ? "Estas preferencias se guardarán únicamente para este estudiante." : "These preferences are saved only for this student."}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{lang === "es" ? "Sonidos de acierto y error" : "Success and error sounds"}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button disabled={settingsBusy} className="button primary panel-save" onClick={saveStudentSettings}>{settingsBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Guardar configuración" : "Save settings")}</button></aside></div>}
 
       {authOpen && <div className="modal-backdrop centered" onMouseDown={() => setAuthOpen(false)}>
         <section className="auth-card" onMouseDown={(event) => event.stopPropagation()}>
@@ -623,7 +653,7 @@ export default function Home() {
           <header className="student-topbar">
             <button className="student-family-back" onClick={() => { setActiveChild(null); setFamilyOpen(true); }}>← {lang === "es" ? "Mi familia" : "My family"}</button>
             <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a>
-            <button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button>
+            <div className="student-top-actions"><button className="student-settings" onClick={() => setSettingsOpen(true)}>⚙ {lang === "es" ? "Mi teclado" : "My keyboard"}</button><button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button></div>
           </header>
 
           <div className="student-welcome">
@@ -637,6 +667,16 @@ export default function Home() {
             <article><span className="stat-icon orange-stat">🔥</span><div><b>{activeChild.streak || 0}</b><small>{lang === "es" ? "Días de racha" : "Streak days"}</small></div></article>
             <article><span className="stat-icon mint-stat">↗</span><div><b>{Math.max(1, activeChild.level)}</b><small>{lang === "es" ? "Nivel actual" : "Current level"}</small></div></article>
           </div>
+
+          <section className="student-subjects">
+            <div><span className="section-kicker">{activeChild.gradeBand === "secondary" ? (lang === "es" ? "SECUNDARIA" : "SECONDARY") : (lang === "es" ? "PRIMARIA" : "PRIMARY")}</span><h3>{lang === "es" ? "Mis materias" : "My subjects"}</h3></div>
+            <div className="subject-tabs">
+              <button className="active"><span>⌨</span><b>{lang === "es" ? "Mecanografía" : "Typing"}</b><small>{lang === "es" ? "En curso" : "In progress"}</small></button>
+              <button disabled><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
+              <button disabled><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
+              <button disabled><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
+            </div>
+          </section>
 
           <div className="student-content-grid">
             <section className="learning-map-card">
@@ -668,7 +708,7 @@ export default function Home() {
         const activeFinger = fingerForKey(courseCurrent);
         const liveAccuracy = courseTyped + courseMistakes === 0 ? 100 : Math.round((courseTyped / (courseTyped + courseMistakes)) * 100);
         return <div className="course-backdrop" onMouseDown={() => setCourseLesson(null)}>
-          <section className="course-player" onMouseDown={(event) => event.stopPropagation()}>
+          <section className={`course-player student-theme-${world} ${bigText ? "student-big-text" : ""}`} onMouseDown={(event) => event.stopPropagation()}>
             <header className="course-player-head">
               <button onClick={() => setCourseLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button>
               <div><span>LUMITYPE</span><b>{lang === "es" ? `Lección ${courseLesson} de 18` : `Lesson ${courseLesson} of 18`}</b></div>
@@ -686,7 +726,7 @@ export default function Home() {
                 <input autoFocus className="course-capture" value="" onChange={() => {}} onKeyDown={handleCourseKey} autoComplete="off" autoCapitalize="off" aria-label={lang === "es" ? "Escribe el ejercicio" : "Type the exercise"} placeholder={lang === "es" ? "Haz clic aquí y comienza…" : "Click here and start…"}/>
                 <div className="finger-instruction"><span>☝</span><div><small>{lang === "es" ? "DEDO CORRECTO" : "CORRECT FINGER"}</small><b>{fingerNames[activeFinger][lang]}</b></div></div>
                 <div className="course-keyboard-wrap">
-                  <div className="hand-guide" aria-hidden="true">
+                  {hands && <div className="hand-guide" aria-hidden="true">
                     <div className="guide-hand left-guide-hand">
                       <div className="guide-palm"/>
                       {(["l-pinky", "l-ring", "l-middle", "l-index"] as FingerId[]).map((finger) => <span key={finger} className={`guide-finger ${finger} ${activeFinger === finger ? "finger-active" : ""} ${pressedFinger === finger ? "finger-pressed" : ""}`}><i/></span>)}
@@ -697,7 +737,7 @@ export default function Home() {
                       {(["r-index", "r-middle", "r-ring", "r-pinky"] as FingerId[]).map((finger) => <span key={finger} className={`guide-finger ${finger} ${activeFinger === finger ? "finger-active" : ""} ${pressedFinger === finger ? "finger-pressed" : ""}`}><i/></span>)}
                       <span className={`guide-thumb right-thumb ${activeFinger === "thumb" ? "finger-active" : ""} ${pressedFinger === "thumb" ? "finger-pressed" : ""}`}><i/></span>
                     </div>
-                  </div>
+                  </div>}
                   <div className="course-keyboard">
                     {rows.map((row, rowIndex) => <div key={rowIndex}>{row.map((rawKey) => {
                       const key = lang === "en" && rawKey === "Ñ" ? ";" : rawKey;
@@ -721,19 +761,20 @@ export default function Home() {
         </div>;
       })()}
 
-      {familyOpen && account && <div className="modal-backdrop" onMouseDown={() => setFamilyOpen(false)}>
+      {familyOpen && account && <div className="modal-backdrop family-backdrop" onMouseDown={() => setFamilyOpen(false)}>
         <aside className="family-panel" onMouseDown={(event) => event.stopPropagation()}>
-          <div className="settings-head"><div><span className="section-kicker">{lang === "es" ? "PANEL FAMILIAR" : "FAMILY DASHBOARD"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
-          <div className="family-summary"><span><b>{children.length}</b><small>{lang === "es" ? "Perfiles infantiles" : "Child profiles"}</small></span><span><b>{children.reduce((total, child) => total + child.stars, 0)}</b><small>{t.stars}</small></span></div>
+          <div className="settings-head family-heading"><div><span className="section-kicker">{lang === "es" ? "MI CUENTA LUMIYA" : "MY LUMIYA ACCOUNT"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email} · {lang === "es" ? "Cuenta familiar" : "Family account"}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
+          <div className="family-summary"><span><b>{children.length}</b><small>{lang === "es" ? "Estudiantes" : "Students"}</small></span><span><b>{children.reduce((total, child) => total + (child.completedLessons?.length || 0), 0)}</b><small>{lang === "es" ? "Lecciones completadas" : "Completed lessons"}</small></span><span><b>{children.reduce((total, child) => total + child.stars, 0)}</b><small>{t.stars}</small></span></div>
           {children.length > 0 && <>
-            <h3>{lang === "es" ? "¿Quién va a aprender?" : "Who is learning?"}</h3>
+            <div className="family-section-title"><div><h3>{lang === "es" ? "Estudiantes inscritos" : "Enrolled students"}</h3><p>{lang === "es" ? "Elige un estudiante para ver sus materias, configurar su teclado y continuar aprendiendo." : "Choose a student to see subjects, configure their keyboard and continue learning."}</p></div></div>
             <div className="children-grid">
-              {children.map((child) => <button className="child-card" onClick={() => enterChildSpace(child)} key={child.id}><span>{child.avatar}</span><b>{child.name}</b><small>{lang === "es" ? `Nivel ${child.level} · ${child.age} años` : `Level ${child.level} · age ${child.age}`}</small><i>→</i></button>)}
+              {children.map((child) => { const completed = child.completedLessons?.length || 0; const progress = Math.round((completed / 18) * 100); return <button className="child-card progress-child-card" onClick={() => enterChildSpace(child)} key={child.id}><span>{child.avatar}</span><div className="child-card-main"><div><b>{child.name}</b><em>{child.gradeBand === "secondary" ? (lang === "es" ? "Secundaria" : "Secondary") : (lang === "es" ? "Primaria" : "Primary")}</em></div><small>{child.age} {lang === "es" ? "años" : "years"} · {lang === "es" ? `Lección ${Math.max(1, child.level)} de 18` : `Lesson ${Math.max(1, child.level)} of 18`}</small><div className="child-progress"><i style={{ width: `${progress}%` }}/></div><small className="child-progress-label"><b>{progress}%</b> {lang === "es" ? "de Mecanografía" : "of Typing"}</small><div className="child-subject-pills"><span>⌨ {lang === "es" ? "Mecanografía" : "Typing"}</span><span className="future-subject">+ {lang === "es" ? "Materias" : "Subjects"}</span></div></div><i>→</i></button>; })}
             </div>
           </>}
           <form className="child-form" onSubmit={addChildProfile}>
             <h3>{children.length === 0 ? (lang === "es" ? "Crea el primer perfil infantil" : "Create the first child profile") : (lang === "es" ? "Agregar perfil infantil" : "Add child profile")}</h3>
             <div className="child-form-row"><label>{lang === "es" ? "Nombre" : "Name"}<input value={childName} onChange={(event) => setChildName(event.target.value)} required /></label><label>{lang === "es" ? "Edad" : "Age"}<input type="number" min="4" max="18" value={childAge} onChange={(event) => setChildAge(event.target.value)} required /></label></div>
+            <label className="grade-label">{lang === "es" ? "Etapa educativa" : "Education stage"}</label><div className="grade-choice"><button type="button" className={childGradeBand === "primary" ? "selected" : ""} onClick={() => setChildGradeBand("primary")}><span>🎒</span><b>{lang === "es" ? "Primaria" : "Primary"}</b><small>{lang === "es" ? "Aprendizaje fundamental" : "Foundational learning"}</small></button><button type="button" className={childGradeBand === "secondary" ? "selected" : ""} onClick={() => setChildGradeBand("secondary")}><span>🎓</span><b>{lang === "es" ? "Secundaria" : "Secondary"}</b><small>{lang === "es" ? "Retos y habilidades avanzadas" : "Advanced skills"}</small></button></div>
             <div className="avatar-choice">{["🌟", "🚀", "🦊", "🐼", "🌈"].map((avatar) => <button type="button" className={childAvatar === avatar ? "selected" : ""} onClick={() => setChildAvatar(avatar)} key={avatar}>{avatar}</button>)}</div>
             <button disabled={profileBusy} className="button primary">{profileBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Agregar estudiante" : "Add student")}</button>
           </form>
