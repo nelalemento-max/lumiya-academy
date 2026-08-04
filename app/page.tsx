@@ -1,0 +1,231 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+const copy = {
+  es: {
+    nav: ["Cursos", "Cómo funciona", "Planes", "Familias"],
+    login: "Ingresar",
+    start: "Comenzar ahora",
+    eyebrow: "La escuela digital que crece contigo",
+    titleA: "Aprender hoy.",
+    titleB: "Crecer para siempre.",
+    intro:
+      "Una experiencia educativa divertida y segura para que cada niño aprenda a su ritmo, acompañado por Lumi.",
+    trial: "Probar una lección",
+    plans: "Ver planes familiares",
+    trusted: "Primer curso disponible",
+    course: "Mecanografía divertida",
+    courseDesc: "Aprende a escribir con todos los dedos mientras juegas.",
+    progress: "Tu progreso de hoy",
+    lesson: "Lección 1 de 18",
+    practice: "Práctica rápida",
+    practiceHint: "Escribe las letras resaltadas usando los dedos correctos.",
+    settings: "Personalizar",
+    reset: "Reiniciar",
+    done: "¡Excelente! Completaste la práctica.",
+    accuracy: "Precisión",
+    streak: "Racha",
+    stars: "Estrellas",
+    why: "Mucho más que escribir rápido",
+    whySub: "Lumiya convierte cada práctica en un pequeño logro.",
+    benefits: [
+      ["Aprende jugando", "Misiones cortas, premios y escenarios que mantienen la motivación."],
+      ["Avanza a su ritmo", "Ejercicios que se adaptan a las teclas que cada niño necesita reforzar."],
+      ["Acompañamiento familiar", "Los padres ven avances, tiempo de práctica y habilidades dominadas."],
+    ],
+    familyTitle: "Un plan para cada familia",
+    familySub: "Perfiles separados, progreso individual y acceso desde cualquier computadora.",
+    month: "/mes",
+    choose: "Elegir plan",
+    popular: "Más elegido",
+    planNames: ["Individual", "Familia", "Familia Plus"],
+    planKids: ["1 estudiante", "Hasta 3 estudiantes", "Hasta 5 estudiantes"],
+    footer: "Producido por Ing. Nelson Mendoza",
+    panelTitle: "Personaliza tu espacio",
+    panelSub: "Los cambios se aplican en la práctica al instante.",
+    theme: "Escenario",
+    themes: ["Aula", "Espacio", "Océano"],
+    hands: "Mostrar manos",
+    sound: "Sonidos de acierto",
+    big: "Texto grande",
+    close: "Listo",
+  },
+  en: {
+    nav: ["Courses", "How it works", "Plans", "Families"],
+    login: "Log in",
+    start: "Start now",
+    eyebrow: "The digital school that grows with you",
+    titleA: "Learn today.",
+    titleB: "Grow forever.",
+    intro:
+      "A fun and safe learning experience where every child grows at their own pace, guided by Lumi.",
+    trial: "Try a lesson",
+    plans: "See family plans",
+    trusted: "First course available",
+    course: "Fun Typing",
+    courseDesc: "Learn to type with every finger while you play.",
+    progress: "Today’s progress",
+    lesson: "Lesson 1 of 18",
+    practice: "Quick practice",
+    practiceHint: "Type the highlighted letters using the correct fingers.",
+    settings: "Customize",
+    reset: "Reset",
+    done: "Great job! You completed the practice.",
+    accuracy: "Accuracy",
+    streak: "Streak",
+    stars: "Stars",
+    why: "Much more than typing fast",
+    whySub: "Lumiya turns every practice into a small achievement.",
+    benefits: [
+      ["Learn through play", "Short missions, rewards and worlds that keep children motivated."],
+      ["Grow at their pace", "Exercises adapt to the keys each child needs to reinforce."],
+      ["Family guidance", "Parents see progress, practice time and mastered skills."],
+    ],
+    familyTitle: "A plan for every family",
+    familySub: "Separate profiles, individual progress and access from any computer.",
+    month: "/month",
+    choose: "Choose plan",
+    popular: "Most popular",
+    planNames: ["Individual", "Family", "Family Plus"],
+    planKids: ["1 student", "Up to 3 students", "Up to 5 students"],
+    footer: "Produced by Eng. Nelson Mendoza",
+    panelTitle: "Customize your space",
+    panelSub: "Changes appear in the practice instantly.",
+    theme: "World",
+    themes: ["Classroom", "Space", "Ocean"],
+    hands: "Show hands",
+    sound: "Success sounds",
+    big: "Large text",
+    close: "Done",
+  },
+} as const;
+
+const rows = [
+  ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+  ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],
+  ["Z", "X", "C", "V", "B", "N", "M"],
+];
+
+export default function Home() {
+  const [lang, setLang] = useState<"es" | "en">("es");
+  const [typed, setTyped] = useState(0);
+  const [mistakes, setMistakes] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [world, setWorld] = useState(0);
+  const [hands, setHands] = useState(true);
+  const [sound, setSound] = useState(true);
+  const [bigText, setBigText] = useState(false);
+  const t = copy[lang];
+  const target = lang === "es" ? "asdf jklñ" : "asdf jkl;";
+  const current = target[typed] ?? "";
+  const accuracy = typed + mistakes === 0 ? 100 : Math.round((typed / (typed + mistakes)) * 100);
+  const worlds = ["classroom", "space", "ocean"];
+
+  const renderedTarget = useMemo(
+    () =>
+      target.split("").map((letter, index) => (
+        <span key={index} className={index < typed ? "typed" : index === typed ? "current-letter" : ""}>
+          {letter === " " ? "·" : letter}
+        </span>
+      )),
+    [target, typed],
+  );
+
+  function handleKey(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (typed >= target.length) return;
+    if (event.key.toLowerCase() === current) {
+      setTyped((value) => value + 1);
+      if (sound && typeof window !== "undefined") {
+        // The visible response is primary; audio is intentionally gentle and optional.
+      }
+    } else if (event.key.length === 1) {
+      setMistakes((value) => value + 1);
+    }
+  }
+
+  function resetPractice() {
+    setTyped(0);
+    setMistakes(0);
+  }
+
+  return (
+    <main>
+      <header className="site-header">
+        <a className="brand" href="#top" aria-label="Lumiya Academy">
+          <span className="brand-mark"><i>L</i><b>✦</b></span>
+          <span><strong>Lumiya</strong><small>ACADEMY</small></span>
+        </a>
+        <nav>{t.nav.map((item, i) => <a key={item} href={["#courses", "#how", "#plans", "#families"][i]}>{item}</a>)}</nav>
+        <div className="header-actions">
+          <button className="language" onClick={() => setLang(lang === "es" ? "en" : "es")} aria-label="Change language">
+            <b>{lang.toUpperCase()}</b><span>⌄</span>
+          </button>
+          <button className="login">{t.login}</button>
+          <button className="button primary small">{t.start}</button>
+        </div>
+      </header>
+
+      <section className="hero" id="top">
+        <div className="hero-copy">
+          <div className="eyebrow"><span>✦</span>{t.eyebrow}</div>
+          <h1>{t.titleA}<br/><em>{t.titleB}</em></h1>
+          <p>{t.intro}</p>
+          <div className="hero-buttons">
+            <a className="button primary" href="#practice">{t.trial} <span>→</span></a>
+            <a className="button secondary" href="#plans">{t.plans}</a>
+          </div>
+          <div className="mini-proof"><span className="avatar-stack"><i>☺</i><i>★</i><i>♥</i></span><span><b>{t.trusted}</b><small>{t.course}</small></span></div>
+        </div>
+
+        <div className="hero-visual" aria-label="Lumiya learning preview">
+          <div className="orbit orbit-one"/><div className="orbit orbit-two"/>
+          <div className="lumi"><span className="ray r1"/><span className="ray r2"/><span className="ray r3"/><span className="ray r4"/><div className="lumi-body"><i>•</i><i>•</i><b>⌣</b></div><div className="lumi-tail"/></div>
+          <div className="floating-card card-progress"><span className="round-icon purple">✓</span><div><small>{t.progress}</small><b>3 {lang === "es" ? "lecciones" : "lessons"}</b></div></div>
+          <div className="floating-card card-streak"><span>🔥</span><div><b>5 {lang === "es" ? "días" : "days"}</b><small>{t.streak}</small></div></div>
+          <div className="floating-key k1">A</div><div className="floating-key k2">S</div><div className="floating-key k3">D</div>
+          <div className="keyboard-mini"><div>Q W E R T Y U I O P</div><div>A S D F G H J K L Ñ</div><div>Z X C V B N M</div><span/></div>
+        </div>
+      </section>
+
+      <section className="course-strip" id="courses">
+        <span className="course-icon">⌨</span><div><small>{t.trusted}</small><h2>{t.course}</h2><p>{t.courseDesc}</p></div>
+        <div className="course-progress"><span><b>01</b><small>{t.lesson}</small></span><div><i/></div></div>
+      </section>
+
+      <section className={`practice-section ${worlds[world]}`} id="practice">
+        <div className="section-heading"><span className="section-kicker">LUMITYPE</span><h2>{t.practice}</h2><p>{t.practiceHint}</p></div>
+        <div className="practice-shell">
+          <div className="practice-top">
+            <span className="lesson-pill">{t.lesson}</span>
+            <div className="practice-actions"><button onClick={() => setSettingsOpen(true)}>⚙ {t.settings}</button><button onClick={resetPractice}>↻ {t.reset}</button></div>
+          </div>
+          <div className={`typing-prompt ${bigText ? "large" : ""}`}>{typed >= target.length ? <b className="complete">{t.done}</b> : renderedTarget}</div>
+          <input autoComplete="off" autoCapitalize="off" aria-label={t.practiceHint} className="typing-capture" value="" onKeyDown={handleKey} onChange={() => {}} placeholder={lang === "es" ? "Haz clic aquí y comienza a escribir…" : "Click here and start typing…"}/>
+          <div className="keyboard">
+            {rows.map((row, rowIndex) => <div className="key-row" key={rowIndex}>{row.map((key) => <span key={key} className={current.toUpperCase() === key ? "active-key" : ""}>{key}</span>)}</div>)}
+            <div className="space-key"><span className={current === " " ? "active-key" : ""}>SPACE</span></div>
+          </div>
+          {hands && <div className="hands"><span className="left-hand">☝</span><span className="right-hand">☝</span></div>}
+          <div className="practice-stats"><span><b>{accuracy}%</b><small>{t.accuracy}</small></span><span><b>{typed}/{target.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span><span><b>{Math.max(1, Math.round(typed / 2))}</b><small>{t.stars}</small></span></div>
+        </div>
+      </section>
+
+      <section className="benefits" id="how">
+        <div className="section-heading"><span className="section-kicker">{lang === "es" ? "APRENDER CON LUMIYA" : "LEARN WITH LUMIYA"}</span><h2>{t.why}</h2><p>{t.whySub}</p></div>
+        <div className="benefit-grid">{t.benefits.map((benefit, index) => <article key={benefit[0]}><span className={`benefit-icon icon-${index}`}>{["✦", "↗", "♡"][index]}</span><h3>{benefit[0]}</h3><p>{benefit[1]}</p></article>)}</div>
+      </section>
+
+      <section className="plans" id="plans">
+        <div className="section-heading"><span className="section-kicker">{lang === "es" ? "PLANES MENSUALES" : "MONTHLY PLANS"}</span><h2>{t.familyTitle}</h2><p>{t.familySub}</p></div>
+        <div className="plan-grid">{[35, 59, 79].map((price, index) => <article key={price} className={index === 1 ? "featured" : ""}>{index === 1 && <span className="popular">{t.popular}</span>}<h3>{t.planNames[index]}</h3><p>{t.planKids[index]}</p><div className="price"><b>{price} Bs</b><span>{t.month}</span></div><ul><li>✓ {lang === "es" ? "Acceso a todos los cursos activos" : "Access to all active courses"}</li><li>✓ {lang === "es" ? "Progreso y certificados" : "Progress and certificates"}</li><li>✓ {lang === "es" ? "Panel para padres" : "Parent dashboard"}</li></ul><button className={`button ${index === 1 ? "primary" : "secondary"}`}>{t.choose}</button></article>)}</div>
+      </section>
+
+      <section className="family-banner" id="families"><div><span>✦</span><h2>{lang === "es" ? "Cada niño tiene su propia forma de brillar." : "Every child has their own way to shine."}</h2><p>{lang === "es" ? "Lumiya se adapta a su ritmo, sus intereses y sus necesidades." : "Lumiya adapts to their pace, interests and needs."}</p></div><a className="button light" href="#plans">{t.start} →</a></section>
+
+      <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a><p>© 2026 Lumiya Academy · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
+
+      {settingsOpen && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">LUMIYA</span><h2>{t.panelTitle}</h2><p>{t.panelSub}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{t.sound}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button className="button primary panel-save" onClick={() => setSettingsOpen(false)}>{t.close}</button></aside></div>}
+    </main>
+  );
+}
