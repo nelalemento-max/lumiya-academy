@@ -122,147 +122,39 @@ const lessonAlternatives: Record<"es" | "en", string[][]> = {
   ],
 };
 
-type ReadingLesson = { title: string; skill: string; prompt: string; sound: string; options: string[]; answer: string };
-
-const readingLessons: Record<"es" | "en", ReadingLesson[]> = {
-  es: [
-    { title:"Escucha la M",skill:"Letra y sonido",prompt:"¿Qué letra hace este sonido?",sound:"mmm",options:["M","S","P"],answer:"M" },
-    { title:"Escucha la S",skill:"Letra y sonido",prompt:"¿Qué letra hace este sonido?",sound:"sss",options:["L","S","T"],answer:"S" },
-    { title:"Escucha la P",skill:"Letra y sonido",prompt:"¿Qué letra inicia la palabra pato?",sound:"pato",options:["P","M","A"],answer:"P" },
-    { title:"Las vocales",skill:"Reconocer vocales",prompt:"¿Cuál es una vocal?",sound:"a",options:["M","A","S"],answer:"A" },
-    { title:"Sonidos iguales",skill:"Discriminación auditiva",prompt:"Escucha: ma, ma. ¿Son iguales?",sound:"ma, ma",options:["Iguales","Diferentes"],answer:"Iguales" },
-    { title:"Sonidos diferentes",skill:"Discriminación auditiva",prompt:"Escucha: sol, sal. ¿Son iguales?",sound:"sol, sal",options:["Iguales","Diferentes"],answer:"Diferentes" },
-    { title:"Formamos MA",skill:"Primera sílaba",prompt:"M más A forman…",sound:"eme más a",options:["MA","ME","MI"],answer:"MA" },
-    { title:"Formamos PA",skill:"Unir sonidos",prompt:"P más A forman…",sound:"pe más a",options:["PO","PA","PE"],answer:"PA" },
-    { title:"Palabra MAMÁ",skill:"Leer palabras",prompt:"¿Cuál palabra dice mamá?",sound:"mamá",options:["MIMO","MAMÁ","MAPA"],answer:"MAMÁ" },
-    { title:"Palabra SOL",skill:"Leer palabras",prompt:"¿Cuál palabra dice sol?",sound:"sol",options:["SAL","SOL","LOS"],answer:"SOL" },
-    { title:"Imagen y palabra",skill:"Comprensión visual",prompt:"¿Qué palabra corresponde a 🏠?",sound:"casa",options:["CASA","MESA","SOPA"],answer:"CASA" },
-    { title:"La primera letra",skill:"Sonido inicial",prompt:"¿Con qué letra empieza luna?",sound:"luna",options:["L","M","N"],answer:"L" },
-    { title:"La última letra",skill:"Sonido final",prompt:"¿Con qué letra termina sol?",sound:"sol",options:["S","O","L"],answer:"L" },
-    { title:"Una frase corta",skill:"Lectura de frase",prompt:"El gato salta. ¿Quién salta?",sound:"El gato salta",options:["El gato","La casa","El sol"],answer:"El gato" },
-    { title:"Ordenamos palabras",skill:"Construir oraciones",prompt:"¿Cuál oración está bien ordenada?",sound:"Lumi lee un libro",options:["Lee Lumi libro un","Lumi lee un libro","Un Lumi libro lee"],answer:"Lumi lee un libro" },
-    { title:"Comprendo lo que leo",skill:"Comprensión",prompt:"Ana tiene una flor roja. ¿De qué color es?",sound:"Ana tiene una flor roja",options:["Azul","Roja","Verde"],answer:"Roja" },
-    { title:"Historia pequeña",skill:"Secuencia",prompt:"Primero llueve y después sale el sol. ¿Qué pasó primero?",sound:"Primero llueve y después sale el sol",options:["Salió el sol","Llovió","Anocheció"],answer:"Llovió" },
-    { title:"La misión de Lumi",skill:"Lectura inicial",prompt:"Lumi ayuda a todos a leer. ¿Qué hace Lumi?",sound:"Lumi ayuda a todos a leer",options:["Ayuda a leer","Sale a correr","Prepara comida"],answer:"Ayuda a leer" },
-  ],
-  en: [
-    { title:"Hear M",skill:"Letter and sound",prompt:"Which letter makes this sound?",sound:"mmm",options:["M","S","P"],answer:"M" },
-    { title:"Hear S",skill:"Letter and sound",prompt:"Which letter makes this sound?",sound:"sss",options:["L","S","T"],answer:"S" },
-    { title:"Hear P",skill:"Letter and sound",prompt:"Which letter begins pen?",sound:"pen",options:["P","M","A"],answer:"P" },
-    { title:"Vowels",skill:"Recognize vowels",prompt:"Which one is a vowel?",sound:"a",options:["M","A","S"],answer:"A" },
-    { title:"Same sounds",skill:"Listening",prompt:"Listen: ma, ma. Are they the same?",sound:"ma, ma",options:["Same","Different"],answer:"Same" },
-    { title:"Different sounds",skill:"Listening",prompt:"Listen: sun, son. Are they the same?",sound:"sun, son",options:["Same","Different"],answer:"Different" },
-    { title:"Build MA",skill:"First syllable",prompt:"M plus A makes…",sound:"m plus a",options:["MA","ME","MI"],answer:"MA" },
-    { title:"Build PA",skill:"Join sounds",prompt:"P plus A makes…",sound:"p plus a",options:["PO","PA","PE"],answer:"PA" },
-    { title:"Word MOM",skill:"Read words",prompt:"Which word says mom?",sound:"mom",options:["MOM","MAP","MOP"],answer:"MOM" },
-    { title:"Word SUN",skill:"Read words",prompt:"Which word says sun?",sound:"sun",options:["SON","SUN","NUS"],answer:"SUN" },
-    { title:"Picture and word",skill:"Visual meaning",prompt:"Which word matches 🏠?",sound:"house",options:["HOUSE","MOUSE","SUN"],answer:"HOUSE" },
-    { title:"First letter",skill:"Initial sound",prompt:"Which letter begins moon?",sound:"moon",options:["L","M","N"],answer:"M" },
-    { title:"Last letter",skill:"Final sound",prompt:"Which letter ends sun?",sound:"sun",options:["S","U","N"],answer:"N" },
-    { title:"A short sentence",skill:"Sentence reading",prompt:"The cat jumps. Who jumps?",sound:"The cat jumps",options:["The cat","The house","The sun"],answer:"The cat" },
-    { title:"Order words",skill:"Build sentences",prompt:"Which sentence is ordered correctly?",sound:"Lumi reads a book",options:["Reads Lumi book a","Lumi reads a book","A Lumi book reads"],answer:"Lumi reads a book" },
-    { title:"Understand reading",skill:"Comprehension",prompt:"Ana has a red flower. What color is it?",sound:"Ana has a red flower",options:["Blue","Red","Green"],answer:"Red" },
-    { title:"Little story",skill:"Sequence",prompt:"First it rains, then the sun comes out. What happened first?",sound:"First it rains, then the sun comes out",options:["The sun came out","It rained","Night came"],answer:"It rained" },
-    { title:"Lumi's mission",skill:"Early reading",prompt:"Lumi helps everyone read. What does Lumi do?",sound:"Lumi helps everyone read",options:["Helps others read","Goes running","Cooks food"],answer:"Helps others read" },
-  ],
-};
-
 const copy = {
   es: {
-    nav: ["Cursos", "Cómo funciona", "Planes", "Familias"],
-    login: "Ingresar",
-    start: "Comenzar ahora",
-    eyebrow: "Plataforma educativa bilingüe para niños",
-    titleA: "Aprender hoy.",
-    titleB: "Crecer para siempre.",
-    intro:
-      "Una experiencia educativa divertida y segura para que cada niño aprenda a su ritmo, acompañado por Lumi.",
-    trial: "Probar una lección",
-    plans: "Ver planes familiares",
-    trusted: "Primer curso disponible",
-    course: "Mecanografía divertida",
-    courseDesc: "Aprende a escribir con todos los dedos mientras juegas.",
-    progress: "Tu progreso de hoy",
-    lesson: "Lección 1 de 18",
-    practice: "Práctica rápida",
-    practiceHint: "Escribe las letras resaltadas usando los dedos correctos.",
-    settings: "Personalizar",
-    reset: "Reiniciar",
-    done: "¡Excelente! Completaste la práctica.",
-    accuracy: "Precisión",
-    streak: "Racha",
-    stars: "Estrellas",
-    why: "Mucho más que escribir rápido",
-    whySub: "Lumiya convierte cada práctica en un pequeño logro.",
-    benefits: [
-      ["Aprende jugando", "Misiones cortas, premios y escenarios que mantienen la motivación."],
-      ["Avanza a su ritmo", "Ejercicios que se adaptan a las teclas que cada niño necesita reforzar."],
-      ["Acompañamiento familiar", "Los padres ven avances, tiempo de práctica y habilidades dominadas."],
-    ],
-    familyTitle: "Un plan para cada familia",
-    familySub: "Perfiles separados, progreso individual y acceso desde cualquier computadora.",
-    month: "/mes",
-    choose: "Elegir plan",
-    popular: "Más elegido",
-    planNames: ["Individual", "Familia", "Familia Plus"],
-    planKids: ["1 estudiante", "Hasta 3 estudiantes", "Hasta 5 estudiantes"],
-    footer: "Producido por Ing. Nelson Mendoza",
-    panelTitle: "Personaliza tu espacio",
-    panelSub: "Los cambios se aplican en la práctica al instante.",
-    theme: "Escenario",
-    themes: ["Aula", "Espacio", "Océano"],
-    hands: "Mostrar manos",
-    sound: "Sonidos de acierto",
-    big: "Texto grande",
-    close: "Listo",
+    nav: ["Cursos", "Cómo funciona", "Planes", "Familias"], login: "Ingresar", start: "Comenzar ahora",
+    eyebrow: "Plataforma educativa bilingüe para niños", titleA: "Aprender hoy.", titleB: "Crecer para siempre.",
+    intro: "Una experiencia educativa divertida y segura para que cada niño aprenda a su ritmo, acompañado por Lumi.",
+    trial: "Probar una lección", plans: "Ver planes familiares", trusted: "Primer curso disponible",
+    course: "Mecanografía divertida", courseDesc: "Aprende a escribir con todos los dedos mientras juegas.",
+    progress: "Tu progreso de hoy", lesson: "Lección 1 de 18", practice: "Práctica rápida",
+    practiceHint: "Escribe las letras resaltadas usando los dedos correctos.", settings: "Personalizar", reset: "Reiniciar",
+    done: "¡Excelente! Completaste la práctica.", accuracy: "Precisión", streak: "Racha", stars: "Estrellas",
+    why: "Mucho más que escribir rápido", whySub: "Lumiya convierte cada práctica en un pequeño logro.",
+    benefits: [["Aprende jugando", "Misiones cortas, premios y escenarios que mantienen la motivación."], ["Avanza a su ritmo", "Ejercicios que se adaptan a las teclas que cada niño necesita reforzar."], ["Acompañamiento familiar", "Los padres ven avances, tiempo de práctica y habilidades dominadas."]],
+    familyTitle: "Un plan para cada familia", familySub: "Perfiles separados, progreso individual y acceso desde cualquier computadora.",
+    month: "/mes", choose: "Elegir plan", popular: "Más elegido", planNames: ["Individual", "Familia", "Familia Plus"],
+    planKids: ["1 estudiante", "Hasta 3 estudiantes", "Hasta 5 estudiantes"], footer: "Producido por Ing. Nelson Mendoza",
+    panelTitle: "Personaliza tu espacio", panelSub: "Los cambios se aplican en la práctica al instante.", theme: "Escenario",
+    themes: ["Aula", "Espacio", "Océano"], hands: "Mostrar manos", sound: "Sonidos de acierto", big: "Texto grande", close: "Listo",
   },
   en: {
-    nav: ["Courses", "How it works", "Plans", "Families"],
-    login: "Log in",
-    start: "Start now",
-    eyebrow: "Bilingual learning platform for children",
-    titleA: "Learn today.",
-    titleB: "Grow forever.",
-    intro:
-      "A fun and safe learning experience where every child grows at their own pace, guided by Lumi.",
-    trial: "Try a lesson",
-    plans: "See family plans",
-    trusted: "First course available",
-    course: "Fun Typing",
-    courseDesc: "Learn to type with every finger while you play.",
-    progress: "Today’s progress",
-    lesson: "Lesson 1 of 18",
-    practice: "Quick practice",
-    practiceHint: "Type the highlighted letters using the correct fingers.",
-    settings: "Customize",
-    reset: "Reset",
-    done: "Great job! You completed the practice.",
-    accuracy: "Accuracy",
-    streak: "Streak",
-    stars: "Stars",
-    why: "Much more than typing fast",
-    whySub: "Lumiya turns every practice into a small achievement.",
-    benefits: [
-      ["Learn through play", "Short missions, rewards and worlds that keep children motivated."],
-      ["Grow at their pace", "Exercises adapt to the keys each child needs to reinforce."],
-      ["Family guidance", "Parents see progress, practice time and mastered skills."],
-    ],
-    familyTitle: "A plan for every family",
-    familySub: "Separate profiles, individual progress and access from any computer.",
-    month: "/month",
-    choose: "Choose plan",
-    popular: "Most popular",
-    planNames: ["Individual", "Family", "Family Plus"],
-    planKids: ["1 student", "Up to 3 students", "Up to 5 students"],
-    footer: "Produced by Eng. Nelson Mendoza",
-    panelTitle: "Customize your space",
-    panelSub: "Changes appear in the practice instantly.",
-    theme: "World",
-    themes: ["Classroom", "Space", "Ocean"],
-    hands: "Show hands",
-    sound: "Success sounds",
-    big: "Large text",
-    close: "Done",
+    nav: ["Courses", "How it works", "Plans", "Families"], login: "Log in", start: "Start now",
+    eyebrow: "Bilingual learning platform for children", titleA: "Learn today.", titleB: "Grow forever.",
+    intro: "A fun and safe learning experience where every child grows at their own pace, guided by Lumi.",
+    trial: "Try a lesson", plans: "See family plans", trusted: "First course available", course: "Fun Typing",
+    courseDesc: "Learn to type with every finger while you play.", progress: "Today’s progress", lesson: "Lesson 1 of 18",
+    practice: "Quick practice", practiceHint: "Type the highlighted letters using the correct fingers.", settings: "Customize",
+    reset: "Reset", done: "Great job! You completed the practice.", accuracy: "Accuracy", streak: "Streak", stars: "Stars",
+    why: "Much more than typing fast", whySub: "Lumiya turns every practice into a small achievement.",
+    benefits: [["Learn through play", "Short missions, rewards and worlds that keep children motivated."], ["Grow at their pace", "Exercises adapt to the keys each child needs to reinforce."], ["Family guidance", "Parents see progress, practice time and mastered skills."]],
+    familyTitle: "A plan for every family", familySub: "Separate profiles, individual progress and access from any computer.",
+    month: "/month", choose: "Choose plan", popular: "Most popular", planNames: ["Individual", "Family", "Family Plus"],
+    planKids: ["1 student", "Up to 3 students", "Up to 5 students"], footer: "Produced by Eng. Nelson Mendoza",
+    panelTitle: "Customize your space", panelSub: "Changes appear in the practice instantly.", theme: "World",
+    themes: ["Classroom", "Space", "Ocean"], hands: "Show hands", sound: "Success sounds", big: "Large text", close: "Done",
   },
 } as const;
 
@@ -271,6 +163,62 @@ const rows = [
   ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],
   ["Z", "X", "C", "V", "B", "N", "M"],
 ];
+
+type ReadingExercise = { kind: "listen" | "choice" | "picture" | "build"; display: string; sound: string; prompt: string; options?: string[]; answer?: string; icon?: string; story?: string };
+type ReadingLesson = { title: string; skill: string; exercises: ReadingExercise[] };
+
+const listenSet = (items: Array<[string,string,string,string]>) => items.map(([display,sound,word,icon]) => ({ kind:"listen" as const, display, sound, prompt:word, icon }));
+const choiceSet = (items: Array<[string,string,string[],string,string?]>) => items.map(([display,sound,options,answer,prompt]) => ({ kind:"choice" as const, display, sound, prompt:prompt || display, options, answer }));
+const pictureSet = (items: Array<[string,string[],string,string]>) => items.map(([word,options,answer,icon]) => ({ kind:"picture" as const, display:word, sound:word, prompt:word, options, answer, icon }));
+const buildSet = (items: Array<[string,string[],string,string]>) => items.map(([word,options,answer,icon]) => ({ kind:"build" as const, display:word, sound:word, prompt:word, options, answer, icon }));
+
+const readingLessons: Record<"es" | "en", ReadingLesson[]> = {
+  es: [
+    { title:"Las vocales suenan", skill:"Vocales · escuchar y repetir", exercises:listenSet([["A a","a","araña","🕷️"],["E e","e","elefante","🐘"],["I i","i","iglú","🧊"],["O o","o","oso","🐻"],["U u","u","uva","🍇"]]) },
+    { title:"Reconozco la vocal", skill:"Vocales · sonido y grafía", exercises:choiceSet([["¿Qué vocal escuchas?","a",["a","e","o","u"],"a"],["¿Qué vocal escuchas?","e",["e","i","a","o"],"e"],["¿Qué vocal escuchas?","i",["i","u","e","a"],"i"],["¿Qué vocal escuchas?","o",["o","a","u","i"],"o"],["¿Qué vocal escuchas?","u",["u","o","i","e"],"u"]]) },
+    { title:"La familia de la M", skill:"Sílabas directas", exercises:listenSet([["ma","ma","mano","✋"],["me","me","mesa","🪑"],["mi","mi","mío","🙋"],["mo","mo","mono","🐒"],["mu","mu","muñeca","🪆"]]) },
+    { title:"La familia de la P", skill:"Sílabas directas", exercises:listenSet([["pa","pa","papá","👨"],["pe","pe","pelota","⚽"],["pi","pi","pipa","🪈"],["po","po","pollo","🐥"],["pu","pu","puerta","🚪"]]) },
+    { title:"La familia de la S", skill:"Sílabas directas", exercises:listenSet([["sa","sa","sapo","🐸"],["se","se","semilla","🌱"],["si","si","silla","🪑"],["so","so","sol","☀️"],["su","su","suma","➕"]]) },
+    { title:"La familia de la L", skill:"Sílabas directas", exercises:listenSet([["la","la","lápiz","✏️"],["le","le","leche","🥛"],["li","li","libro","📘"],["lo","lo","loro","🦜"],["lu","lu","luna","🌙"]]) },
+    { title:"La familia de la T", skill:"Sílabas directas", exercises:listenSet([["ta","ta","taza","☕"],["te","te","techo","🏠"],["ti","ti","tigre","🐯"],["to","to","tomate","🍅"],["tu","tu","tucán","🐦"]]) },
+    { title:"Palabras con M y P", skill:"Palabra e imagen", exercises:pictureSet([["mono",["mono","pan","mapa","pelota"],"mono","🐒"],["mapa",["mano","mapa","pollo","puerta"],"mapa","🗺️"],["pan",["mono","papá","pan","mesa"],"pan","🍞"],["mano",["mano","pelota","mapa","pan"],"mano","✋"],["papá",["pollo","mono","mesa","papá"],"papá","👨"]]) },
+    { title:"Palabras con S y L", skill:"Palabra e imagen", exercises:pictureSet([["sol",["sol","luna","sapo","silla"],"sol","☀️"],["luna",["lápiz","luna","sol","libro"],"luna","🌙"],["sapo",["silla","sol","sapo","loro"],"sapo","🐸"],["silla",["silla","sapo","luna","lápiz"],"silla","🪑"],["lápiz",["libro","sol","lápiz","sapo"],"lápiz","✏️"]]) },
+    { title:"Leo palabras: los animales", skill:"Palabra e imagen", exercises:pictureSet([["perro",["gato","perro","pato","sol"],"perro","🐶"],["gato",["gato","casa","perro","pato"],"gato","🐱"],["casa",["pelota","pato","casa","gato"],"casa","🏠"],["pelota",["perro","pelota","casa","pato"],"pelota","⚽"],["pato",["gato","casa","perro","pato"],"pato","🦆"]]) },
+    { title:"Palabras con N y D", skill:"Palabra e imagen", exercises:pictureSet([["nido",["nido","dado","nube","dedo"],"nido","🪺"],["dedo",["nariz","dedo","nido","dado"],"dedo","☝️"],["nube",["nube","nariz","dedo","dado"],"nube","☁️"],["dado",["nido","nube","dado","nariz"],"dado","🎲"],["nariz",["dedo","nariz","nido","dado"],"nariz","👃"]]) },
+    { title:"Palabras con R y C", skill:"Palabra e imagen", exercises:pictureSet([["rosa",["rosa","cama","ratón","coco"],"rosa","🌹"],["cama",["cohete","cama","rosa","ratón"],"cama","🛏️"],["ratón",["coco","cama","ratón","cohete"],"ratón","🐭"],["cohete",["cohete","rosa","coco","ratón"],"cohete","🚀"],["coco",["cama","ratón","coco","rosa"],"coco","🥥"]]) },
+    { title:"Sílabas trabadas", skill:"Sílabas complejas", exercises:listenSet([["bla","bla","blanco","⚪"],["pla","pla","plátano","🍌"],["tra","tra","tractor","🚜"],["cri","cri","grillo","🦗"],["gru","gru","gruta","⛰️"]]) },
+    { title:"Armo palabras", skill:"Unir sílabas", exercises:buildSet([["mesa",["sa","me"],"me|sa","🪑"],["pipa",["pa","pi"],"pi|pa","🪈"],["sapo",["po","sa"],"sa|po","🐸"],["luna",["na","lu"],"lu|na","🌙"],["dedo",["do","de"],"de|do","☝️"]]) },
+    { title:"Leo frases cortas", skill:"Frases y comprensión", exercises:choiceSet([["El perro corre.","El perro corre",["El perro","El gato","La luna"],"El perro","¿Quién corre?"],["La luna sale.","La luna sale",["El sol","La luna","La casa"],"La luna","¿Qué sale?"],["Mi mamá me ama.","Mi mamá me ama",["Mi papá","Mi perro","Mi mamá"],"Mi mamá","¿Quién me ama?"],["El sol calienta.","El sol calienta",["El sol","La luna","El pan"],"El sol","¿Qué calienta?"],["Ana lee un libro.","Ana lee un libro",["Un mapa","Un libro","Una carta"],"Un libro","¿Qué lee Ana?"]]) },
+    { title:"Entiendo lo que leo", skill:"Comprensión de detalles", exercises:choiceSet([["El gato duerme en la silla.","El gato duerme en la silla",["En la silla","En la luna","En el mapa"],"En la silla","¿Dónde duerme el gato?"],["Tomás come un tomate rojo.","Tomás come un tomate rojo",["Verde","Rojo","Azul"],"Rojo","¿De qué color es el tomate?"],["La abeja vuela sobre la rosa.","La abeja vuela sobre la rosa",["Sobre la rosa","Sobre la cama","Sobre el pan"],"Sobre la rosa","¿Sobre qué vuela la abeja?"],["El tren pasa por el túnel.","El tren pasa por el túnel",["Por la casa","Por el túnel","Por la luna"],"Por el túnel","¿Por dónde pasa el tren?"],["Lucía pinta una flor amarilla.","Lucía pinta una flor amarilla",["Una flor","Un sapo","Un dado"],"Una flor","¿Qué pinta Lucía?"]]) },
+    { title:"Cuento: Tito el perrito", skill:"Mini-cuento y comprensión", exercises:choiceSet([["Tito es un perrito pequeño. Tito vive en una casa azul. Cada mañana juega con una pelota roja. Por la noche duerme bajo la luna.","Tito es un perrito pequeño. Tito vive en una casa azul. Cada mañana juega con una pelota roja. Por la noche duerme bajo la luna.",["Tito","Coco","Max"],"Tito","¿Cómo se llama el perrito?"],["El cuento de Tito","Tito vive en una casa azul",["Roja","Verde","Azul"],"Azul","¿De qué color es su casa?"],["El cuento de Tito","Tito juega con una pelota roja",["Con un libro","Con una pelota","Con un lápiz"],"Con una pelota","¿Con qué juega Tito?"],["El cuento de Tito","La pelota es roja",["Roja","Azul","Amarilla"],"Roja","¿De qué color es la pelota?"],["El cuento de Tito","Tito duerme bajo la luna",["En el sol","Bajo la luna","En una nube"],"Bajo la luna","¿Dónde duerme Tito?"]]) },
+    { title:"Repaso final", skill:"Todas las habilidades", exercises:[{kind:"choice",display:"¿Qué vocal escuchas?",sound:"o",prompt:"Escucha y elige",options:["o","a","u","i"],answer:"o"},{kind:"listen",display:"ta",sound:"ta",prompt:"taza",icon:"☕"},{kind:"picture",display:"perro",sound:"perro",prompt:"perro",options:["gato","perro","pato","casa"],answer:"perro",icon:"🐶"},{kind:"build",display:"luna",sound:"luna",prompt:"luna",options:["na","lu"],answer:"lu|na",icon:"🌙"},{kind:"choice",display:"El sol calienta.",sound:"El sol calienta",prompt:"¿Qué calienta?",options:["El sol","La luna","El pan"],answer:"El sol"}] },
+  ],
+  en: [
+    { title:"Vowels have sounds",skill:"Vowels · listen and repeat",exercises:listenSet([["A a","a","apple","🍎"],["E e","e","elephant","🐘"],["I i","i","igloo","🧊"],["O o","o","octopus","🐙"],["U u","u","umbrella","☂️"]]) },
+    { title:"Recognize the vowel",skill:"Vowels · sound and letter",exercises:choiceSet([["Which vowel do you hear?","a",["a","e","o","u"],"a"],["Which vowel do you hear?","e",["e","i","a","o"],"e"],["Which vowel do you hear?","i",["i","u","e","a"],"i"],["Which vowel do you hear?","o",["o","a","u","i"],"o"],["Which vowel do you hear?","u",["u","o","i","e"],"u"]]) },
+    { title:"The M family",skill:"Direct syllables",exercises:listenSet([["ma","ma","map","🗺️"],["me","me","melon","🍈"],["mi","mi","mirror","🪞"],["mo","mo","monkey","🐒"],["mu","mu","music","🎵"]]) },
+    { title:"The P family",skill:"Direct syllables",exercises:listenSet([["pa","pa","papa","👨"],["pe","pe","pen","🖊️"],["pi","pi","pig","🐷"],["po","po","pot","🍲"],["pu","pu","pudding","🍮"]]) },
+    { title:"The S family",skill:"Direct syllables",exercises:listenSet([["sa","sa","sand","🏖️"],["se","se","seed","🌱"],["si","si","sit","🪑"],["so","so","sun","☀️"],["su","su","soup","🥣"]]) },
+    { title:"The L family",skill:"Direct syllables",exercises:listenSet([["la","la","lamp","💡"],["le","le","lemon","🍋"],["li","li","lion","🦁"],["lo","lo","log","🪵"],["lu","lu","lunar","🌙"]]) },
+    { title:"The T family",skill:"Direct syllables",exercises:listenSet([["ta","ta","table","🪑"],["te","te","ten","🔟"],["ti","ti","tiger","🐯"],["to","to","tomato","🍅"],["tu","tu","tulip","🌷"]]) },
+    { title:"Words with M and P",skill:"Word and picture",exercises:pictureSet([["monkey",["monkey","bread","map","ball"],"monkey","🐒"],["map",["hand","map","chicken","door"],"map","🗺️"],["bread",["monkey","dad","bread","table"],"bread","🍞"],["hand",["hand","ball","map","bread"],"hand","✋"],["dad",["chicken","monkey","table","dad"],"dad","👨"]]) },
+    { title:"Words with S and L",skill:"Word and picture",exercises:pictureSet([["sun",["sun","moon","frog","chair"],"sun","☀️"],["moon",["pencil","moon","sun","book"],"moon","🌙"],["frog",["chair","sun","frog","parrot"],"frog","🐸"],["chair",["chair","frog","moon","pencil"],"chair","🪑"],["pencil",["book","sun","pencil","frog"],"pencil","✏️"]]) },
+    { title:"Animal words",skill:"Word and picture",exercises:pictureSet([["dog",["cat","dog","duck","sun"],"dog","🐶"],["cat",["cat","house","dog","duck"],"cat","🐱"],["house",["ball","duck","house","cat"],"house","🏠"],["ball",["dog","ball","house","duck"],"ball","⚽"],["duck",["cat","house","dog","duck"],"duck","🦆"]]) },
+    { title:"Words with N and D",skill:"Word and picture",exercises:pictureSet([["nest",["nest","dice","cloud","finger"],"nest","🪺"],["finger",["nose","finger","nest","dice"],"finger","☝️"],["cloud",["cloud","nose","finger","dice"],"cloud","☁️"],["dice",["nest","cloud","dice","nose"],"dice","🎲"],["nose",["finger","nose","nest","dice"],"nose","👃"]]) },
+    { title:"Words with R and C",skill:"Word and picture",exercises:pictureSet([["rose",["rose","bed","mouse","coconut"],"rose","🌹"],["bed",["rocket","bed","rose","mouse"],"bed","🛏️"],["mouse",["coconut","bed","mouse","rocket"],"mouse","🐭"],["rocket",["rocket","rose","coconut","mouse"],"rocket","🚀"],["coconut",["bed","mouse","coconut","rose"],"coconut","🥥"]]) },
+    { title:"Blended sounds",skill:"Complex syllables",exercises:listenSet([["bla","bla","blank","⚪"],["pla","pla","plant","🌱"],["tra","tra","tractor","🚜"],["cri","cri","cricket","🦗"],["gru","gru","group","👥"]]) },
+    { title:"Build words",skill:"Join syllables",exercises:buildSet([["table",["ble","ta"],"ta|ble","🪑"],["paper",["per","pa"],"pa|per","📄"],["sunny",["ny","sun"],"sun|ny","☀️"],["lunar",["nar","lu"],"lu|nar","🌙"],["finger",["ger","fin"],"fin|ger","☝️"]]) },
+    { title:"Read short sentences",skill:"Sentences and meaning",exercises:choiceSet([["The dog runs.","The dog runs",["The dog","The cat","The moon"],"The dog","Who runs?"],["The moon rises.","The moon rises",["The sun","The moon","The house"],"The moon","What rises?"],["My mom loves me.","My mom loves me",["My dad","My dog","My mom"],"My mom","Who loves me?"],["The sun warms us.","The sun warms us",["The sun","The moon","The bread"],"The sun","What warms us?"],["Ana reads a book.","Ana reads a book",["A map","A book","A letter"],"A book","What does Ana read?"]]) },
+    { title:"Understand what I read",skill:"Reading details",exercises:choiceSet([["The cat sleeps on the chair.","The cat sleeps on the chair",["On the chair","On the moon","On the map"],"On the chair","Where does the cat sleep?"],["Tom eats a red tomato.","Tom eats a red tomato",["Green","Red","Blue"],"Red","What color is the tomato?"],["The bee flies over the rose.","The bee flies over the rose",["Over the rose","Over the bed","Over the bread"],"Over the rose","What does the bee fly over?"],["The train goes through the tunnel.","The train goes through the tunnel",["The house","The tunnel","The moon"],"The tunnel","Where does the train go?"],["Lucy paints a yellow flower.","Lucy paints a yellow flower",["A flower","A frog","A die"],"A flower","What does Lucy paint?"]]) },
+    { title:"Story: Tito the puppy",skill:"Story comprehension",exercises:choiceSet([["Tito is a small puppy. He lives in a blue house. Each morning he plays with a red ball. At night he sleeps under the moon.","Tito is a small puppy. He lives in a blue house. Each morning he plays with a red ball. At night he sleeps under the moon.",["Tito","Coco","Max"],"Tito","What is the puppy's name?"],["Tito's story","Tito lives in a blue house",["Red","Green","Blue"],"Blue","What color is his house?"],["Tito's story","Tito plays with a red ball",["A book","A ball","A pencil"],"A ball","What does Tito play with?"],["Tito's story","The ball is red",["Red","Blue","Yellow"],"Red","What color is the ball?"],["Tito's story","Tito sleeps under the moon",["In the sun","Under the moon","In a cloud"],"Under the moon","Where does Tito sleep?"]]) },
+    { title:"Final review",skill:"All reading skills",exercises:[{kind:"choice",display:"Which vowel do you hear?",sound:"o",prompt:"Listen and choose",options:["o","a","u","i"],answer:"o"},{kind:"listen",display:"ta",sound:"ta",prompt:"table",icon:"🪑"},{kind:"picture",display:"dog",sound:"dog",prompt:"dog",options:["cat","dog","duck","house"],answer:"dog",icon:"🐶"},{kind:"build",display:"lunar",sound:"lunar",prompt:"lunar",options:["nar","lu"],answer:"lu|nar",icon:"🌙"},{kind:"choice",display:"The sun warms us.",sound:"The sun warms us",prompt:"What warms us?",options:["The sun","The moon","The bread"],answer:"The sun"}] },
+  ],
+};
+
+function readingPicture(word: string) {
+  const pictures: Record<string,string> = { mono:"🐒",pan:"🍞",mapa:"🗺️",pelota:"⚽",mano:"✋",papá:"👨",pollo:"🐥",mesa:"🪑",puerta:"🚪",sol:"☀️",luna:"🌙",sapo:"🐸",silla:"🪑",loro:"🦜",lápiz:"✏️",libro:"📘",perro:"🐶",gato:"🐱",pato:"🦆",casa:"🏠",nido:"🪺",dado:"🎲",nube:"☁️",dedo:"☝️",nariz:"👃",rosa:"🌹",cama:"🛏️",ratón:"🐭",coco:"🥥",cohete:"🚀",monkey:"🐒",bread:"🍞",map:"🗺️",ball:"⚽",hand:"✋",dad:"👨",chicken:"🐥",table:"🪑",door:"🚪",sun:"☀️",moon:"🌙",frog:"🐸",chair:"🪑",parrot:"🦜",pencil:"✏️",book:"📘",dog:"🐶",cat:"🐱",duck:"🦆",house:"🏠",nest:"🪺",dice:"🎲",cloud:"☁️",finger:"☝️",nose:"👃",rose:"🌹",bed:"🛏️",mouse:"🐭",coconut:"🥥",rocket:"🚀" };
+  return pictures[word.toLowerCase()] || "🖼️";
+}
 
 type FingerId = "l-pinky" | "l-ring" | "l-middle" | "l-index" | "thumb" | "r-index" | "r-middle" | "r-ring" | "r-pinky";
 
@@ -340,6 +288,9 @@ export default function Home() {
   const [readingFeedback, setReadingFeedback] = useState("");
   const [readingSequence, setReadingSequence] = useState<number[]>([]);
   const [readingLesson, setReadingLesson] = useState<number | null>(null);
+  const [readingExercise, setReadingExercise] = useState(0);
+  const [readingBuild, setReadingBuild] = useState<string[]>([]);
+  const [readingLessonDone, setReadingLessonDone] = useState(false);
   const [readingBusy, setReadingBusy] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
@@ -628,17 +579,32 @@ export default function Home() {
 
   function startReadingLesson(lessonNumber: number) {
     setReadingLesson(lessonNumber);
+    setReadingExercise(0);
+    setReadingBuild([]);
+    setReadingLessonDone(false);
     setReadingFeedback("");
-    const lesson = readingLessons[lang][lessonNumber - 1];
-    window.setTimeout(() => readingVoice(`${lesson.prompt}. ${lesson.sound}`), 180);
+    const exercise = readingLessons[lang][lessonNumber - 1].exercises[0];
+    window.setTimeout(() => readingVoice(`${exercise.display}. ${exercise.sound}`), 180);
   }
 
-  async function answerReadingLesson(option: string) {
+  async function completeReadingExercise() {
     if (!account || !activeChild || !readingLesson || readingBusy) return;
     const lesson = readingLessons[lang][readingLesson - 1];
-    if (option !== lesson.answer) { gentleReadingFeedback(); return; }
+    if (readingExercise < lesson.exercises.length - 1) {
+      playTone("correct");
+      setReadingFeedback(lang === "es" ? "¡Muy bien! Vamos al siguiente ejercicio." : "Great job! Let's go to the next activity.");
+      window.setTimeout(() => {
+        const nextExercise = readingExercise + 1;
+        setReadingExercise(nextExercise);
+        setReadingBuild([]);
+        setReadingFeedback("");
+        const next = lesson.exercises[nextExercise];
+        readingVoice(`${next.display}. ${next.sound}`);
+      }, 550);
+      return;
+    }
     playTone("complete");
-    setReadingFeedback(lang === "es" ? "¡Excelente! Aprendiste algo nuevo hoy." : "Excellent! You learned something new today.");
+    setReadingFeedback(lang === "es" ? "¡Lección completada! Abriste la siguiente misión." : "Lesson complete! You unlocked the next mission.");
     setReadingBusy(true);
     const completed = activeChild.readingCompletedLessons || [];
     const firstCompletion = !completed.includes(readingLesson);
@@ -648,7 +614,26 @@ export default function Home() {
       await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { readingLevel: nextLevel, readingCompletedLessons: arrayUnion(readingLesson), stars: updated.stars, lastReadingAt: serverTimestamp() });
       setActiveChild(updated);
       setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+      setReadingLessonDone(true);
     } finally { setReadingBusy(false); }
+  }
+
+  function answerReadingLesson(option: string) {
+    if (!readingLesson || readingBusy || readingLessonDone) return;
+    const exercise = readingLessons[lang][readingLesson - 1].exercises[readingExercise];
+    if (option !== exercise.answer) { gentleReadingFeedback(); return; }
+    void completeReadingExercise();
+  }
+
+  function chooseReadingSyllable(syllable: string) {
+    if (!readingLesson || readingLessonDone) return;
+    const exercise = readingLessons[lang][readingLesson - 1].exercises[readingExercise];
+    const attempt = [...readingBuild, syllable];
+    setReadingBuild(attempt);
+    if (attempt.length === 2) {
+      if (attempt.join("|") === exercise.answer) void completeReadingExercise();
+      else { setReadingBuild([]); gentleReadingFeedback(); }
+    }
   }
 
   function startChildLesson() {
@@ -932,7 +917,7 @@ export default function Home() {
 
           {readingStage === 7 && !readingLesson && <div className="reading-map"><div className="reading-map-title"><div><span className="section-kicker">LUMIREAD · 5 MINUTOS AL DÍA</span><h2>{lang === "es" ? `Tu aventura de lectura, ${activeChild.name}` : `Your reading adventure, ${activeChild.name}`}</h2><p>{lang === "es" ? "Escucha, juega y aprende. Cada misión abre la siguiente." : "Listen, play and learn. Each mission unlocks the next."}</p></div><div className="assessment-badge"><span>🏅</span><b>{activeChild.readingAssessmentScore ?? readingScore}/5</b><small>{lang === "es" ? "Misión inicial" : "First mission"}</small></div></div><div className="reading-lesson-grid">{readingLessons[lang].map((lesson,index) => { const number=index+1; const completed=activeChild.readingCompletedLessons?.includes(number); const available=completed || number === (activeChild.readingLevel || 1); return <article className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`} key={lesson.title}><span>{completed ? "✓" : available ? number : "🔒"}</span><div><small>{lang === "es" ? `LECCIÓN ${number}` : `LESSON ${number}`}</small><b>{lesson.title}</b><p>{lesson.skill}</p></div>{available && <button onClick={() => startReadingLesson(number)}>{completed ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}</article>; })}</div></div>}
 
-          {readingStage === 7 && readingLesson && (() => { const lesson=readingLessons[lang][readingLesson-1]; return <div className="reading-lesson-player"><div className="lesson-book">📖</div><span className="section-kicker">{lesson.skill.toUpperCase()}</span><h2>{lesson.title}</h2><p>{lesson.prompt}</p><button className="listen-button" onClick={() => readingVoice(lesson.sound)}>🔊 {lang === "es" ? "Escuchar" : "Listen"}</button><div className="lesson-answer-grid">{lesson.options.map((option) => <button disabled={readingBusy} key={option} onClick={() => void answerReadingLesson(option)}>{option}</button>)}</div>{readingFeedback && <div className="reading-feedback">{readingFeedback}</div>}{readingFeedback.startsWith("¡Excelente") || readingFeedback.startsWith("Excellent") ? <button className="button primary" onClick={() => setReadingLesson(null)}>{lang === "es" ? "Volver al mapa" : "Back to map"}</button> : null}</div>; })()}
+          {readingStage === 7 && readingLesson && (() => { const lesson=readingLessons[lang][readingLesson-1]; const exercise=lesson.exercises[readingExercise]; return <div className="reading-lesson-player"><div className="reading-exercise-head"><button onClick={() => setReadingLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button><span>{lang === "es" ? `Ejercicio ${readingExercise+1} de 5` : `Activity ${readingExercise+1} of 5`}</span></div><div className="reading-exercise-progress"><i style={{width:`${((readingExercise+(readingLessonDone?1:0))/5)*100}%`}}/></div><div className="lesson-book">{exercise.icon || (exercise.kind === "picture" ? readingPicture(exercise.answer || "") : "📖")}</div><span className="section-kicker">{lesson.skill.toUpperCase()}</span><h2>{lesson.title}</h2>{exercise.story && <div className="reading-story">{exercise.story}</div>}<div className={exercise.display.length > 45 ? "reading-display sentence" : "reading-display"}>{exercise.display}</div><p>{exercise.prompt}</p><button className="listen-button" onClick={() => readingVoice(exercise.sound)}>🔊 {lang === "es" ? "Escuchar" : "Listen"}</button>{exercise.kind === "listen" && !readingLessonDone && <button className="repeat-confirm" onClick={() => void completeReadingExercise()}>✓ {lang === "es" ? "Ya lo escuché y repetí" : "I listened and repeated"}</button>}{(exercise.kind === "choice" || exercise.kind === "picture") && !readingLessonDone && <div className={exercise.kind === "picture" ? "lesson-answer-grid picture-answers" : "lesson-answer-grid"}>{exercise.options?.map((option) => <button disabled={readingBusy} key={option} onClick={() => answerReadingLesson(option)}>{exercise.kind === "picture" && <span>{readingPicture(option)}</span>}<b>{option}</b></button>)}</div>}{exercise.kind === "build" && !readingLessonDone && <><div className="assembled-word">{readingBuild.length ? readingBuild.join(" + ") : (lang === "es" ? "Toca las sílabas en orden" : "Tap the syllables in order")}</div><div className="syllable-options">{exercise.options?.map((option,index) => <button key={`${option}-${index}`} onClick={() => chooseReadingSyllable(option)}>{option}</button>)}</div><button className="clear-build" onClick={() => setReadingBuild([])}>{lang === "es" ? "Borrar intento" : "Clear attempt"}</button></>}{readingFeedback && <div className="reading-feedback">{readingFeedback}</div>}{readingLessonDone && <button className="button primary next-reading-lesson" onClick={() => readingLesson < 18 ? startReadingLesson(readingLesson+1) : setReadingLesson(null)}>{readingLesson < 18 ? (lang === "es" ? "Siguiente lección →" : "Next lesson →") : (lang === "es" ? "Finalizar curso" : "Finish course")}</button>}</div>; })()}
         </section>
       </div>}
 
