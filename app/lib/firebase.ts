@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBhySzJaJO7PqtN8xqDvT8-M3AWGNDDPfM",
-  authDomain: "lumiya-academy.firebaseapp.com",
-  projectId: "lumiya-academy",
-  storageBucket: "lumiya-academy.firebasestorage.app",
-  messagingSenderId: "338617993201",
-  appId: "1:338617993201:web:ec85aed9188bea9f77e650",
+  apiKey: "AIzaSyCfLszzb9G1jRXzzUkunwrG6_y21IZL9Aw",
+  authDomain: "lumiya-academy-web.firebaseapp.com",
+  projectId: "lumiya-academy-web",
+  storageBucket: "lumiya-academy-web.firebasestorage.app",
+  messagingSenderId: "150814976336",
+  appId: "1:150814976336:web:96d8b3211ee66badf62455",
 };
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
