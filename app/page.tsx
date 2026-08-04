@@ -191,6 +191,33 @@ const rows = [
   ["Z", "X", "C", "V", "B", "N", "M"],
 ];
 
+type FingerId = "l-pinky" | "l-ring" | "l-middle" | "l-index" | "thumb" | "r-index" | "r-middle" | "r-ring" | "r-pinky";
+
+const fingerNames: Record<FingerId, { es: string; en: string }> = {
+  "l-pinky": { es: "meñique izquierdo", en: "left little finger" },
+  "l-ring": { es: "anular izquierdo", en: "left ring finger" },
+  "l-middle": { es: "medio izquierdo", en: "left middle finger" },
+  "l-index": { es: "índice izquierdo", en: "left index finger" },
+  thumb: { es: "pulgar", en: "thumb" },
+  "r-index": { es: "índice derecho", en: "right index finger" },
+  "r-middle": { es: "medio derecho", en: "right middle finger" },
+  "r-ring": { es: "anular derecho", en: "right ring finger" },
+  "r-pinky": { es: "meñique derecho", en: "right little finger" },
+};
+
+function fingerForKey(key: string): FingerId {
+  const normalized = key.toLocaleLowerCase("es");
+  if (normalized === " ") return "thumb";
+  if ("qaz".includes(normalized)) return "l-pinky";
+  if ("wsx".includes(normalized)) return "l-ring";
+  if ("edc".includes(normalized)) return "l-middle";
+  if ("rftgvb".includes(normalized)) return "l-index";
+  if ("yuhjnm".includes(normalized)) return "r-index";
+  if ("ik,".includes(normalized)) return "r-middle";
+  if ("ol.".includes(normalized)) return "r-ring";
+  return "r-pinky";
+}
+
 export default function Home() {
   const [lang, setLang] = useState<"es" | "en">("es");
   const [typed, setTyped] = useState(0);
@@ -215,6 +242,7 @@ export default function Home() {
   const [courseMistakes, setCourseMistakes] = useState(0);
   const [courseBusy, setCourseBusy] = useState(false);
   const [courseResult, setCourseResult] = useState<{ passed: boolean; accuracy: number; stars: number } | null>(null);
+  const [pressedFinger, setPressedFinger] = useState<FingerId | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("8");
@@ -345,6 +373,7 @@ export default function Home() {
     setCourseTyped(0);
     setCourseMistakes(0);
     setCourseResult(null);
+    setPressedFinger(null);
   }
 
   async function finishCourseLesson(lessonNumber: number, finalMistakes: number) {
@@ -395,6 +424,9 @@ export default function Home() {
     const expected = lesson.target[courseTyped] || "";
     const pressed = event.key.length === 1 ? event.key : "";
     if (pressed === expected) {
+      const correctFinger = fingerForKey(expected);
+      setPressedFinger(correctFinger);
+      window.setTimeout(() => setPressedFinger((finger) => finger === correctFinger ? null : finger), 180);
       const nextTyped = courseTyped + 1;
       setCourseTyped(nextTyped);
       if (nextTyped === lesson.target.length) void finishCourseLesson(courseLesson, courseMistakes);
@@ -553,6 +585,7 @@ export default function Home() {
       {courseLesson && activeChild && (() => {
         const lesson = courseLessons[lang][courseLesson - 1];
         const courseCurrent = lesson.target[courseTyped] || "";
+        const activeFinger = fingerForKey(courseCurrent);
         const liveAccuracy = courseTyped + courseMistakes === 0 ? 100 : Math.round((courseTyped / (courseTyped + courseMistakes)) * 100);
         return <div className="course-backdrop" onMouseDown={() => setCourseLesson(null)}>
           <section className="course-player" onMouseDown={(event) => event.stopPropagation()}>
@@ -571,12 +604,27 @@ export default function Home() {
                   {lesson.target.split("").map((letter, index) => <span key={index} className={index < courseTyped ? "done" : index === courseTyped ? "now" : ""}>{letter === " " ? "·" : letter}</span>)}
                 </div>
                 <input autoFocus className="course-capture" value="" onChange={() => {}} onKeyDown={handleCourseKey} autoComplete="off" autoCapitalize="off" aria-label={lang === "es" ? "Escribe el ejercicio" : "Type the exercise"} placeholder={lang === "es" ? "Haz clic aquí y comienza…" : "Click here and start…"}/>
-                <div className="course-keyboard">
-                  {rows.map((row, rowIndex) => <div key={rowIndex}>{row.map((rawKey) => {
-                    const key = lang === "en" && rawKey === "Ñ" ? ";" : rawKey;
-                    return <span className={courseCurrent.toUpperCase() === key ? "active" : ""} key={key}>{key}</span>;
-                  })}</div>)}
-                  <div><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}>SPACE</span></div>
+                <div className="finger-instruction"><span>☝</span><div><small>{lang === "es" ? "DEDO CORRECTO" : "CORRECT FINGER"}</small><b>{fingerNames[activeFinger][lang]}</b></div></div>
+                <div className="course-keyboard-wrap">
+                  <div className="hand-guide" aria-hidden="true">
+                    <div className="guide-hand left-guide-hand">
+                      <div className="guide-palm"/>
+                      {(["l-pinky", "l-ring", "l-middle", "l-index"] as FingerId[]).map((finger) => <span key={finger} className={`guide-finger ${finger} ${activeFinger === finger ? "finger-active" : ""} ${pressedFinger === finger ? "finger-pressed" : ""}`}><i/></span>)}
+                      <span className={`guide-thumb left-thumb ${activeFinger === "thumb" ? "finger-active" : ""} ${pressedFinger === "thumb" ? "finger-pressed" : ""}`}><i/></span>
+                    </div>
+                    <div className="guide-hand right-guide-hand">
+                      <div className="guide-palm"/>
+                      {(["r-index", "r-middle", "r-ring", "r-pinky"] as FingerId[]).map((finger) => <span key={finger} className={`guide-finger ${finger} ${activeFinger === finger ? "finger-active" : ""} ${pressedFinger === finger ? "finger-pressed" : ""}`}><i/></span>)}
+                      <span className={`guide-thumb right-thumb ${activeFinger === "thumb" ? "finger-active" : ""} ${pressedFinger === "thumb" ? "finger-pressed" : ""}`}><i/></span>
+                    </div>
+                  </div>
+                  <div className="course-keyboard">
+                    {rows.map((row, rowIndex) => <div key={rowIndex}>{row.map((rawKey) => {
+                      const key = lang === "en" && rawKey === "Ñ" ? ";" : rawKey;
+                      return <span className={courseCurrent.toUpperCase() === key ? "active" : ""} key={key}>{key}</span>;
+                    })}</div>)}
+                    <div><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}>SPACE</span></div>
+                  </div>
                 </div>
                 <div className="course-live-stats"><span><b>{liveAccuracy}%</b><small>{t.accuracy}</small></span><span><b>{courseMistakes}</b><small>{lang === "es" ? "Errores" : "Mistakes"}</small></span><span><b>{courseTyped}/{lesson.target.length}</b><small>{lang === "es" ? "Caracteres" : "Characters"}</small></span></div>
               </> : <div className={`course-result ${courseResult.passed ? "passed" : "retry"}`}>
