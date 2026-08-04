@@ -53,7 +53,7 @@ type CourseLesson = {
 
 const courseLessons: Record<"es" | "en", CourseLesson[]> = {
   es: [
-    { title: "Dedos en casa", skill: "A S D F · J K L Ñ", target: "asdf jklñ asdf jklñ" },
+    { title: "Acomoda tus dedos", skill: "Siente las guías de F y J", target: "fjasdklñ" },
     { title: "Ritmo inicial", skill: "Combina la fila guía", target: "asa sala dada falda" },
     { title: "Índice fuerte", skill: "G y H", target: "fgh jhg gafas haga" },
     { title: "Fila guía completa", skill: "Precisión sin mirar", target: "la sala es genial" },
@@ -73,7 +73,7 @@ const courseLessons: Record<"es" | "en", CourseLesson[]> = {
     { title: "Reto de la estrella", skill: "Graduación LumiType", target: "aprender hoy, crecer para siempre." },
   ],
   en: [
-    { title: "Home fingers", skill: "A S D F · J K L ;", target: "asdf jkl; asdf jkl;" },
+    { title: "Place your fingers", skill: "Feel the guides on F and J", target: "fjasdkl;" },
     { title: "First rhythm", skill: "Mix the home row", target: "sad fall dad flask" },
     { title: "Strong index", skill: "G and H", target: "fish had glass" },
     { title: "Full home row", skill: "Accuracy without looking", target: "a glad lad has salad" },
@@ -91,6 +91,31 @@ const courseLessons: Record<"es" | "en", CourseLesson[]> = {
     { title: "Fluent sentences", skill: "Continuous rhythm", target: "every day i type with more precision" },
     { title: "Speed challenge", skill: "Keep 85% or more", target: "lumi guides my learning adventure" },
     { title: "Star challenge", skill: "LumiType graduation", target: "learn today, grow forever." },
+  ],
+};
+
+const lessonAlternatives: Record<"es" | "en", string[][]> = {
+  es: [
+    [], ["ala sala asa dala", "sal falla las alas"], ["haga gafas gas hagas", "gafas haga hall gas"],
+    ["las hadas salen", "la falda es lila"], ["isla eje idea lija", "jefe elige la isla"],
+    ["dura rueda jugar", "jurar ayuda a lula"], ["queso puro equipo", "papa quiere queso"],
+    ["puedo escribir mejor", "quiero jugar y aprender"], ["mimo cama camino", "comida rica mama"],
+    ["vino nave nueve", "ventana nueva vino"], ["examen zorro feliz", "zeta extra feliz"],
+    ["escribir con calma ayuda", "practicar teclado es genial"], ["Lumi aprende Contigo", "Bolivia Escribe Feliz"],
+    ["escribo lento, luego rapido.", "mi teclado, mi aventura."], ["¿seguimos? ¡claro que si!", "¿preparado? ¡vamos juntos!"],
+    ["cada practica mejora mi ritmo", "mis dedos escriben con confianza"], ["escribo con precision y buen ritmo", "cada tecla me acerca a mi meta"],
+    ["con practica puedo lograr grandes cosas.", "lumiya me ayuda a crecer cada dia."],
+  ],
+  en: [
+    [], ["sad lad fall ask", "all lads ask"], ["glass fish had gas", "a glad fish has gas"],
+    ["a glad lad has salad", "all flags shall fall"], ["side idea field", "jill likes the field"],
+    ["true rule rude", "jude hurried up"], ["quiet people power", "people quote poems"],
+    ["i want to learn quickly", "we type words with care"], ["calm comic come", "mimi can come"],
+    ["new van invent", "nine vines vanish"], ["extra lazy zoom", "zany foxes relax"],
+    ["typing calmly feels great", "practice makes typing easier"], ["Lumi Learns With Me", "Bolivia Types Today"],
+    ["i type slowly, then quickly.", "my keyboard, my adventure."], ["are we ready? yes, we are!", "can we type? let us begin!"],
+    ["every practice improves my rhythm", "my fingers type with confidence"], ["i type with accuracy and rhythm", "every key brings me closer"],
+    ["with practice i can achieve great things.", "lumiya helps me grow every day."],
   ],
 };
 
@@ -247,6 +272,7 @@ export default function Home() {
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null);
   const [courseLesson, setCourseLesson] = useState<number | null>(null);
   const [courseTyped, setCourseTyped] = useState(0);
+  const [courseTarget, setCourseTarget] = useState("");
   const [courseMistakes, setCourseMistakes] = useState(0);
   const [courseBusy, setCourseBusy] = useState(false);
   const [courseResult, setCourseResult] = useState<{ passed: boolean; accuracy: number; stars: number } | null>(null);
@@ -258,6 +284,7 @@ export default function Home() {
   const [childGradeBand, setChildGradeBand] = useState<"primary" | "secondary">("primary");
   const [profileBusy, setProfileBusy] = useState(false);
   const [settingsBusy, setSettingsBusy] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState("");
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
@@ -283,7 +310,7 @@ export default function Home() {
       if (event.key !== "Enter") return;
       event.preventDefault();
       if (courseResult.passed && courseLesson < 18) startCourseLesson(courseLesson + 1);
-      else startCourseLesson(courseLesson);
+      else startCourseLesson(courseLesson, !courseResult.passed);
     };
     window.addEventListener("keydown", advanceWithEnter);
     return () => window.removeEventListener("keydown", advanceWithEnter);
@@ -435,7 +462,7 @@ export default function Home() {
   }
 
   function enterChildSpace(child: ChildProfile) {
-    const preferences = child.keyboardSettings || { world: 0, hands: true, sound: true, bigText: false };
+    const preferences = { world: 0, hands: true, sound: true, bigText: false, ...child.keyboardSettings };
     setWorld(preferences.world);
     setHands(preferences.hands);
     setSound(preferences.sound);
@@ -447,32 +474,52 @@ export default function Home() {
   async function saveStudentSettings() {
     if (!account || !activeChild) return;
     setSettingsBusy(true);
+    setSettingsMessage("");
     const keyboardSettings = { world, hands, sound, bigText };
-    await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { keyboardSettings });
-    const updatedChild = { ...activeChild, keyboardSettings };
-    setActiveChild(updatedChild);
-    setChildren((currentChildren) => currentChildren.map((child) => child.id === activeChild.id ? updatedChild : child));
-    setSettingsBusy(false);
-    setSettingsOpen(false);
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { keyboardSettings });
+      const updatedChild = { ...activeChild, keyboardSettings };
+      setActiveChild(updatedChild);
+      setChildren((currentChildren) => currentChildren.map((child) => child.id === activeChild.id ? updatedChild : child));
+      setSettingsMessage(lang === "es" ? "Configuración guardada" : "Settings saved");
+      window.setTimeout(() => setSettingsOpen(false), 650);
+    } catch {
+      setSettingsMessage(lang === "es" ? "No se pudo guardar. Inténtalo nuevamente." : "Could not save. Please try again.");
+    } finally {
+      setSettingsBusy(false);
+    }
   }
 
   function startChildLesson() {
     if (activeChild) startCourseLesson(activeChild.level || 1);
   }
 
-  function startCourseLesson(lessonNumber: number) {
-    setCourseLesson(Math.min(18, Math.max(1, lessonNumber)));
+  function startCourseLesson(lessonNumber: number, alternate = false) {
+    const safeLesson = Math.min(18, Math.max(1, lessonNumber));
+    const lesson = courseLessons[lang][safeLesson - 1];
+    const alternatives = lessonAlternatives[lang][safeLesson - 1] || [];
+    let nextTarget = lesson.target;
+    if (alternate && alternatives.length) {
+      const available = alternatives.filter((option) => option !== courseTarget);
+      nextTarget = available[Math.floor(Math.random() * available.length)] || alternatives[0];
+    }
+    setCourseLesson(safeLesson);
+    setCourseTarget(nextTarget);
     setCourseTyped(0);
     setCourseMistakes(0);
     setCourseResult(null);
     setPressedFinger(null);
+    if (safeLesson === 1) {
+      window.setTimeout(() => speakFeedback(lang === "es"
+        ? "Acomoda tus dedos. Siente las pequeñas ranuras de las letras F y J. Después, presiona cada tecla iluminada."
+        : "Place your fingers. Feel the small guides on the F and J keys. Then press each highlighted key."), 250);
+    }
   }
 
   async function finishCourseLesson(lessonNumber: number, finalMistakes: number) {
     if (!account || !activeChild || courseBusy) return;
-    const lesson = courseLessons[lang][lessonNumber - 1];
-    const finalAccuracy = Math.round((lesson.target.length / (lesson.target.length + finalMistakes)) * 100);
-    const passed = finalAccuracy >= 80;
+    const finalAccuracy = Math.round((courseTarget.length / (courseTarget.length + finalMistakes)) * 100);
+    const passed = lessonNumber === 1 || finalAccuracy >= 80;
     const earnedStars = finalAccuracy >= 95 ? 3 : finalAccuracy >= 88 ? 2 : passed ? 1 : 0;
     setCourseResult({ passed, accuracy: finalAccuracy, stars: earnedStars });
     if (!passed) {
@@ -517,8 +564,7 @@ export default function Home() {
 
   function handleCourseKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (!courseLesson || courseResult) return;
-    const lesson = courseLessons[lang][courseLesson - 1];
-    const expected = lesson.target[courseTyped] || "";
+    const expected = courseTarget[courseTyped] || "";
     const pressed = event.key.length === 1 ? event.key : "";
     if (pressed === expected) {
       const correctFinger = fingerForKey(expected);
@@ -527,7 +573,7 @@ export default function Home() {
       const nextTyped = courseTyped + 1;
       setCourseTyped(nextTyped);
       celebrateCorrect(nextTyped);
-      if (nextTyped === lesson.target.length) void finishCourseLesson(courseLesson, courseMistakes);
+      if (nextTyped === courseTarget.length) void finishCourseLesson(courseLesson, courseMistakes);
     } else if (pressed) {
       setCourseMistakes((value) => value + 1);
       reactToError();
@@ -626,7 +672,7 @@ export default function Home() {
 
       <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a><p>© 2026 Lumiya Academy · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
 
-      {settingsOpen && activeChild && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">{activeChild.name.toUpperCase()}</span><h2>{lang === "es" ? "Configurar su teclado" : "Keyboard settings"}</h2><p>{lang === "es" ? "Estas preferencias se guardarán únicamente para este estudiante." : "These preferences are saved only for this student."}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{lang === "es" ? "Sonidos de acierto y error" : "Success and error sounds"}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button disabled={settingsBusy} className="button primary panel-save" onClick={saveStudentSettings}>{settingsBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Guardar configuración" : "Save settings")}</button></aside></div>}
+      {settingsOpen && activeChild && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">{activeChild.name.toUpperCase()}</span><h2>{lang === "es" ? "Configurar su teclado" : "Keyboard settings"}</h2><p>{lang === "es" ? "Estas preferencias se guardarán únicamente para este estudiante." : "These preferences are saved only for this student."}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><div className={`keyboard-settings-preview preview-${world} ${bigText ? "large" : ""}`}><span>{hands ? "☝  A S D F   J K L Ñ  ☝" : "A S D F   J K L Ñ"}</span><small>{sound ? "🔊" : "🔇"} {lang === "es" ? "Vista previa" : "Preview"}</small></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{lang === "es" ? "Sonidos de acierto y error" : "Success and error sounds"}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button disabled={settingsBusy} className="button primary panel-save" onClick={saveStudentSettings}>{settingsBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Guardar configuración" : "Save settings")}</button>{settingsMessage && <p className={`settings-message ${settingsMessage.includes("No ") || settingsMessage.includes("Could ") ? "error" : ""}`}>{settingsMessage}</p>}</aside></div>}
 
       {authOpen && <div className="modal-backdrop centered" onMouseDown={() => setAuthOpen(false)}>
         <section className="auth-card" onMouseDown={(event) => event.stopPropagation()}>
@@ -653,7 +699,7 @@ export default function Home() {
           <header className="student-topbar">
             <button className="student-family-back" onClick={() => { setActiveChild(null); setFamilyOpen(true); }}>← {lang === "es" ? "Mi familia" : "My family"}</button>
             <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a>
-            <div className="student-top-actions"><button className="student-settings" onClick={() => setSettingsOpen(true)}>⚙ {lang === "es" ? "Mi teclado" : "My keyboard"}</button><button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button></div>
+            <div className="student-top-actions"><button className="student-settings" onClick={() => { setSettingsMessage(""); setSettingsOpen(true); }}>⚙ {lang === "es" ? "Mi teclado" : "My keyboard"}</button><button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button></div>
           </header>
 
           <div className="student-welcome">
@@ -704,7 +750,7 @@ export default function Home() {
 
       {courseLesson && activeChild && (() => {
         const lesson = courseLessons[lang][courseLesson - 1];
-        const courseCurrent = lesson.target[courseTyped] || "";
+        const courseCurrent = courseTarget[courseTyped] || "";
         const activeFinger = fingerForKey(courseCurrent);
         const liveAccuracy = courseTyped + courseMistakes === 0 ? 100 : Math.round((courseTyped / (courseTyped + courseMistakes)) * 100);
         return <div className="course-backdrop" onMouseDown={() => setCourseLesson(null)}>
@@ -714,14 +760,14 @@ export default function Home() {
               <div><span>LUMITYPE</span><b>{lang === "es" ? `Lección ${courseLesson} de 18` : `Lesson ${courseLesson} of 18`}</b></div>
               <div className="course-player-actions"><button className={`course-sound ${sound ? "on" : ""}`} onClick={() => { if (sound && typeof window !== "undefined") window.speechSynthesis?.cancel(); setSound(!sound); }} aria-label={sound ? (lang === "es" ? "Silenciar sonidos" : "Mute sounds") : (lang === "es" ? "Activar sonidos" : "Enable sounds")}>{sound ? "🔊" : "🔇"}</button><button className="student-close" onClick={() => setCourseLesson(null)}>×</button></div>
             </header>
-            <div className="course-progress-line"><i style={{ width: `${(courseTyped / lesson.target.length) * 100}%` }}/></div>
+            <div className="course-progress-line"><i style={{ width: `${(courseTyped / Math.max(1, courseTarget.length)) * 100}%` }}/></div>
 
             <div className="course-player-body">
-              <div className="course-title"><span>{activeChild.avatar}</span><div><small>{lesson.skill}</small><h2>{lesson.title}</h2><p>{lang === "es" ? "Escribe el ejercicio con calma. Necesitas 80% de precisión para avanzar." : "Type calmly. You need 80% accuracy to move forward."}</p></div></div>
+              <div className="course-title"><span>{activeChild.avatar}</span><div><small>{lesson.skill}</small><h2>{lesson.title}</h2><p>{courseLesson === 1 ? (lang === "es" ? "Busca las pequeñas ranuras de F y J, acomoda allí tus índices y presiona todas las teclas iluminadas." : "Find the small guides on F and J, place your index fingers there and press every highlighted key.") : (lang === "es" ? "Escribe el ejercicio con calma. Necesitas 80% de precisión para avanzar." : "Type calmly. You need 80% accuracy to move forward.")}</p></div></div>
 
               {!courseResult ? <>
                 <div className="course-target" aria-live="polite">
-                  {lesson.target.split("").map((letter, index) => <span key={index} className={index < courseTyped ? "done" : index === courseTyped ? "now" : ""}>{letter === " " ? "·" : letter}</span>)}
+                  {courseTarget.split("").map((letter, index) => <span key={index} className={index < courseTyped ? "done" : index === courseTyped ? "now" : ""}>{letter === " " ? "·" : letter}</span>)}
                 </div>
                 <input autoFocus className="course-capture" value="" onChange={() => {}} onKeyDown={handleCourseKey} autoComplete="off" autoCapitalize="off" aria-label={lang === "es" ? "Escribe el ejercicio" : "Type the exercise"} placeholder={lang === "es" ? "Haz clic aquí y comienza…" : "Click here and start…"}/>
                 <div className="finger-instruction"><span>☝</span><div><small>{lang === "es" ? "DEDO CORRECTO" : "CORRECT FINGER"}</small><b>{fingerNames[activeFinger][lang]}</b></div></div>
@@ -746,14 +792,14 @@ export default function Home() {
                     <div><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}>SPACE</span></div>
                   </div>
                 </div>
-                <div className="course-live-stats"><span><b>{liveAccuracy}%</b><small>{t.accuracy}</small></span><span><b>{courseMistakes}</b><small>{lang === "es" ? "Errores" : "Mistakes"}</small></span><span><b>{courseTyped}/{lesson.target.length}</b><small>{lang === "es" ? "Caracteres" : "Characters"}</small></span></div>
+                <div className="course-live-stats"><span><b>{courseLesson === 1 ? `${courseTyped}/${courseTarget.length}` : `${liveAccuracy}%`}</b><small>{courseLesson === 1 ? (lang === "es" ? "Teclas ubicadas" : "Keys found") : t.accuracy}</small></span><span><b>{courseMistakes}</b><small>{lang === "es" ? "Intentos" : "Attempts"}</small></span><span><b>{courseTyped}/{courseTarget.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span></div>
               </> : <div className={`course-result ${courseResult.passed ? "passed" : "retry"}`}>
                 <div className="result-lumi">{courseResult.passed ? "🌟" : "💪"}</div>
                 <span>{courseResult.passed ? (lang === "es" ? "¡LECCIÓN COMPLETADA!" : "LESSON COMPLETE!") : (lang === "es" ? "¡CASI LO LOGRAS!" : "ALMOST THERE!")}</span>
                 <h2>{courseResult.passed ? (lang === "es" ? `¡Excelente, ${activeChild.name}!` : `Great job, ${activeChild.name}!`) : (lang === "es" ? "Vamos a intentarlo otra vez" : "Let's try one more time")}</h2>
                 <p>{courseResult.passed ? (lang === "es" ? "Tu avance quedó guardado y abriste una nueva lección." : "Your progress is saved and a new lesson is unlocked.") : (lang === "es" ? "Practica más despacio para alcanzar 80% de precisión." : "Slow down to reach 80% accuracy.")}</p>
                 <div className="result-score"><span><b>{courseResult.accuracy}%</b><small>{t.accuracy}</small></span><span><b>{courseResult.stars ? "★".repeat(courseResult.stars) : "—"}</b><small>{t.stars}</small></span></div>
-                <button disabled={courseBusy} className="button primary" onClick={() => courseResult.passed && courseLesson < 18 ? startCourseLesson(courseLesson + 1) : startCourseLesson(courseLesson)}>{courseBusy ? (lang === "es" ? "Guardando…" : "Saving…") : courseResult.passed && courseLesson < 18 ? (lang === "es" ? "Siguiente lección" : "Next lesson") : courseResult.passed ? (lang === "es" ? "Repetir reto" : "Repeat challenge") : (lang === "es" ? "Intentar otra vez" : "Try again")}</button>
+                <button disabled={courseBusy} className="button primary" onClick={() => courseResult.passed && courseLesson < 18 ? startCourseLesson(courseLesson + 1) : startCourseLesson(courseLesson, !courseResult.passed)}>{courseBusy ? (lang === "es" ? "Guardando…" : "Saving…") : courseResult.passed && courseLesson < 18 ? (lang === "es" ? "Siguiente lección" : "Next lesson") : courseResult.passed ? (lang === "es" ? "Repetir reto" : "Repeat challenge") : (lang === "es" ? "Practicar con otro ejercicio" : "Practice with another exercise")}</button>
                 <small className="enter-hint">↵ {lang === "es" ? "También puedes presionar Enter" : "You can also press Enter"}</small>
               </div>}
             </div>
