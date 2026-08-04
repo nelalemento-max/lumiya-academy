@@ -22,6 +22,9 @@
 .student-close { justify-self: end; width: 40px; height: 40px; border-radius: 50%; background: #f1f1f7; font-size: 25px; }
 .student-top-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
 .student-settings { border: 1px solid #deddea; background: #f7f6ff; color: #4f45c9; border-radius: 11px; padding: 10px 13px; font-size: 11px; font-weight: 800; }
+.keyboard-settings-preview { min-height: 105px; margin: 24px 0 8px; border-radius: 18px; background: linear-gradient(145deg,#f5f2ff,#effbf8); border: 1px solid #dedbea; display: grid; place-items: center; align-content: center; gap: 10px; color: #30276d; transition: .2s; }
+.keyboard-settings-preview span { font: 800 18px/1.4 monospace; letter-spacing: 2px; }.keyboard-settings-preview small { color: #70798e; font-size: 10px; }.keyboard-settings-preview.preview-1 { background: linear-gradient(145deg,#191c47,#3e3987); color: white; }.keyboard-settings-preview.preview-1 small { color: #d9daf1; }.keyboard-settings-preview.preview-2 { background: linear-gradient(145deg,#dff9ff,#dff8f1); }.keyboard-settings-preview.large span { font-size: 24px; }
+.settings-message { margin: 12px 0 0; text-align: center; color: #078d7a; font-size: 12px; font-weight: 800; }.settings-message.error { color: #b33d4d; }
 .student-welcome { margin: 28px 32px 18px; padding: 28px 30px; border-radius: 24px; color: white; background: radial-gradient(circle at 85% 20%,#746bf0 0,transparent 27%),linear-gradient(120deg,#30276d,#6257e8); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 22px; overflow: hidden; }
 .student-avatar { width: 82px; height: 82px; border-radius: 24px; background: #fff; display: grid; place-items: center; color: #17233c; font-size: 42px; position: relative; box-shadow: 0 12px 25px #17133b38; }
 .student-avatar span { position: absolute; right: -8px; top: -12px; color: #ffc857; font-size: 24px; }
