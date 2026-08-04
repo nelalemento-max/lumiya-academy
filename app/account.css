@@ -1,0 +1,10 @@
+@media (max-width: 900px) {
+  .site-header .account-button { display: none !important; }
+}
+
+@media (max-width: 600px) {
+  .auth-card { padding: 30px 21px; }
+  .family-panel { padding: 25px 18px; }
+  .children-grid { grid-template-columns: 1fr; }
+  .child-form-row { grid-template-columns: 1fr; }
+}
