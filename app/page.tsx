@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -248,6 +248,8 @@ export default function Home() {
   const [childAge, setChildAge] = useState("8");
   const [childAvatar, setChildAvatar] = useState("🌟");
   const [profileBusy, setProfileBusy] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
   const target = lang === "es" ? "asdf jklñ" : "asdf jkl;";
   const current = target[typed] ?? "";
@@ -268,6 +270,54 @@ export default function Home() {
   async function loadChildren(uid: string) {
     const snapshot = await getDocs(query(collection(db, "parents", uid, "children"), orderBy("createdAt", "asc")));
     setChildren(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) as ChildProfile[]);
+  }
+
+  function playTone(kind: "correct" | "error" | "complete") {
+    if (!sound || typeof window === "undefined") return;
+    const AudioContextClass = window.AudioContext;
+    if (!AudioContextClass) return;
+    const context = audioContextRef.current || new AudioContextClass();
+    audioContextRef.current = context;
+    if (context.state === "suspended") void context.resume();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const now = context.currentTime;
+    oscillator.type = kind === "error" ? "sawtooth" : "sine";
+    const startFrequency = kind === "correct" ? 620 : kind === "complete" ? 520 : 260;
+    const endFrequency = kind === "correct" ? 880 : kind === "complete" ? 1040 : 115;
+    oscillator.frequency.setValueAtTime(startFrequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(endFrequency, now + (kind === "complete" ? .22 : .12));
+    gain.gain.setValueAtTime(kind === "error" ? .035 : .045, now);
+    gain.gain.exponentialRampToValueAtTime(.001, now + (kind === "complete" ? .3 : .16));
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + (kind === "complete" ? .31 : .17));
+  }
+
+  function speakFeedback(message: string, playful = false) {
+    if (!sound || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const voice = new SpeechSynthesisUtterance(message);
+    voice.lang = lang === "es" ? "es-BO" : "en-US";
+    voice.rate = playful ? 1.18 : 1.05;
+    voice.pitch = playful ? 1.45 : 1.2;
+    voice.volume = .42;
+    window.speechSynthesis.speak(voice);
+  }
+
+  function celebrateCorrect(nextTyped: number) {
+    playTone("correct");
+    if (nextTyped % 5 === 0) speakFeedback(lang === "es" ? "¡Yey!" : "Yay!", true);
+  }
+
+  function reactToError() {
+    playTone("error");
+    const now = Date.now();
+    if (now - lastFunnyErrorRef.current > 900) {
+      lastFunnyErrorRef.current = now;
+      speakFeedback(lang === "es" ? "¡Ay, nooo!" : "Oh, nooo!", true);
+    }
   }
 
   function openAccount(mode: "login" | "register") {
@@ -345,12 +395,12 @@ export default function Home() {
   function handleKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (typed >= target.length) return;
     if (event.key.toLowerCase() === current) {
-      setTyped((value) => value + 1);
-      if (sound && typeof window !== "undefined") {
-        // The visible response is primary; audio is intentionally gentle and optional.
-      }
+      const nextTyped = typed + 1;
+      setTyped(nextTyped);
+      celebrateCorrect(nextTyped);
     } else if (event.key.length === 1) {
       setMistakes((value) => value + 1);
+      reactToError();
     }
   }
 
@@ -383,7 +433,12 @@ export default function Home() {
     const passed = finalAccuracy >= 80;
     const earnedStars = finalAccuracy >= 95 ? 3 : finalAccuracy >= 88 ? 2 : passed ? 1 : 0;
     setCourseResult({ passed, accuracy: finalAccuracy, stars: earnedStars });
-    if (!passed) return;
+    if (!passed) {
+      speakFeedback(lang === "es" ? "Respira. ¡Vamos otra vez!" : "Take a breath. Let's try again!", true);
+      return;
+    }
+    playTone("complete");
+    speakFeedback(lang === "es" ? "¡Yey! ¡Lección completada!" : "Yay! Lesson complete!", true);
 
     setCourseBusy(true);
     const completed = activeChild.completedLessons || [];
@@ -429,9 +484,11 @@ export default function Home() {
       window.setTimeout(() => setPressedFinger((finger) => finger === correctFinger ? null : finger), 180);
       const nextTyped = courseTyped + 1;
       setCourseTyped(nextTyped);
+      celebrateCorrect(nextTyped);
       if (nextTyped === lesson.target.length) void finishCourseLesson(courseLesson, courseMistakes);
     } else if (pressed) {
       setCourseMistakes((value) => value + 1);
+      reactToError();
     }
   }
 
@@ -592,7 +649,7 @@ export default function Home() {
             <header className="course-player-head">
               <button onClick={() => setCourseLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button>
               <div><span>LUMITYPE</span><b>{lang === "es" ? `Lección ${courseLesson} de 18` : `Lesson ${courseLesson} of 18`}</b></div>
-              <button className="student-close" onClick={() => setCourseLesson(null)}>×</button>
+              <div className="course-player-actions"><button className={`course-sound ${sound ? "on" : ""}`} onClick={() => { if (sound && typeof window !== "undefined") window.speechSynthesis?.cancel(); setSound(!sound); }} aria-label={sound ? (lang === "es" ? "Silenciar sonidos" : "Mute sounds") : (lang === "es" ? "Activar sonidos" : "Enable sounds")}>{sound ? "🔊" : "🔇"}</button><button className="student-close" onClick={() => setCourseLesson(null)}>×</button></div>
             </header>
             <div className="course-progress-line"><i style={{ width: `${(courseTyped / lesson.target.length) * 100}%` }}/></div>
 
