@@ -8,7 +8,10 @@
   "scripts": {
     "install:ci": "bash scripts/install-ci.sh",
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vite",
+    "dev:firebase": "next dev",
     "build": "bash scripts/build-verified.sh",
+    "build:firebase": "next build",
+    "deploy:firebase": "npm run build:firebase && firebase deploy --only hosting",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
