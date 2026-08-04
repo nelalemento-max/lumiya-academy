@@ -1,6 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  type User,
+} from "firebase/auth";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
+import { auth, db } from "./lib/firebase";
+import "./account.css";
+
+type ChildProfile = {
+  id: string;
+  name: string;
+  age: number;
+  avatar: string;
+  level: number;
+  stars: number;
+};
 
 const copy = {
   es: {
@@ -116,11 +145,101 @@ export default function Home() {
   const [hands, setHands] = useState(true);
   const [sound, setSound] = useState(true);
   const [bigText, setBigText] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [account, setAccount] = useState<User | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [parentName, setParentName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [familyOpen, setFamilyOpen] = useState(false);
+  const [children, setChildren] = useState<ChildProfile[]>([]);
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("8");
+  const [childAvatar, setChildAvatar] = useState("🌟");
+  const [profileBusy, setProfileBusy] = useState(false);
   const t = copy[lang];
   const target = lang === "es" ? "asdf jklñ" : "asdf jkl;";
   const current = target[typed] ?? "";
   const accuracy = typed + mistakes === 0 ? 100 : Math.round((typed / (typed + mistakes)) * 100);
   const worlds = ["classroom", "space", "ocean"];
+
+  useEffect(() => onAuthStateChanged(auth, async (currentAccount) => {
+    setAccount(currentAccount);
+    if (currentAccount) {
+      await loadChildren(currentAccount.uid);
+    } else {
+      setChildren([]);
+      setFamilyOpen(false);
+    }
+  }), []);
+
+  async function loadChildren(uid: string) {
+    const snapshot = await getDocs(query(collection(db, "parents", uid, "children"), orderBy("createdAt", "asc")));
+    setChildren(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) as ChildProfile[]);
+  }
+
+  function openAccount(mode: "login" | "register") {
+    setAuthMode(mode);
+    setAuthError("");
+    setAuthOpen(true);
+  }
+
+  async function submitAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      if (authMode === "register") {
+        const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        await updateProfile(result.user, { displayName: parentName.trim() });
+        await setDoc(doc(db, "parents", result.user.uid), {
+          name: parentName.trim(),
+          email: email.trim().toLowerCase(),
+          role: "parent",
+          language: lang,
+          plan: "pending",
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      }
+      setAuthOpen(false);
+      setFamilyOpen(true);
+      setPassword("");
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      setAuthError(code.includes("email-already-in-use")
+        ? (lang === "es" ? "Este correo ya está registrado." : "This email is already registered.")
+        : code.includes("invalid-credential")
+          ? (lang === "es" ? "Correo o contraseña incorrectos." : "Incorrect email or password.")
+          : code.includes("weak-password")
+            ? (lang === "es" ? "La contraseña debe tener al menos 6 caracteres." : "Password must contain at least 6 characters.")
+            : (lang === "es" ? "No pudimos completar la operación. Inténtalo nuevamente." : "We could not complete the operation. Please try again."));
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function addChildProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!account || !childName.trim()) return;
+    setProfileBusy(true);
+    await addDoc(collection(db, "parents", account.uid, "children"), {
+      name: childName.trim(),
+      age: Number(childAge),
+      avatar: childAvatar,
+      level: 1,
+      stars: 0,
+      streak: 0,
+      activeCourse: "lumitype",
+      createdAt: serverTimestamp(),
+    });
+    await loadChildren(account.uid);
+    setChildName("");
+    setProfileBusy(false);
+  }
 
   const renderedTarget = useMemo(
     () =>
@@ -161,8 +280,13 @@ export default function Home() {
           <button className="language" onClick={() => setLang(lang === "es" ? "en" : "es")} aria-label="Change language">
             <b>{lang.toUpperCase()}</b><span>⌄</span>
           </button>
-          <button className="login">{t.login}</button>
-          <button className="button primary small">{t.start}</button>
+          {account ? (
+            <button className="account-button" onClick={() => setFamilyOpen(true)}>
+              <span>{account.displayName?.charAt(0).toUpperCase() || "F"}</span>
+              {account.displayName || (lang === "es" ? "Mi familia" : "My family")}
+            </button>
+          ) : <button className="login" onClick={() => openAccount("login")}>{t.login}</button>}
+          <button className="button primary small" onClick={() => account ? setFamilyOpen(true) : openAccount("register")}>{t.start}</button>
         </div>
       </header>
 
@@ -218,7 +342,7 @@ export default function Home() {
 
       <section className="plans" id="plans">
         <div className="section-heading"><span className="section-kicker">{lang === "es" ? "PLANES MENSUALES" : "MONTHLY PLANS"}</span><h2>{t.familyTitle}</h2><p>{t.familySub}</p></div>
-        <div className="plan-grid">{[35, 59, 79].map((price, index) => <article key={price} className={index === 1 ? "featured" : ""}>{index === 1 && <span className="popular">{t.popular}</span>}<h3>{t.planNames[index]}</h3><p>{t.planKids[index]}</p><div className="price"><b>{price} Bs</b><span>{t.month}</span></div><ul><li>✓ {lang === "es" ? "Acceso a todos los cursos activos" : "Access to all active courses"}</li><li>✓ {lang === "es" ? "Progreso y certificados" : "Progress and certificates"}</li><li>✓ {lang === "es" ? "Panel para padres" : "Parent dashboard"}</li></ul><button className={`button ${index === 1 ? "primary" : "secondary"}`}>{t.choose}</button></article>)}</div>
+        <div className="plan-grid">{[35, 59, 79].map((price, index) => <article key={price} className={index === 1 ? "featured" : ""}>{index === 1 && <span className="popular">{t.popular}</span>}<h3>{t.planNames[index]}</h3><p>{t.planKids[index]}</p><div className="price"><b>{price} Bs</b><span>{t.month}</span></div><ul><li>✓ {lang === "es" ? "Acceso a todos los cursos activos" : "Access to all active courses"}</li><li>✓ {lang === "es" ? "Progreso y certificados" : "Progress and certificates"}</li><li>✓ {lang === "es" ? "Panel para padres" : "Parent dashboard"}</li></ul><button onClick={() => account ? setFamilyOpen(true) : openAccount("register")} className={`button ${index === 1 ? "primary" : "secondary"}`}>{t.choose}</button></article>)}</div>
       </section>
 
       <section className="family-banner" id="families"><div><span>✦</span><h2>{lang === "es" ? "Cada niño tiene su propia forma de brillar." : "Every child has their own way to shine."}</h2><p>{lang === "es" ? "Lumiya se adapta a su ritmo, sus intereses y sus necesidades." : "Lumiya adapts to their pace, interests and needs."}</p></div><a className="button light" href="#plans">{t.start} →</a></section>
@@ -226,6 +350,45 @@ export default function Home() {
       <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a><p>© 2026 Lumiya Academy · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
 
       {settingsOpen && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">LUMIYA</span><h2>{t.panelTitle}</h2><p>{t.panelSub}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{t.sound}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button className="button primary panel-save" onClick={() => setSettingsOpen(false)}>{t.close}</button></aside></div>}
+
+      {authOpen && <div className="modal-backdrop centered" onMouseDown={() => setAuthOpen(false)}>
+        <section className="auth-card" onMouseDown={(event) => event.stopPropagation()}>
+          <button className="modal-close" onClick={() => setAuthOpen(false)}>×</button>
+          <span className="brand-mark auth-logo"><i>L</i><b>✦</b></span>
+          <span className="section-kicker">LUMIYA ACADEMY</span>
+          <h2>{authMode === "login" ? (lang === "es" ? "Bienvenido de nuevo" : "Welcome back") : (lang === "es" ? "Crea tu cuenta familiar" : "Create your family account")}</h2>
+          <p>{authMode === "login" ? (lang === "es" ? "Ingresa para continuar el aprendizaje." : "Log in to continue learning.") : (lang === "es" ? "El adulto crea la cuenta y luego agrega los perfiles infantiles." : "An adult creates the account and then adds child profiles.")}</p>
+          <form onSubmit={submitAccount}>
+            {authMode === "register" && <label>{lang === "es" ? "Nombre del padre, madre o tutor" : "Parent or guardian name"}<input value={parentName} onChange={(event) => setParentName(event.target.value)} required /></label>}
+            <label>{lang === "es" ? "Correo electrónico" : "Email"}<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+            <label>{lang === "es" ? "Contraseña" : "Password"}<input type="password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+            {authError && <div className="form-error">{authError}</div>}
+            <button disabled={authBusy} className="button primary auth-submit">{authBusy ? (lang === "es" ? "Procesando…" : "Working…") : authMode === "login" ? t.login : t.start}</button>
+          </form>
+          <button className="mode-switch" onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthError(""); }}>
+            {authMode === "login" ? (lang === "es" ? "¿Aún no tienes cuenta? Crear cuenta" : "No account yet? Create one") : (lang === "es" ? "Ya tengo una cuenta" : "I already have an account")}
+          </button>
+        </section>
+      </div>}
+
+      {familyOpen && account && <div className="modal-backdrop" onMouseDown={() => setFamilyOpen(false)}>
+        <aside className="family-panel" onMouseDown={(event) => event.stopPropagation()}>
+          <div className="settings-head"><div><span className="section-kicker">{lang === "es" ? "PANEL FAMILIAR" : "FAMILY DASHBOARD"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
+          <div className="family-summary"><span><b>{children.length}</b><small>{lang === "es" ? "Perfiles infantiles" : "Child profiles"}</small></span><span><b>{children.reduce((total, child) => total + child.stars, 0)}</b><small>{t.stars}</small></span></div>
+          <h3>{lang === "es" ? "¿Quién va a aprender?" : "Who is learning?"}</h3>
+          <div className="children-grid">
+            {children.map((child) => <button className="child-card" key={child.id}><span>{child.avatar}</span><b>{child.name}</b><small>{lang === "es" ? `Nivel ${child.level} · ${child.age} años` : `Level ${child.level} · age ${child.age}`}</small></button>)}
+            {children.length === 0 && <p className="empty-profiles">{lang === "es" ? "Crea el primer perfil infantil para comenzar." : "Create the first child profile to begin."}</p>}
+          </div>
+          <form className="child-form" onSubmit={addChildProfile}>
+            <h3>{lang === "es" ? "Agregar perfil infantil" : "Add child profile"}</h3>
+            <div className="child-form-row"><label>{lang === "es" ? "Nombre" : "Name"}<input value={childName} onChange={(event) => setChildName(event.target.value)} required /></label><label>{lang === "es" ? "Edad" : "Age"}<input type="number" min="4" max="18" value={childAge} onChange={(event) => setChildAge(event.target.value)} required /></label></div>
+            <div className="avatar-choice">{["🌟", "🚀", "🦊", "🐼", "🌈"].map((avatar) => <button type="button" className={childAvatar === avatar ? "selected" : ""} onClick={() => setChildAvatar(avatar)} key={avatar}>{avatar}</button>)}</div>
+            <button disabled={profileBusy} className="button primary">{profileBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Agregar estudiante" : "Add student")}</button>
+          </form>
+          <button className="signout-button" onClick={() => signOut(auth)}>{lang === "es" ? "Cerrar sesión" : "Sign out"}</button>
+        </aside>
+      </div>}
     </main>
   );
 }
