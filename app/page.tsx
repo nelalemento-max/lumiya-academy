@@ -11,6 +11,7 @@ import {
 } from "firebase/auth";
 import {
   addDoc,
+  arrayUnion,
   collection,
   doc,
   getDocs,
@@ -18,6 +19,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "./lib/firebase";
 import "./account.css";
@@ -30,30 +32,59 @@ type ChildProfile = {
   level: number;
   stars: number;
   streak?: number;
+  completedLessons?: number[];
+  bestAccuracy?: number;
+  courseCompleted?: boolean;
 };
 
-const learningPath = {
+type CourseLesson = {
+  title: string;
+  skill: string;
+  target: string;
+};
+
+const courseLessons: Record<"es" | "en", CourseLesson[]> = {
   es: [
-    ["Fila guía", "A S D F · J K L Ñ"],
-    ["Ritmo inicial", "Pulsaciones lentas y precisas"],
-    ["Fila superior", "Q W E R · U I O P"],
-    ["Palabras cortas", "Une letras sin mirar"],
-    ["Fila inferior", "Z X C V · B N M"],
-    ["Mayúsculas", "Usa Shift con confianza"],
-    ["Frases divertidas", "Precisión y velocidad"],
-    ["Reto de la estrella", "Completa tu primera etapa"],
+    { title: "Dedos en casa", skill: "A S D F · J K L Ñ", target: "asdf jklñ asdf jklñ" },
+    { title: "Ritmo inicial", skill: "Combina la fila guía", target: "asa sala dada falda" },
+    { title: "Índice fuerte", skill: "G y H", target: "fgh jhg gafas haga" },
+    { title: "Fila guía completa", skill: "Precisión sin mirar", target: "la sala es genial" },
+    { title: "Subimos a E e I", skill: "E I con dedo medio", target: "eje idea isla jefe" },
+    { title: "R y U", skill: "Alcanza la fila superior", target: "rueda dura jurar" },
+    { title: "W O Q P", skill: "Extremos superiores", target: "poco queso equipo" },
+    { title: "Reto superior", skill: "Palabras de dos filas", target: "quiero aprender rapido" },
+    { title: "Bajamos a C y M", skill: "Fila inferior central", target: "cama mimo comida" },
+    { title: "V N", skill: "Índices hacia abajo", target: "nave vino ventana" },
+    { title: "X Z", skill: "Meñique y anular", target: "zorro feliz examen" },
+    { title: "Teclado completo", skill: "Las tres filas", target: "mi teclado es divertido" },
+    { title: "Mayúsculas", skill: "Usa Shift", target: "Lumi vive en Bolivia" },
+    { title: "Coma y punto", skill: "Pausas al escribir", target: "escribo bien, rapido y feliz." },
+    { title: "Signos y preguntas", skill: "¿ ? ¡ !", target: "¿listos? ¡vamos a escribir!" },
+    { title: "Frases fluidas", skill: "Ritmo continuo", target: "cada dia escribo con mayor precision" },
+    { title: "Desafío de velocidad", skill: "Mantén 85% o más", target: "lumi acompaña mi aventura de aprender" },
+    { title: "Reto de la estrella", skill: "Graduación LumiType", target: "aprender hoy, crecer para siempre." },
   ],
   en: [
-    ["Home row", "A S D F · J K L ;"],
-    ["First rhythm", "Slow and accurate keystrokes"],
-    ["Top row", "Q W E R · U I O P"],
-    ["Short words", "Join letters without looking"],
-    ["Bottom row", "Z X C V · B N M"],
-    ["Capital letters", "Use Shift with confidence"],
-    ["Fun sentences", "Accuracy and speed"],
-    ["Star challenge", "Complete your first stage"],
+    { title: "Home fingers", skill: "A S D F · J K L ;", target: "asdf jkl; asdf jkl;" },
+    { title: "First rhythm", skill: "Mix the home row", target: "sad fall dad flask" },
+    { title: "Strong index", skill: "G and H", target: "fish had glass" },
+    { title: "Full home row", skill: "Accuracy without looking", target: "a glad lad has salad" },
+    { title: "Up to E and I", skill: "Middle fingers reach up", target: "idea side field" },
+    { title: "R and U", skill: "Reach the top row", target: "rule rude true" },
+    { title: "W O Q P", skill: "Top-row edges", target: "power quiet people" },
+    { title: "Top-row challenge", skill: "Words across two rows", target: "i want to type quickly" },
+    { title: "Down to C and M", skill: "Lower middle row", target: "come calm comic" },
+    { title: "V and N", skill: "Index fingers move down", target: "van vine invent" },
+    { title: "X and Z", skill: "Ring and little finger", target: "zoom extra lazy" },
+    { title: "Full keyboard", skill: "All three rows", target: "my keyboard is fun" },
+    { title: "Capital letters", skill: "Use Shift", target: "Lumi lives in Bolivia" },
+    { title: "Comma and period", skill: "Punctuation pauses", target: "i type well, fast and happy." },
+    { title: "Question marks", skill: "Questions and excitement", target: "are you ready? let us type!" },
+    { title: "Fluent sentences", skill: "Continuous rhythm", target: "every day i type with more precision" },
+    { title: "Speed challenge", skill: "Keep 85% or more", target: "lumi guides my learning adventure" },
+    { title: "Star challenge", skill: "LumiType graduation", target: "learn today, grow forever." },
   ],
-} as const;
+};
 
 const copy = {
   es: {
@@ -179,6 +210,11 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [familyOpen, setFamilyOpen] = useState(false);
   const [activeChild, setActiveChild] = useState<ChildProfile | null>(null);
+  const [courseLesson, setCourseLesson] = useState<number | null>(null);
+  const [courseTyped, setCourseTyped] = useState(0);
+  const [courseMistakes, setCourseMistakes] = useState(0);
+  const [courseBusy, setCourseBusy] = useState(false);
+  const [courseResult, setCourseResult] = useState<{ passed: boolean; accuracy: number; stars: number } | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("8");
@@ -259,6 +295,7 @@ export default function Home() {
       level: 1,
       stars: 0,
       streak: 0,
+      completedLessons: [],
       activeCourse: "lumitype",
       createdAt: serverTimestamp(),
     });
@@ -300,8 +337,71 @@ export default function Home() {
   }
 
   function startChildLesson() {
-    setActiveChild(null);
-    window.setTimeout(() => document.getElementById("practice")?.scrollIntoView({ behavior: "smooth" }), 50);
+    if (activeChild) startCourseLesson(activeChild.level || 1);
+  }
+
+  function startCourseLesson(lessonNumber: number) {
+    setCourseLesson(Math.min(18, Math.max(1, lessonNumber)));
+    setCourseTyped(0);
+    setCourseMistakes(0);
+    setCourseResult(null);
+  }
+
+  async function finishCourseLesson(lessonNumber: number, finalMistakes: number) {
+    if (!account || !activeChild || courseBusy) return;
+    const lesson = courseLessons[lang][lessonNumber - 1];
+    const finalAccuracy = Math.round((lesson.target.length / (lesson.target.length + finalMistakes)) * 100);
+    const passed = finalAccuracy >= 80;
+    const earnedStars = finalAccuracy >= 95 ? 3 : finalAccuracy >= 88 ? 2 : passed ? 1 : 0;
+    setCourseResult({ passed, accuracy: finalAccuracy, stars: earnedStars });
+    if (!passed) return;
+
+    setCourseBusy(true);
+    const completed = activeChild.completedLessons || [];
+    const firstCompletion = !completed.includes(lessonNumber);
+    const nextLevel = firstCompletion && lessonNumber >= activeChild.level
+      ? Math.min(18, lessonNumber + 1)
+      : activeChild.level;
+    const nextStars = activeChild.stars + (firstCompletion ? earnedStars : 0);
+    const nextCompleted = firstCompletion ? [...completed, lessonNumber] : completed;
+    const nextChild: ChildProfile = {
+      ...activeChild,
+      level: nextLevel,
+      stars: nextStars,
+      completedLessons: nextCompleted,
+      bestAccuracy: Math.max(activeChild.bestAccuracy || 0, finalAccuracy),
+      courseCompleted: lessonNumber === 18 || activeChild.courseCompleted,
+    };
+
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), {
+        level: nextLevel,
+        stars: nextStars,
+        completedLessons: arrayUnion(lessonNumber),
+        bestAccuracy: nextChild.bestAccuracy,
+        courseCompleted: nextChild.courseCompleted || false,
+        lastLessonAt: serverTimestamp(),
+      });
+      setActiveChild(nextChild);
+      setChildren((profiles) => profiles.map((profile) => profile.id === nextChild.id ? nextChild : profile));
+    } finally {
+      setCourseBusy(false);
+    }
+  }
+
+  function handleCourseKey(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (!courseLesson || courseResult) return;
+    const lesson = courseLessons[lang][courseLesson - 1];
+    const expected = lesson.target[courseTyped] || "";
+    const pressed = event.key.length === 1 ? event.key : "";
+    const locale = lang === "es" ? "es" : "en";
+    if (pressed.toLocaleLowerCase(locale) === expected.toLocaleLowerCase(locale)) {
+      const nextTyped = courseTyped + 1;
+      setCourseTyped(nextTyped);
+      if (nextTyped === lesson.target.length) void finishCourseLesson(courseLesson, courseMistakes);
+    } else if (pressed) {
+      setCourseMistakes((value) => value + 1);
+    }
   }
 
   return (
@@ -431,25 +531,67 @@ export default function Home() {
             <section className="learning-map-card">
               <div className="map-heading"><div><span className="section-kicker">LUMITYPE</span><h3>{lang === "es" ? "Mapa de aprendizaje" : "Learning map"}</h3><p>{lang === "es" ? "Completa cada misión para abrir la siguiente." : "Complete each mission to unlock the next one."}</p></div><span className="map-stage">{lang === "es" ? "ETAPA 1" : "STAGE 1"}</span></div>
               <div className="learning-path">
-                {learningPath[lang].map((lesson, index) => {
+                {courseLessons[lang].map((lesson, index) => {
                   const lessonNumber = index + 1;
-                  const state = lessonNumber < activeChild.level ? "completed" : lessonNumber === activeChild.level ? "current" : "locked";
-                  return <article className={`lesson-node ${state}`} key={lesson[0]}>
+                  const state = activeChild.completedLessons?.includes(lessonNumber) ? "completed" : lessonNumber === activeChild.level ? "current" : "locked";
+                  return <article className={`lesson-node ${state}`} key={lesson.title}>
                     <span className="lesson-orb">{state === "completed" ? "✓" : state === "locked" ? "🔒" : lessonNumber}</span>
-                    <div><small>{lang === "es" ? `LECCIÓN ${lessonNumber}` : `LESSON ${lessonNumber}`}</small><b>{lesson[0]}</b><p>{lesson[1]}</p></div>
-                    {state === "current" && <button onClick={startChildLesson}>{lang === "es" ? "Empezar" : "Start"}</button>}
+                    <div><small>{lang === "es" ? `LECCIÓN ${lessonNumber}` : `LESSON ${lessonNumber}`}</small><b>{lesson.title}</b><p>{lesson.skill}</p></div>
+                    {state !== "locked" && <button onClick={() => startCourseLesson(lessonNumber)}>{state === "completed" ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}
                   </article>;
                 })}
               </div>
             </section>
 
             <aside className="student-side">
-              <section className="daily-mission"><span className="mission-lumi">✦</span><small>{lang === "es" ? "MISIÓN DIARIA" : "DAILY MISSION"}</small><h3>{lang === "es" ? "Practica 5 minutos" : "Practice for 5 minutes"}</h3><p>{lang === "es" ? "Completa una lección sin mirar el teclado." : "Complete one lesson without looking at the keyboard."}</p><div><i style={{ width: "20%" }}/></div><span>1 / 5 min</span></section>
+              <section className="daily-mission"><span className="mission-lumi">✦</span><small>{lang === "es" ? "MISIÓN DIARIA" : "DAILY MISSION"}</small><h3>{lang === "es" ? "Completa una lección" : "Complete one lesson"}</h3><p>{lang === "es" ? "Practica con calma y consigue al menos 80% de precisión." : "Practice calmly and earn at least 80% accuracy."}</p><div><i style={{ width: `${Math.min(100, (activeChild.completedLessons?.length || 0) * 20)}%` }}/></div><span>{activeChild.completedLessons?.length || 0} / 18</span></section>
               <section className="next-reward"><div><span>🎁</span><small>{lang === "es" ? "PRÓXIMA RECOMPENSA" : "NEXT REWARD"}</small></div><h3>{lang === "es" ? "Cofre violeta" : "Purple chest"}</h3><p>{lang === "es" ? "Completa 3 lecciones para abrirlo." : "Complete 3 lessons to unlock it."}</p><div className="reward-stars">★ ★ <i>★</i></div></section>
             </aside>
           </div>
         </section>
       </div>}
+
+      {courseLesson && activeChild && (() => {
+        const lesson = courseLessons[lang][courseLesson - 1];
+        const courseCurrent = lesson.target[courseTyped] || "";
+        const liveAccuracy = courseTyped + courseMistakes === 0 ? 100 : Math.round((courseTyped / (courseTyped + courseMistakes)) * 100);
+        return <div className="course-backdrop" onMouseDown={() => setCourseLesson(null)}>
+          <section className="course-player" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="course-player-head">
+              <button onClick={() => setCourseLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button>
+              <div><span>LUMITYPE</span><b>{lang === "es" ? `Lección ${courseLesson} de 18` : `Lesson ${courseLesson} of 18`}</b></div>
+              <button className="student-close" onClick={() => setCourseLesson(null)}>×</button>
+            </header>
+            <div className="course-progress-line"><i style={{ width: `${(courseTyped / lesson.target.length) * 100}%` }}/></div>
+
+            <div className="course-player-body">
+              <div className="course-title"><span>{activeChild.avatar}</span><div><small>{lesson.skill}</small><h2>{lesson.title}</h2><p>{lang === "es" ? "Escribe el ejercicio con calma. Necesitas 80% de precisión para avanzar." : "Type calmly. You need 80% accuracy to move forward."}</p></div></div>
+
+              {!courseResult ? <>
+                <div className="course-target" aria-live="polite">
+                  {lesson.target.split("").map((letter, index) => <span key={index} className={index < courseTyped ? "done" : index === courseTyped ? "now" : ""}>{letter === " " ? "·" : letter}</span>)}
+                </div>
+                <input autoFocus className="course-capture" value="" onChange={() => {}} onKeyDown={handleCourseKey} autoComplete="off" autoCapitalize="off" aria-label={lang === "es" ? "Escribe el ejercicio" : "Type the exercise"} placeholder={lang === "es" ? "Haz clic aquí y comienza…" : "Click here and start…"}/>
+                <div className="course-keyboard">
+                  {rows.map((row, rowIndex) => <div key={rowIndex}>{row.map((rawKey) => {
+                    const key = lang === "en" && rawKey === "Ñ" ? ";" : rawKey;
+                    return <span className={courseCurrent.toUpperCase() === key ? "active" : ""} key={key}>{key}</span>;
+                  })}</div>)}
+                  <div><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}>SPACE</span></div>
+                </div>
+                <div className="course-live-stats"><span><b>{liveAccuracy}%</b><small>{t.accuracy}</small></span><span><b>{courseMistakes}</b><small>{lang === "es" ? "Errores" : "Mistakes"}</small></span><span><b>{courseTyped}/{lesson.target.length}</b><small>{lang === "es" ? "Caracteres" : "Characters"}</small></span></div>
+              </> : <div className={`course-result ${courseResult.passed ? "passed" : "retry"}`}>
+                <div className="result-lumi">{courseResult.passed ? "🌟" : "💪"}</div>
+                <span>{courseResult.passed ? (lang === "es" ? "¡LECCIÓN COMPLETADA!" : "LESSON COMPLETE!") : (lang === "es" ? "¡CASI LO LOGRAS!" : "ALMOST THERE!")}</span>
+                <h2>{courseResult.passed ? (lang === "es" ? `¡Excelente, ${activeChild.name}!` : `Great job, ${activeChild.name}!`) : (lang === "es" ? "Vamos a intentarlo otra vez" : "Let's try one more time")}</h2>
+                <p>{courseResult.passed ? (lang === "es" ? "Tu avance quedó guardado y abriste una nueva lección." : "Your progress is saved and a new lesson is unlocked.") : (lang === "es" ? "Practica más despacio para alcanzar 80% de precisión." : "Slow down to reach 80% accuracy.")}</p>
+                <div className="result-score"><span><b>{courseResult.accuracy}%</b><small>{t.accuracy}</small></span><span><b>{courseResult.stars ? "★".repeat(courseResult.stars) : "—"}</b><small>{t.stars}</small></span></div>
+                <button disabled={courseBusy} className="button primary" onClick={() => courseResult.passed && courseLesson < 18 ? startCourseLesson(courseLesson + 1) : startCourseLesson(courseLesson)}>{courseBusy ? (lang === "es" ? "Guardando…" : "Saving…") : courseResult.passed && courseLesson < 18 ? (lang === "es" ? "Siguiente lección" : "Next lesson") : courseResult.passed ? (lang === "es" ? "Repetir reto" : "Repeat challenge") : (lang === "es" ? "Intentar otra vez" : "Try again")}</button>
+              </div>}
+            </div>
+          </section>
+        </div>;
+      })()}
 
       {familyOpen && account && <div className="modal-backdrop" onMouseDown={() => setFamilyOpen(false)}>
         <aside className="family-panel" onMouseDown={(event) => event.stopPropagation()}>
