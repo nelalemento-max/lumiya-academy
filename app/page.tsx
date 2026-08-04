@@ -29,7 +29,31 @@ type ChildProfile = {
   avatar: string;
   level: number;
   stars: number;
+  streak?: number;
 };
+
+const learningPath = {
+  es: [
+    ["Fila guía", "A S D F · J K L Ñ"],
+    ["Ritmo inicial", "Pulsaciones lentas y precisas"],
+    ["Fila superior", "Q W E R · U I O P"],
+    ["Palabras cortas", "Une letras sin mirar"],
+    ["Fila inferior", "Z X C V · B N M"],
+    ["Mayúsculas", "Usa Shift con confianza"],
+    ["Frases divertidas", "Precisión y velocidad"],
+    ["Reto de la estrella", "Completa tu primera etapa"],
+  ],
+  en: [
+    ["Home row", "A S D F · J K L ;"],
+    ["First rhythm", "Slow and accurate keystrokes"],
+    ["Top row", "Q W E R · U I O P"],
+    ["Short words", "Join letters without looking"],
+    ["Bottom row", "Z X C V · B N M"],
+    ["Capital letters", "Use Shift with confidence"],
+    ["Fun sentences", "Accuracy and speed"],
+    ["Star challenge", "Complete your first stage"],
+  ],
+} as const;
 
 const copy = {
   es: {
@@ -154,6 +178,7 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [familyOpen, setFamilyOpen] = useState(false);
+  const [activeChild, setActiveChild] = useState<ChildProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("8");
@@ -172,6 +197,7 @@ export default function Home() {
     } else {
       setChildren([]);
       setFamilyOpen(false);
+      setActiveChild(null);
     }
   }), []);
 
@@ -266,6 +292,16 @@ export default function Home() {
   function resetPractice() {
     setTyped(0);
     setMistakes(0);
+  }
+
+  function enterChildSpace(child: ChildProfile) {
+    setActiveChild(child);
+    setFamilyOpen(false);
+  }
+
+  function startChildLesson() {
+    setActiveChild(null);
+    window.setTimeout(() => document.getElementById("practice")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
   return (
@@ -371,13 +407,57 @@ export default function Home() {
         </section>
       </div>}
 
+      {activeChild && <div className="student-backdrop" onMouseDown={() => setActiveChild(null)}>
+        <section className="student-dashboard" onMouseDown={(event) => event.stopPropagation()}>
+          <header className="student-topbar">
+            <button className="student-family-back" onClick={() => { setActiveChild(null); setFamilyOpen(true); }}>← {lang === "es" ? "Mi familia" : "My family"}</button>
+            <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a>
+            <button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button>
+          </header>
+
+          <div className="student-welcome">
+            <div className="student-avatar">{activeChild.avatar}<span>✦</span></div>
+            <div><span className="student-kicker">{lang === "es" ? "TU AVENTURA DE HOY" : "TODAY'S ADVENTURE"}</span><h2>{lang === "es" ? `¡Hola, ${activeChild.name}!` : `Hi, ${activeChild.name}!`}</h2><p>{lang === "es" ? "Lumi está listo para aprender contigo. Continúa donde lo dejaste." : "Lumi is ready to learn with you. Continue where you left off."}</p></div>
+            <button className="button primary student-continue" onClick={startChildLesson}>{lang === "es" ? "Continuar lección" : "Continue lesson"} <span>→</span></button>
+          </div>
+
+          <div className="student-stat-grid">
+            <article><span className="stat-icon purple-stat">★</span><div><b>{activeChild.stars || 0}</b><small>{lang === "es" ? "Estrellas ganadas" : "Stars earned"}</small></div></article>
+            <article><span className="stat-icon orange-stat">🔥</span><div><b>{activeChild.streak || 0}</b><small>{lang === "es" ? "Días de racha" : "Streak days"}</small></div></article>
+            <article><span className="stat-icon mint-stat">↗</span><div><b>{Math.max(1, activeChild.level)}</b><small>{lang === "es" ? "Nivel actual" : "Current level"}</small></div></article>
+          </div>
+
+          <div className="student-content-grid">
+            <section className="learning-map-card">
+              <div className="map-heading"><div><span className="section-kicker">LUMITYPE</span><h3>{lang === "es" ? "Mapa de aprendizaje" : "Learning map"}</h3><p>{lang === "es" ? "Completa cada misión para abrir la siguiente." : "Complete each mission to unlock the next one."}</p></div><span className="map-stage">{lang === "es" ? "ETAPA 1" : "STAGE 1"}</span></div>
+              <div className="learning-path">
+                {learningPath[lang].map((lesson, index) => {
+                  const lessonNumber = index + 1;
+                  const state = lessonNumber < activeChild.level ? "completed" : lessonNumber === activeChild.level ? "current" : "locked";
+                  return <article className={`lesson-node ${state}`} key={lesson[0]}>
+                    <span className="lesson-orb">{state === "completed" ? "✓" : state === "locked" ? "🔒" : lessonNumber}</span>
+                    <div><small>{lang === "es" ? `LECCIÓN ${lessonNumber}` : `LESSON ${lessonNumber}`}</small><b>{lesson[0]}</b><p>{lesson[1]}</p></div>
+                    {state === "current" && <button onClick={startChildLesson}>{lang === "es" ? "Empezar" : "Start"}</button>}
+                  </article>;
+                })}
+              </div>
+            </section>
+
+            <aside className="student-side">
+              <section className="daily-mission"><span className="mission-lumi">✦</span><small>{lang === "es" ? "MISIÓN DIARIA" : "DAILY MISSION"}</small><h3>{lang === "es" ? "Practica 5 minutos" : "Practice for 5 minutes"}</h3><p>{lang === "es" ? "Completa una lección sin mirar el teclado." : "Complete one lesson without looking at the keyboard."}</p><div><i style={{ width: "20%" }}/></div><span>1 / 5 min</span></section>
+              <section className="next-reward"><div><span>🎁</span><small>{lang === "es" ? "PRÓXIMA RECOMPENSA" : "NEXT REWARD"}</small></div><h3>{lang === "es" ? "Cofre violeta" : "Purple chest"}</h3><p>{lang === "es" ? "Completa 3 lecciones para abrirlo." : "Complete 3 lessons to unlock it."}</p><div className="reward-stars">★ ★ <i>★</i></div></section>
+            </aside>
+          </div>
+        </section>
+      </div>}
+
       {familyOpen && account && <div className="modal-backdrop" onMouseDown={() => setFamilyOpen(false)}>
         <aside className="family-panel" onMouseDown={(event) => event.stopPropagation()}>
           <div className="settings-head"><div><span className="section-kicker">{lang === "es" ? "PANEL FAMILIAR" : "FAMILY DASHBOARD"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
           <div className="family-summary"><span><b>{children.length}</b><small>{lang === "es" ? "Perfiles infantiles" : "Child profiles"}</small></span><span><b>{children.reduce((total, child) => total + child.stars, 0)}</b><small>{t.stars}</small></span></div>
           <h3>{lang === "es" ? "¿Quién va a aprender?" : "Who is learning?"}</h3>
           <div className="children-grid">
-            {children.map((child) => <button className="child-card" key={child.id}><span>{child.avatar}</span><b>{child.name}</b><small>{lang === "es" ? `Nivel ${child.level} · ${child.age} años` : `Level ${child.level} · age ${child.age}`}</small></button>)}
+            {children.map((child) => <button className="child-card" onClick={() => enterChildSpace(child)} key={child.id}><span>{child.avatar}</span><b>{child.name}</b><small>{lang === "es" ? `Nivel ${child.level} · ${child.age} años` : `Level ${child.level} · age ${child.age}`}</small><i>→</i></button>)}
             {children.length === 0 && <p className="empty-profiles">{lang === "es" ? "Crea el primer perfil infantil para comenzar." : "Create the first child profile to begin."}</p>}
           </div>
           <form className="child-form" onSubmit={addChildProfile}>
