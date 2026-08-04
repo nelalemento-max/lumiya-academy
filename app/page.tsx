@@ -43,6 +43,9 @@ type ChildProfile = {
     sound: boolean;
     bigText: boolean;
   };
+  readingLevel?: number;
+  readingCompletedLessons?: number[];
+  readingAssessmentScore?: number;
 };
 
 type CourseLesson = {
@@ -116,6 +119,51 @@ const lessonAlternatives: Record<"es" | "en", string[][]> = {
     ["i type slowly, then quickly.", "my keyboard, my adventure."], ["are we ready? yes, we are!", "can we type? let us begin!"],
     ["every practice improves my rhythm", "my fingers type with confidence"], ["i type with accuracy and rhythm", "every key brings me closer"],
     ["with practice i can achieve great things.", "lumiya helps me grow every day."],
+  ],
+};
+
+type ReadingLesson = { title: string; skill: string; prompt: string; sound: string; options: string[]; answer: string };
+
+const readingLessons: Record<"es" | "en", ReadingLesson[]> = {
+  es: [
+    { title:"Escucha la M",skill:"Letra y sonido",prompt:"¿Qué letra hace este sonido?",sound:"mmm",options:["M","S","P"],answer:"M" },
+    { title:"Escucha la S",skill:"Letra y sonido",prompt:"¿Qué letra hace este sonido?",sound:"sss",options:["L","S","T"],answer:"S" },
+    { title:"Escucha la P",skill:"Letra y sonido",prompt:"¿Qué letra inicia la palabra pato?",sound:"pato",options:["P","M","A"],answer:"P" },
+    { title:"Las vocales",skill:"Reconocer vocales",prompt:"¿Cuál es una vocal?",sound:"a",options:["M","A","S"],answer:"A" },
+    { title:"Sonidos iguales",skill:"Discriminación auditiva",prompt:"Escucha: ma, ma. ¿Son iguales?",sound:"ma, ma",options:["Iguales","Diferentes"],answer:"Iguales" },
+    { title:"Sonidos diferentes",skill:"Discriminación auditiva",prompt:"Escucha: sol, sal. ¿Son iguales?",sound:"sol, sal",options:["Iguales","Diferentes"],answer:"Diferentes" },
+    { title:"Formamos MA",skill:"Primera sílaba",prompt:"M más A forman…",sound:"eme más a",options:["MA","ME","MI"],answer:"MA" },
+    { title:"Formamos PA",skill:"Unir sonidos",prompt:"P más A forman…",sound:"pe más a",options:["PO","PA","PE"],answer:"PA" },
+    { title:"Palabra MAMÁ",skill:"Leer palabras",prompt:"¿Cuál palabra dice mamá?",sound:"mamá",options:["MIMO","MAMÁ","MAPA"],answer:"MAMÁ" },
+    { title:"Palabra SOL",skill:"Leer palabras",prompt:"¿Cuál palabra dice sol?",sound:"sol",options:["SAL","SOL","LOS"],answer:"SOL" },
+    { title:"Imagen y palabra",skill:"Comprensión visual",prompt:"¿Qué palabra corresponde a 🏠?",sound:"casa",options:["CASA","MESA","SOPA"],answer:"CASA" },
+    { title:"La primera letra",skill:"Sonido inicial",prompt:"¿Con qué letra empieza luna?",sound:"luna",options:["L","M","N"],answer:"L" },
+    { title:"La última letra",skill:"Sonido final",prompt:"¿Con qué letra termina sol?",sound:"sol",options:["S","O","L"],answer:"L" },
+    { title:"Una frase corta",skill:"Lectura de frase",prompt:"El gato salta. ¿Quién salta?",sound:"El gato salta",options:["El gato","La casa","El sol"],answer:"El gato" },
+    { title:"Ordenamos palabras",skill:"Construir oraciones",prompt:"¿Cuál oración está bien ordenada?",sound:"Lumi lee un libro",options:["Lee Lumi libro un","Lumi lee un libro","Un Lumi libro lee"],answer:"Lumi lee un libro" },
+    { title:"Comprendo lo que leo",skill:"Comprensión",prompt:"Ana tiene una flor roja. ¿De qué color es?",sound:"Ana tiene una flor roja",options:["Azul","Roja","Verde"],answer:"Roja" },
+    { title:"Historia pequeña",skill:"Secuencia",prompt:"Primero llueve y después sale el sol. ¿Qué pasó primero?",sound:"Primero llueve y después sale el sol",options:["Salió el sol","Llovió","Anocheció"],answer:"Llovió" },
+    { title:"La misión de Lumi",skill:"Lectura inicial",prompt:"Lumi ayuda a todos a leer. ¿Qué hace Lumi?",sound:"Lumi ayuda a todos a leer",options:["Ayuda a leer","Sale a correr","Prepara comida"],answer:"Ayuda a leer" },
+  ],
+  en: [
+    { title:"Hear M",skill:"Letter and sound",prompt:"Which letter makes this sound?",sound:"mmm",options:["M","S","P"],answer:"M" },
+    { title:"Hear S",skill:"Letter and sound",prompt:"Which letter makes this sound?",sound:"sss",options:["L","S","T"],answer:"S" },
+    { title:"Hear P",skill:"Letter and sound",prompt:"Which letter begins pen?",sound:"pen",options:["P","M","A"],answer:"P" },
+    { title:"Vowels",skill:"Recognize vowels",prompt:"Which one is a vowel?",sound:"a",options:["M","A","S"],answer:"A" },
+    { title:"Same sounds",skill:"Listening",prompt:"Listen: ma, ma. Are they the same?",sound:"ma, ma",options:["Same","Different"],answer:"Same" },
+    { title:"Different sounds",skill:"Listening",prompt:"Listen: sun, son. Are they the same?",sound:"sun, son",options:["Same","Different"],answer:"Different" },
+    { title:"Build MA",skill:"First syllable",prompt:"M plus A makes…",sound:"m plus a",options:["MA","ME","MI"],answer:"MA" },
+    { title:"Build PA",skill:"Join sounds",prompt:"P plus A makes…",sound:"p plus a",options:["PO","PA","PE"],answer:"PA" },
+    { title:"Word MOM",skill:"Read words",prompt:"Which word says mom?",sound:"mom",options:["MOM","MAP","MOP"],answer:"MOM" },
+    { title:"Word SUN",skill:"Read words",prompt:"Which word says sun?",sound:"sun",options:["SON","SUN","NUS"],answer:"SUN" },
+    { title:"Picture and word",skill:"Visual meaning",prompt:"Which word matches 🏠?",sound:"house",options:["HOUSE","MOUSE","SUN"],answer:"HOUSE" },
+    { title:"First letter",skill:"Initial sound",prompt:"Which letter begins moon?",sound:"moon",options:["L","M","N"],answer:"M" },
+    { title:"Last letter",skill:"Final sound",prompt:"Which letter ends sun?",sound:"sun",options:["S","U","N"],answer:"N" },
+    { title:"A short sentence",skill:"Sentence reading",prompt:"The cat jumps. Who jumps?",sound:"The cat jumps",options:["The cat","The house","The sun"],answer:"The cat" },
+    { title:"Order words",skill:"Build sentences",prompt:"Which sentence is ordered correctly?",sound:"Lumi reads a book",options:["Reads Lumi book a","Lumi reads a book","A Lumi book reads"],answer:"Lumi reads a book" },
+    { title:"Understand reading",skill:"Comprehension",prompt:"Ana has a red flower. What color is it?",sound:"Ana has a red flower",options:["Blue","Red","Green"],answer:"Red" },
+    { title:"Little story",skill:"Sequence",prompt:"First it rains, then the sun comes out. What happened first?",sound:"First it rains, then the sun comes out",options:["The sun came out","It rained","Night came"],answer:"It rained" },
+    { title:"Lumi's mission",skill:"Early reading",prompt:"Lumi helps everyone read. What does Lumi do?",sound:"Lumi helps everyone read",options:["Helps others read","Goes running","Cooks food"],answer:"Helps others read" },
   ],
 };
 
@@ -285,6 +333,14 @@ export default function Home() {
   const [profileBusy, setProfileBusy] = useState(false);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState("");
+  const [readingOpen, setReadingOpen] = useState(false);
+  const [readingStage, setReadingStage] = useState(0);
+  const [readingScore, setReadingScore] = useState(0);
+  const [readingSeconds, setReadingSeconds] = useState(0);
+  const [readingFeedback, setReadingFeedback] = useState("");
+  const [readingSequence, setReadingSequence] = useState<number[]>([]);
+  const [readingLesson, setReadingLesson] = useState<number | null>(null);
+  const [readingBusy, setReadingBusy] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
@@ -315,6 +371,12 @@ export default function Home() {
     window.addEventListener("keydown", advanceWithEnter);
     return () => window.removeEventListener("keydown", advanceWithEnter);
   }, [courseResult, courseLesson, courseBusy]);
+
+  useEffect(() => {
+    if (!readingOpen || readingStage >= 7) return;
+    const timer = window.setInterval(() => setReadingSeconds((seconds) => Math.min(300, seconds + 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [readingOpen, readingStage]);
 
   async function loadChildren(uid: string) {
     const snapshot = await getDocs(query(collection(db, "parents", uid, "children"), orderBy("createdAt", "asc")));
@@ -488,6 +550,105 @@ export default function Home() {
     } finally {
       setSettingsBusy(false);
     }
+  }
+
+  function readingVoice(message: string) {
+    speakFeedback(message);
+  }
+
+  function openReadingCourse() {
+    if (!activeChild) return;
+    setReadingOpen(true);
+    setReadingLesson(null);
+    setReadingFeedback("");
+    setReadingSequence([]);
+    if (activeChild.readingAssessmentScore !== undefined) {
+      setReadingStage(7);
+    } else {
+      setReadingStage(0);
+      setReadingScore(0);
+      setReadingSeconds(0);
+      window.setTimeout(() => readingVoice(lang === "es" ? `¡Qué bien que estás aquí, ${activeChild.name}! Necesitamos tu ayuda para una misión importante.` : `We're so glad you're here, ${activeChild.name}! We need your help with an important mission.`), 250);
+    }
+  }
+
+  function advanceReadingIntro() {
+    const next = readingStage + 1;
+    setReadingStage(next);
+    setReadingFeedback("");
+    const messages = lang === "es" ? [
+      "Para esta misión aprenderás un poco todos los días. Nosotros te enseñaremos a hacerlo.",
+      "Cada sesión dura cinco minutos. En el reloj podrás ver cuánto llevas. ¡Comencemos!",
+    ] : [
+      "For this mission, you will learn a little every day. We will show you how.",
+      "Each session lasts five minutes. The clock shows your time. Let's begin!",
+    ];
+    if (next <= 2) window.setTimeout(() => readingVoice(messages[next - 1]), 150);
+  }
+
+  function gentleReadingFeedback() {
+    setReadingFeedback(lang === "es" ? "No te preocupes. Respira, observa y prueba otra vez. Lumi cree en ti." : "Don't worry. Take a breath, look carefully, and try again. Lumi believes in you.");
+    playTone("error");
+  }
+
+  function answerAssessment(correct: boolean) {
+    if (!correct) { gentleReadingFeedback(); return; }
+    const nextScore = readingScore + 1;
+    setReadingScore(nextScore);
+    setReadingFeedback(lang === "es" ? "¡Muy bien! Sigamos con la misión." : "Great job! Let's continue the mission.");
+    playTone("correct");
+    if (readingStage === 6) {
+      window.setTimeout(() => void completeReadingAssessment(nextScore), 650);
+    } else {
+      window.setTimeout(() => { setReadingStage((stage) => stage + 1); setReadingFeedback(""); setReadingSequence([]); }, 650);
+    }
+  }
+
+  function chooseSequencePiece(piece: number, total: number) {
+    const expected = readingSequence.length + 1;
+    if (piece !== expected) { setReadingSequence([]); gentleReadingFeedback(); return; }
+    const next = [...readingSequence, piece];
+    setReadingSequence(next);
+    if (next.length === total) answerAssessment(true);
+  }
+
+  async function completeReadingAssessment(finalScore: number) {
+    if (!account || !activeChild) return;
+    setReadingBusy(true);
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { readingAssessmentScore: finalScore, readingLevel: 1, readingCompletedLessons: [], subjects: arrayUnion("reading") });
+      const updated = { ...activeChild, readingAssessmentScore: finalScore, readingLevel: 1, readingCompletedLessons: [], subjects: [...new Set([...(activeChild.subjects || []), "reading"])] };
+      setActiveChild(updated);
+      setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+      setReadingStage(7);
+      setReadingFeedback("");
+      speakFeedback(lang === "es" ? "¡Misión completada! Ya sabemos por dónde comenzar tu aventura de lectura." : "Mission complete! We now know where to begin your reading adventure.", true);
+    } finally { setReadingBusy(false); }
+  }
+
+  function startReadingLesson(lessonNumber: number) {
+    setReadingLesson(lessonNumber);
+    setReadingFeedback("");
+    const lesson = readingLessons[lang][lessonNumber - 1];
+    window.setTimeout(() => readingVoice(`${lesson.prompt}. ${lesson.sound}`), 180);
+  }
+
+  async function answerReadingLesson(option: string) {
+    if (!account || !activeChild || !readingLesson || readingBusy) return;
+    const lesson = readingLessons[lang][readingLesson - 1];
+    if (option !== lesson.answer) { gentleReadingFeedback(); return; }
+    playTone("complete");
+    setReadingFeedback(lang === "es" ? "¡Excelente! Aprendiste algo nuevo hoy." : "Excellent! You learned something new today.");
+    setReadingBusy(true);
+    const completed = activeChild.readingCompletedLessons || [];
+    const firstCompletion = !completed.includes(readingLesson);
+    const nextLevel = firstCompletion && readingLesson >= (activeChild.readingLevel || 1) ? Math.min(18, readingLesson + 1) : (activeChild.readingLevel || 1);
+    const updated = { ...activeChild, readingLevel: nextLevel, readingCompletedLessons: firstCompletion ? [...completed, readingLesson] : completed, stars: activeChild.stars + (firstCompletion ? 2 : 0) };
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { readingLevel: nextLevel, readingCompletedLessons: arrayUnion(readingLesson), stars: updated.stars, lastReadingAt: serverTimestamp() });
+      setActiveChild(updated);
+      setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+    } finally { setReadingBusy(false); }
   }
 
   function startChildLesson() {
@@ -718,7 +879,7 @@ export default function Home() {
             <div><span className="section-kicker">{activeChild.gradeBand === "secondary" ? (lang === "es" ? "SECUNDARIA" : "SECONDARY") : (lang === "es" ? "PRIMARIA" : "PRIMARY")}</span><h3>{lang === "es" ? "Mis materias" : "My subjects"}</h3></div>
             <div className="subject-tabs">
               <button className="active"><span>⌨</span><b>{lang === "es" ? "Mecanografía" : "Typing"}</b><small>{lang === "es" ? "En curso" : "In progress"}</small></button>
-              <button disabled><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
+              <button className="reading-subject" onClick={openReadingCourse}><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{activeChild.readingAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.readingCompletedLessons?.length || 0} de 18` : `${activeChild.readingCompletedLessons?.length || 0} of 18`)}</small></button>
               <button disabled><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
               <button disabled><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
             </div>
@@ -745,6 +906,33 @@ export default function Home() {
               <section className="next-reward"><div><span>🎁</span><small>{lang === "es" ? "PRÓXIMA RECOMPENSA" : "NEXT REWARD"}</small></div><h3>{lang === "es" ? "Cofre violeta" : "Purple chest"}</h3><p>{lang === "es" ? "Completa 3 lecciones para abrirlo." : "Complete 3 lessons to unlock it."}</p><div className="reward-stars">★ ★ <i>★</i></div></section>
             </aside>
           </div>
+        </section>
+      </div>}
+
+      {readingOpen && activeChild && <div className="reading-backdrop" onMouseDown={() => setReadingOpen(false)}>
+        <section className="reading-player" onMouseDown={(event) => event.stopPropagation()}>
+          <header className="reading-header"><button onClick={() => readingLesson ? setReadingLesson(null) : setReadingOpen(false)}>← {readingLesson ? (lang === "es" ? "Mapa" : "Map") : (lang === "es" ? "Mis materias" : "My subjects")}</button><div><span>LUMIREAD</span><b>{readingStage < 7 ? (lang === "es" ? "Misión inicial" : "First mission") : (lang === "es" ? "Aventura de lectura" : "Reading adventure")}</b></div><div className="reading-clock"><span>⏱</span><b>{String(Math.floor(readingSeconds / 60)).padStart(2,"0")}:{String(readingSeconds % 60).padStart(2,"0")}</b><small>/ 05:00</small></div></header>
+
+          {readingStage < 7 && <div className="reading-mission">
+            <div className="reading-world"><div className="reading-character character-lumi"><span>✦</span><i>•‿•</i><b>Lumi</b></div><div className="mission-path">★ · · · · · ★</div><div className="reading-character character-milo"><span>📚</span><i>◕‿◕</i><b>Milo</b></div></div>
+            {(readingStage === 0 || readingStage === 1) && <div className="reading-dialogue"><span>{readingStage === 0 ? "Lumi" : "Milo"}</span><h2>{readingStage === 0 ? (lang === "es" ? `¡Qué bien que estás aquí, ${activeChild.name}!` : `We're glad you're here, ${activeChild.name}!`) : (lang === "es" ? "Aprenderemos un poco todos los días" : "We will learn a little every day")}</h2><p>{readingStage === 0 ? (lang === "es" ? "Necesitamos tu ayuda para una misión muy importante." : "We need your help with a very important mission.") : (lang === "es" ? "Nosotros te enseñaremos. Cada sesión durará cinco minutos y el reloj te mostrará cuánto llevas." : "We will guide you. Each session takes five minutes and the clock shows your time.")}</p><button className="reading-next" onClick={advanceReadingIntro} aria-label={lang === "es" ? "Continuar" : "Continue"}>→</button></div>}
+
+            {readingStage === 2 && <div className="reading-challenge"><small>{lang === "es" ? "OBSERVA CON ATENCIÓN" : "LOOK CAREFULLY"}</small><h2>{lang === "es" ? "¿Cuántas estrellas ves?" : "How many stars do you see?"}</h2><div className="counting-objects">⭐ ⭐ ⭐ ⭐ ⭐</div><div className="reading-options">{[4,5,6].map((number) => <button key={number} onClick={() => answerAssessment(number === 5)}>{number}</button>)}</div></div>}
+
+            {readingStage === 3 && <div className="reading-challenge"><small>{lang === "es" ? "ARMA LA IMAGEN" : "BUILD THE PICTURE"}</small><h2>{lang === "es" ? "Presiona las piezas del 1 al 4" : "Press the pieces from 1 to 4"}</h2><div className="picture-puzzle">{[3,1,4,2].map((piece) => <button className={readingSequence.includes(piece) ? "placed" : ""} key={piece} onClick={() => chooseSequencePiece(piece,4)}><span>{piece}</span>{["☀️","🏠","🌳","☁️"][piece-1]}</button>)}</div></div>}
+
+            {readingStage === 4 && <div className="reading-challenge"><small>{lang === "es" ? "UNE LOS NÚMEROS" : "CONNECT THE NUMBERS"}</small><h2>{lang === "es" ? "Forma una casita del 1 al 5" : "Build a little house from 1 to 5"}</h2><div className="house-dots"><span className={readingSequence.includes(1) ? "joined" : ""} onClick={() => chooseSequencePiece(1,5)}>1</span><span className={readingSequence.includes(2) ? "joined" : ""} onClick={() => chooseSequencePiece(2,5)}>2</span><span className={readingSequence.includes(3) ? "joined" : ""} onClick={() => chooseSequencePiece(3,5)}>3</span><span className={readingSequence.includes(4) ? "joined" : ""} onClick={() => chooseSequencePiece(4,5)}>4</span><span className={readingSequence.includes(5) ? "joined" : ""} onClick={() => chooseSequencePiece(5,5)}>5</span></div></div>}
+
+            {readingStage === 5 && <div className="reading-challenge"><small>{lang === "es" ? "ESCUCHA" : "LISTEN"}</small><h2>{lang === "es" ? "¿Estos sonidos son iguales?" : "Are these sounds the same?"}</h2><button className="listen-button" onClick={() => readingVoice(lang === "es" ? "ma, ma" : "ma, ma")}>🔊 {lang === "es" ? "Oír otra vez" : "Hear again"}</button><div className="reading-options wide"><button onClick={() => answerAssessment(true)}>{lang === "es" ? "Iguales" : "Same"}</button><button onClick={() => answerAssessment(false)}>{lang === "es" ? "Diferentes" : "Different"}</button></div></div>}
+
+            {readingStage === 6 && <div className="reading-challenge"><small>{lang === "es" ? "LETRA Y SONIDO" : "LETTER AND SOUND"}</small><h2>{lang === "es" ? "¿Qué letra hace el sonido mmm?" : "Which letter makes the sound mmm?"}</h2><button className="listen-button" onClick={() => readingVoice("mmm")}>🔊 mmm</button><div className="reading-options">{["M","S","P"].map((letter) => <button key={letter} onClick={() => answerAssessment(letter === "M")}>{letter}</button>)}</div></div>}
+            {readingFeedback && <div className="reading-feedback">{readingFeedback}</div>}
+            <div className="mission-progress"><i style={{width:`${Math.min(100,((readingStage + 1)/7)*100)}%`}}/></div>
+          </div>}
+
+          {readingStage === 7 && !readingLesson && <div className="reading-map"><div className="reading-map-title"><div><span className="section-kicker">LUMIREAD · 5 MINUTOS AL DÍA</span><h2>{lang === "es" ? `Tu aventura de lectura, ${activeChild.name}` : `Your reading adventure, ${activeChild.name}`}</h2><p>{lang === "es" ? "Escucha, juega y aprende. Cada misión abre la siguiente." : "Listen, play and learn. Each mission unlocks the next."}</p></div><div className="assessment-badge"><span>🏅</span><b>{activeChild.readingAssessmentScore ?? readingScore}/5</b><small>{lang === "es" ? "Misión inicial" : "First mission"}</small></div></div><div className="reading-lesson-grid">{readingLessons[lang].map((lesson,index) => { const number=index+1; const completed=activeChild.readingCompletedLessons?.includes(number); const available=completed || number === (activeChild.readingLevel || 1); return <article className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`} key={lesson.title}><span>{completed ? "✓" : available ? number : "🔒"}</span><div><small>{lang === "es" ? `LECCIÓN ${number}` : `LESSON ${number}`}</small><b>{lesson.title}</b><p>{lesson.skill}</p></div>{available && <button onClick={() => startReadingLesson(number)}>{completed ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}</article>; })}</div></div>}
+
+          {readingStage === 7 && readingLesson && (() => { const lesson=readingLessons[lang][readingLesson-1]; return <div className="reading-lesson-player"><div className="lesson-book">📖</div><span className="section-kicker">{lesson.skill.toUpperCase()}</span><h2>{lesson.title}</h2><p>{lesson.prompt}</p><button className="listen-button" onClick={() => readingVoice(lesson.sound)}>🔊 {lang === "es" ? "Escuchar" : "Listen"}</button><div className="lesson-answer-grid">{lesson.options.map((option) => <button disabled={readingBusy} key={option} onClick={() => void answerReadingLesson(option)}>{option}</button>)}</div>{readingFeedback && <div className="reading-feedback">{readingFeedback}</div>}{readingFeedback.startsWith("¡Excelente") || readingFeedback.startsWith("Excellent") ? <button className="button primary" onClick={() => setReadingLesson(null)}>{lang === "es" ? "Volver al mapa" : "Back to map"}</button> : null}</div>; })()}
         </section>
       </div>}
 
