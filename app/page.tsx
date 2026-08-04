@@ -394,8 +394,7 @@ export default function Home() {
     const lesson = courseLessons[lang][courseLesson - 1];
     const expected = lesson.target[courseTyped] || "";
     const pressed = event.key.length === 1 ? event.key : "";
-    const locale = lang === "es" ? "es" : "en";
-    if (pressed.toLocaleLowerCase(locale) === expected.toLocaleLowerCase(locale)) {
+    if (pressed === expected) {
       const nextTyped = courseTyped + 1;
       setCourseTyped(nextTyped);
       if (nextTyped === lesson.target.length) void finishCourseLesson(courseLesson, courseMistakes);
