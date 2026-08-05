@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lumiya Academy | Aprender hoy. Crecer para siempre.",
-  description: "Escuela digital bilingüe para niños: mecanografía, lectura, escritura y aprendizaje en familia.",
+  title: "Lumi | Plataforma educativa bilingüe",
+  description: "Plataforma educativa bilingüe de dactilografía, lectura, matemáticas, inglés y nuevas áreas de aprendizaje.",
   other: {
     "codex-preview": "development",
   },
