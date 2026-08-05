@@ -46,6 +46,9 @@ type ChildProfile = {
   readingLevel?: number;
   readingCompletedLessons?: number[];
   readingAssessmentScore?: number;
+  mathLevel?: number;
+  mathCompletedLessons?: number[];
+  mathAssessmentScore?: number;
 };
 
 type CourseLesson = {
@@ -215,6 +218,56 @@ const readingLessons: Record<"es" | "en", ReadingLesson[]> = {
   ],
 };
 
+type MathProblem = { display: string; answer: string; options?: string[]; promptEs?: string; promptEn?: string };
+type MathLesson = { es: string; en: string; skillEs: string; skillEn: string; icon: string; problems: MathProblem[] };
+const mathProblems = (items: Array<[string, number | string, string[]?]>): MathProblem[] => items.map(([display, answer, options]) => ({ display, answer: String(answer), options }));
+const mathLessons: MathLesson[] = [
+  {es:"El concepto de juntar",en:"The idea of joining",skillEs:"Suma concreta",skillEn:"Concrete addition",icon:"🧱",problems:mathProblems([["2 + 3",5],["1 + 4",5],["3 + 2",5],["4 + 3",7],["2 + 6",8]])},
+  {es:"El concepto de quitar",en:"The idea of taking away",skillEs:"Resta concreta",skillEn:"Concrete subtraction",icon:"👾",problems:mathProblems([["6 − 2",4],["5 − 1",4],["7 − 3",4],["8 − 2",6],["9 − 4",5]])},
+  {es:"La recta numérica",en:"The number line",skillEs:"Avanzar y retroceder",skillEn:"Move forward and backward",icon:"🐸",problems:mathProblems([["3 → +2",5],["6 → −3",3],["4 → +4",8],["9 → −2",7],["5 → +3",8]])},
+  {es:"Amigos del 10",en:"Friends of 10",skillEs:"Parejas que forman diez",skillEn:"Pairs that make ten",icon:"🌈",problems:mathProblems([["3 + ? = 10",7],["1 + ? = 10",9],["6 + ? = 10",4],["8 + ? = 10",2],["5 + ? = 10",5]])},
+  {es:"Sumar con cero",en:"Adding zero",skillEs:"El valor no cambia",skillEn:"The value stays the same",icon:"📦",problems:mathProblems([["4 + 0",4],["0 + 7",7],["9 + 0",9],["0 + 3",3],["6 + 0",6]])},
+  {es:"Restar hasta cero",en:"Subtracting to zero",skillEs:"Cuenta regresiva",skillEn:"Countdown",icon:"🚀",problems:mathProblems([["5 − 5",0],["4 − 4",0],["7 − 7",0],["9 − 9",0],["3 − 3",0]])},
+  {es:"La suma se puede girar",en:"Addition can turn around",skillEs:"Propiedad conmutativa",skillEn:"Commutative property",icon:"⚖️",problems:mathProblems([["3 + 2 = 2 + ?",3],["4 + 1 = 1 + ?",4],["6 + 2 = 2 + ?",6],["5 + 3 = 3 + ?",5],["7 + 1 = 1 + ?",7]])},
+  {es:"Dobles",en:"Doubles",skillEs:"Sumar el mismo número",skillEn:"Add the same number",icon:"🪞",problems:mathProblems([["2 + 2",4],["3 + 3",6],["4 + 4",8],["5 + 5",10],["6 + 6",12]])},
+  {es:"Casi dobles",en:"Near doubles",skillEs:"Doble más uno",skillEn:"Double plus one",icon:"👯",problems:mathProblems([["4 + 5",9],["6 + 7",13],["3 + 4",7],["8 + 9",17],["5 + 6",11]])},
+  {es:"Sumas cruzando la decena",en:"Adding across ten",skillEs:"Completar diez",skillEn:"Make ten first",icon:"🚗",problems:mathProblems([["8 + 5",13],["9 + 4",13],["7 + 6",13],["8 + 7",15],["9 + 8",17]])},
+  {es:"Restar pasando por diez",en:"Subtracting across ten",skillEs:"Romper la decena",skillEn:"Break apart ten",icon:"🗼",problems:mathProblems([["13 − 5",8],["12 − 4",8],["15 − 7",8],["14 − 6",8],["17 − 9",8]])},
+  {es:"Suma de dos dígitos",en:"Two-digit addition",skillEs:"Sin llevar",skillEn:"Without regrouping",icon:"🧮",problems:mathProblems([["21 + 13",34],["32 + 16",48],["43 + 25",68],["12 + 27",39],["51 + 18",69]])},
+  {es:"Resta de dos dígitos",en:"Two-digit subtraction",skillEs:"Sin prestar",skillEn:"Without borrowing",icon:"🏦",problems:mathProblems([["46 − 23",23],["58 − 17",41],["79 − 35",44],["64 − 22",42],["87 − 46",41]])},
+  {es:"La fábrica de decenas",en:"The tens factory",skillEs:"Suma llevando",skillEn:"Addition with regrouping",icon:"🏭",problems:mathProblems([["28 + 17",45],["36 + 29",65],["47 + 18",65],["59 + 24",83],["68 + 27",95]])},
+  {es:"Desarmando el atado",en:"Unbundling a ten",skillEs:"Resta prestando",skillEn:"Subtraction with borrowing",icon:"🎋",problems:mathProblems([["42 − 18",24],["53 − 27",26],["61 − 35",26],["74 − 48",26],["82 − 56",26]])},
+  {es:"Familias de operaciones",en:"Fact families",skillEs:"Sumas y restas relacionadas",skillEn:"Related addition and subtraction",icon:"🔺",problems:mathProblems([["3 + 7",10],["10 − 7",3],["4 + 6",10],["10 − 4",6],["12 − 5",7]])},
+  {es:"Detectives de palabras",en:"Word detectives",skillEs:"Problemas verbales",skillEn:"Word problems",icon:"🕵️",problems:mathProblems([["Lumi tenía 5 estrellas y ganó 3. ¿Cuántas tiene?",8],["Había 9 globos y se fueron 4. ¿Cuántos quedan?",5],["Ana juntó 6 flores y luego 2 más.",8],["Tomás tenía 10 fichas y regaló 3.",7],["Hay 7 aves y llegan 5 más.",12]])},
+  {es:"El gran mercado",en:"The big market",skillEs:"Cálculo mental y repaso",skillEn:"Mental math review",icon:"🛒",problems:mathProblems([["Pan 4 Bs + leche 6 Bs",10],["Pago 20 Bs por algo de 13 Bs. Cambio:",7],["2 jugos de 5 Bs",10],["Tengo 15 Bs y gasto 8 Bs",7],["3 frutas de 4 Bs",12]])},
+  {es:"El tren de cargas",en:"The cargo train",skillEs:"Multiplicación como suma repetida",skillEn:"Multiplication as repeated addition",icon:"🚂",problems:mathProblems([["3 + 3 + 3 + 3",12],["2 + 2 + 2",6],["5 + 5 + 5",15],["4 + 4",8],["6 + 6 + 6",18]])},
+  {es:"Sembrando el huerto",en:"Planting the garden",skillEs:"Filas y columnas",skillEn:"Rows and columns",icon:"🌱",problems:mathProblems([["3 filas × 4 columnas",12],["2 filas × 5 columnas",10],["4 filas × 3 columnas",12],["5 filas × 2 columnas",10],["3 filas × 6 columnas",18]])},
+  {es:"La tabla del 2",en:"The 2 times table",skillEs:"El doble de las cosas",skillEn:"Double everything",icon:"👟",problems:mathProblems([["2 × 3",6],["2 × 5",10],["2 × 7",14],["2 × 9",18],["2 × 10",20]])},
+  {es:"La tabla del 5",en:"The 5 times table",skillEs:"Reloj y dedos",skillEn:"Clock and fingers",icon:"✋",problems:mathProblems([["5 × 2",10],["5 × 4",20],["5 × 6",30],["5 × 8",40],["5 × 10",50]])},
+  {es:"La tabla del 10",en:"The 10 times table",skillEs:"El truco del cero",skillEn:"The zero trick",icon:"🔟",problems:mathProblems([["10 × 2",20],["10 × 4",40],["10 × 7",70],["10 × 9",90],["10 × 12",120]])},
+  {es:"Girar la galleta",en:"Turn the cookie",skillEs:"Propiedad conmutativa",skillEn:"Commutative property",icon:"🍪",problems:mathProblems([["2 × 5 = 5 × ?",2],["3 × 4 = 4 × ?",3],["6 × 2 = 2 × ?",6],["7 × 3 = 3 × ?",7],["8 × 4 = 4 × ?",8]])},
+  {es:"Tablas del 3 y 4",en:"The 3 and 4 tables",skillEs:"Saltos con ritmo",skillEn:"Rhythmic skip counting",icon:"🎵",problems:mathProblems([["3 × 4",12],["4 × 5",20],["3 × 7",21],["4 × 8",32],["3 × 9",27]])},
+  {es:"Tablas del 6 y 7",en:"The 6 and 7 tables",skillEs:"Descomponer para resolver",skillEn:"Break apart to solve",icon:"🧱",problems:mathProblems([["6 × 4",24],["7 × 3",21],["6 × 7",42],["7 × 8",56],["6 × 9",54]])},
+  {es:"Tablas del 8 y 9",en:"The 8 and 9 tables",skillEs:"Trucos visuales",skillEn:"Visual strategies",icon:"👐",problems:mathProblems([["8 × 4",32],["9 × 3",27],["8 × 7",56],["9 × 8",72],["9 × 9",81]])},
+  {es:"El cero y el uno",en:"Zero and one",skillEs:"Multiplicar por 0 y 1",skillEn:"Multiply by 0 and 1",icon:"🕳️",problems:mathProblems([["5 × 0",0],["7 × 1",7],["0 × 9",0],["1 × 12",12],["8 × 0",0]])},
+  {es:"Repartiendo caramelos",en:"Sharing candy",skillEs:"División equitativa",skillEn:"Equal sharing",icon:"🍬",problems:mathProblems([["12 ÷ 3",4],["10 ÷ 2",5],["15 ÷ 5",3],["18 ÷ 6",3],["20 ÷ 4",5]])},
+  {es:"Empacando galletas",en:"Packing cookies",skillEs:"División como agrupación",skillEn:"Division by grouping",icon:"📦",problems:mathProblems([["15 en grupos de 5",3],["12 en grupos de 3",4],["18 en grupos de 6",3],["20 en grupos de 4",5],["24 en grupos de 8",3]])},
+  {es:"La familia de factores",en:"The factor family",skillEs:"Multiplicar y dividir",skillEn:"Multiply and divide",icon:"👨‍👩‍👧",problems:mathProblems([["4 × 5",20],["20 ÷ 5",4],["20 ÷ 4",5],["3 × 6",18],["18 ÷ 3",6]])},
+  {es:"Lo que sobra",en:"What is left over",skillEs:"División con residuo",skillEn:"Division with remainders",icon:"🎂",problems:mathProblems([["11 ÷ 3 · sobra",2],["14 ÷ 4 · sobra",2],["17 ÷ 5 · sobra",2],["10 ÷ 3 · sobra",1],["19 ÷ 6 · sobra",1]])},
+  {es:"Cero y uno al dividir",en:"Zero and one in division",skillEs:"Reglas especiales",skillEn:"Special rules",icon:"🚫",problems:mathProblems([["10 ÷ 1",10],["0 ÷ 5",0],["7 ÷ 1",7],["5 ÷ 0","No se puede"],["0 ÷ 9",0]])},
+  {es:"El súper escalador",en:"The super climber",skillEs:"Multiplicar por decenas",skillEn:"Multiply by tens",icon:"🧗",problems:mathProblems([["3 × 20",60],["4 × 30",120],["6 × 40",240],["5 × 50",250],["8 × 20",160]])},
+  {es:"Historias de dos pasos",en:"Two-step stories",skillEs:"Multiplicar y después sumar o restar",skillEn:"Multiply then add or subtract",icon:"📚",problems:mathProblems([["3 cajas × 4 lápices − 2",10],["2 bolsas × 5 frutas + 3",13],["4 mesas × 3 niños − 1",11],["5 platos × 2 panes + 4",14],["3 equipos × 6 puntos − 5",13]])},
+  {es:"El restaurante matemático",en:"The math restaurant",skillEs:"Proyecto final",skillEn:"Final project",icon:"🍽️",problems:mathProblems([["3 jugos de 4 Bs",12],["2 platos de 15 Bs",30],["Cuenta de 24 Bs entre 3",8],["4 postres de 6 Bs",24],["Cuenta de 40 Bs entre 5",8]])},
+];
+
+function mathOptions(problem: MathProblem, language: "es" | "en") {
+  if (problem.options) return problem.options;
+  const value = Number(problem.answer);
+  if (Number.isNaN(value)) return [language === "es" ? "No se puede" : "Cannot divide", "0", "5"];
+  const candidates = [String(value), String(value + 1), String(Math.max(0, value - 2)), String(value + 3)];
+  return [...new Set(candidates)].slice(0, 3);
+}
+
 function readingPicture(word: string) {
   const pictures: Record<string,string> = { mono:"🐒",pan:"🍞",mapa:"🗺️",pelota:"⚽",mano:"✋",papá:"👨",pollo:"🐥",mesa:"🪑",puerta:"🚪",sol:"☀️",luna:"🌙",sapo:"🐸",silla:"🪑",loro:"🦜",lápiz:"✏️",libro:"📘",perro:"🐶",gato:"🐱",pato:"🦆",casa:"🏠",nido:"🪺",dado:"🎲",nube:"☁️",dedo:"☝️",nariz:"👃",rosa:"🌹",cama:"🛏️",ratón:"🐭",coco:"🥥",cohete:"🚀",monkey:"🐒",bread:"🍞",map:"🗺️",ball:"⚽",hand:"✋",dad:"👨",chicken:"🐥",table:"🪑",door:"🚪",sun:"☀️",moon:"🌙",frog:"🐸",chair:"🪑",parrot:"🦜",pencil:"✏️",book:"📘",dog:"🐶",cat:"🐱",duck:"🦆",house:"🏠",nest:"🪺",dice:"🎲",cloud:"☁️",finger:"☝️",nose:"👃",rose:"🌹",bed:"🛏️",mouse:"🐭",coconut:"🥥",rocket:"🚀" };
   return pictures[word.toLowerCase()] || "🖼️";
@@ -292,6 +345,14 @@ export default function Home() {
   const [readingBuild, setReadingBuild] = useState<string[]>([]);
   const [readingLessonDone, setReadingLessonDone] = useState(false);
   const [readingBusy, setReadingBusy] = useState(false);
+  const [mathOpen, setMathOpen] = useState(false);
+  const [mathAssessmentIndex, setMathAssessmentIndex] = useState(0);
+  const [mathAssessmentScore, setMathAssessmentScore] = useState(0);
+  const [mathLesson, setMathLesson] = useState<number | null>(null);
+  const [mathExercise, setMathExercise] = useState(0);
+  const [mathLessonDone, setMathLessonDone] = useState(false);
+  const [mathFeedback, setMathFeedback] = useState("");
+  const [mathBusy, setMathBusy] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
@@ -636,6 +697,93 @@ export default function Home() {
     }
   }
 
+  const mathAssessment = [
+    { display: "2 + 3", answer: "5", options: ["4", "5", "6"] },
+    { display: "7 − 2", answer: "5", options: ["3", "5", "6"] },
+    { display: "2 × 4", answer: "8", options: ["6", "8", "10"] },
+    { display: "12 ÷ 3", answer: "4", options: ["3", "4", "6"] },
+    { display: "8 + 7", answer: "15", options: ["14", "15", "16"] },
+  ];
+
+  function openMathCourse() {
+    if (!activeChild) return;
+    setMathOpen(true);
+    setMathLesson(null);
+    setMathFeedback("");
+    if (activeChild.mathAssessmentScore === undefined) {
+      setMathAssessmentIndex(0);
+      setMathAssessmentScore(0);
+      window.setTimeout(() => readingVoice(lang === "es" ? `¡Hola, ${activeChild.name}! Ayuda a Lumi a resolver cinco retos para encontrar tu punto de partida.` : `Hi, ${activeChild.name}! Help Lumi solve five challenges to find your starting point.`), 200);
+    }
+  }
+
+  async function answerMathAssessment(option: string) {
+    if (!account || !activeChild || mathBusy) return;
+    const problem = mathAssessment[mathAssessmentIndex];
+    const expected = problem.answer === "No se puede" && lang === "en" ? "Cannot divide" : problem.answer;
+    if (option !== expected) {
+      setMathFeedback(lang === "es" ? "No pasa nada. Cuenta con calma y vuelve a intentarlo." : "That's okay. Count calmly and try again.");
+      playTone("error");
+      return;
+    }
+    const score = mathAssessmentScore + 1;
+    setMathAssessmentScore(score);
+    playTone("correct");
+    if (mathAssessmentIndex < mathAssessment.length - 1) {
+      setMathFeedback(lang === "es" ? "¡Muy bien! Vamos al siguiente reto." : "Great job! On to the next challenge.");
+      window.setTimeout(() => { setMathAssessmentIndex((value) => value + 1); setMathFeedback(""); }, 450);
+      return;
+    }
+    setMathBusy(true);
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { mathAssessmentScore: score, mathLevel: 1, mathCompletedLessons: [], subjects: arrayUnion("math") });
+      const updated = { ...activeChild, mathAssessmentScore: score, mathLevel: 1, mathCompletedLessons: [], subjects: [...new Set([...(activeChild.subjects || []), "math"])] };
+      setActiveChild(updated);
+      setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+      setMathFeedback("");
+      speakFeedback(lang === "es" ? "¡Evaluación terminada! Tu camino matemático está listo." : "Assessment complete! Your math path is ready.", true);
+    } finally { setMathBusy(false); }
+  }
+
+  function startMathLesson(lessonNumber: number) {
+    setMathLesson(lessonNumber);
+    setMathExercise(0);
+    setMathLessonDone(false);
+    setMathFeedback("");
+    const lesson = mathLessons[lessonNumber - 1];
+    window.setTimeout(() => readingVoice(`${lang === "es" ? lesson.es : lesson.en}. ${lesson.problems[0].display}`), 180);
+  }
+
+  async function answerMathLesson(option: string) {
+    if (!account || !activeChild || !mathLesson || mathBusy || mathLessonDone) return;
+    const lesson = mathLessons[mathLesson - 1];
+    const problem = lesson.problems[mathExercise];
+    if (option !== problem.answer) {
+      setMathFeedback(lang === "es" ? "Casi. Usa los objetos, cuenta otra vez y prueba de nuevo." : "Almost. Use the objects, count again, and try once more.");
+      playTone("error");
+      return;
+    }
+    playTone("correct");
+    if (mathExercise < lesson.problems.length - 1) {
+      setMathFeedback(lang === "es" ? "¡Correcto! Siguiente ejercicio." : "Correct! Next activity.");
+      window.setTimeout(() => { const next = mathExercise + 1; setMathExercise(next); setMathFeedback(""); readingVoice(lesson.problems[next].display); }, 450);
+      return;
+    }
+    setMathBusy(true);
+    playTone("complete");
+    const completed = activeChild.mathCompletedLessons || [];
+    const firstCompletion = !completed.includes(mathLesson);
+    const nextLevel = firstCompletion && mathLesson >= (activeChild.mathLevel || 1) ? Math.min(36, mathLesson + 1) : (activeChild.mathLevel || 1);
+    const updated = { ...activeChild, mathLevel: nextLevel, mathCompletedLessons: firstCompletion ? [...completed, mathLesson] : completed, stars: activeChild.stars + (firstCompletion ? 2 : 0) };
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { mathLevel: nextLevel, mathCompletedLessons: arrayUnion(mathLesson), stars: updated.stars, lastMathAt: serverTimestamp() });
+      setActiveChild(updated);
+      setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+      setMathFeedback(lang === "es" ? "¡Lección completada! Abriste el siguiente reto." : "Lesson complete! You unlocked the next challenge.");
+      setMathLessonDone(true);
+    } finally { setMathBusy(false); }
+  }
+
   function startChildLesson() {
     if (activeChild) startCourseLesson(activeChild.level || 1);
   }
@@ -770,19 +918,19 @@ export default function Home() {
       </section>
 
       <section className="course-strip" id="courses">
-        <span className="course-icon">⌨</span><div><small>{t.trusted}</small><h2>{t.course}</h2><p>{t.courseDesc}</p></div>
-        <div className="course-progress"><span><b>01</b><small>{t.lesson}</small></span><div><i/></div></div>
+        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "TRES CURRÍCULOS DISPONIBLES" : "THREE CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Mecanografía · Lectura · Matemáticas" : "Typing · Reading · Mathematics"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada niño." : "Progressive paths, short activities, and individual progress for every child."}</p></div>
+        <div className="course-progress"><span><b>03</b><small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small></span><div><i style={{width:"100%"}}/></div></div>
       </section>
 
       <section className="education-path" aria-label={lang === "es" ? "Áreas educativas" : "Learning areas"}>
         <div className="education-path-copy"><span className="section-kicker">{lang === "es" ? "ESCUELA DIGITAL LUMIYA" : "LUMIYA DIGITAL SCHOOL"}</span><h2>{lang === "es" ? "Una escuela que crece con cada niño" : "A school that grows with every child"}</h2><p>{lang === "es" ? "Comenzamos con mecanografía y avanzaremos hacia las habilidades fundamentales para aprender con confianza." : "We begin with typing and grow toward the essential skills children need to learn confidently."}</p></div>
         <div className="education-area-grid">
           {[
-            ["⌨", lang === "es" ? "Mecanografía" : "Typing", lang === "es" ? "Disponible" : "Available"],
-            ["📖", lang === "es" ? "Lectura" : "Reading", lang === "es" ? "Próximamente" : "Coming soon"],
-            ["🔢", lang === "es" ? "Matemáticas" : "Mathematics", lang === "es" ? "Próximamente" : "Coming soon"],
+            ["⌨", lang === "es" ? "Mecanografía" : "Typing", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
+            ["📖", lang === "es" ? "Lectura" : "Reading", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
+            ["🔢", lang === "es" ? "Matemáticas" : "Mathematics", lang === "es" ? "36 lecciones · Disponible" : "36 lessons · Available"],
             ["🌎", lang === "es" ? "Inglés" : "English", lang === "es" ? "Próximamente" : "Coming soon"],
-          ].map((area, index) => <article className={index === 0 ? "available" : ""} key={area[1]}><span>{area[0]}</span><div><b>{area[1]}</b><small>{area[2]}</small></div></article>)}
+          ].map((area, index) => <article className={index < 3 ? "available" : ""} key={area[1]}><span>{area[0]}</span><div><b>{area[1]}</b><small>{area[2]}</small></div></article>)}
         </div>
       </section>
 
@@ -865,7 +1013,7 @@ export default function Home() {
             <div className="subject-tabs">
               <button className="active"><span>⌨</span><b>{lang === "es" ? "Mecanografía" : "Typing"}</b><small>{lang === "es" ? "En curso" : "In progress"}</small></button>
               <button className="reading-subject" onClick={openReadingCourse}><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{activeChild.readingAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.readingCompletedLessons?.length || 0} de 18` : `${activeChild.readingCompletedLessons?.length || 0} of 18`)}</small></button>
-              <button disabled><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
+              <button className="math-subject" onClick={openMathCourse}><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{activeChild.mathAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.mathCompletedLessons?.length || 0} de 36` : `${activeChild.mathCompletedLessons?.length || 0} of 36`)}</small></button>
               <button disabled><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
             </div>
           </section>
@@ -918,6 +1066,18 @@ export default function Home() {
           {readingStage === 7 && !readingLesson && <div className="reading-map"><div className="reading-map-title"><div><span className="section-kicker">LUMIREAD · 5 MINUTOS AL DÍA</span><h2>{lang === "es" ? `Tu aventura de lectura, ${activeChild.name}` : `Your reading adventure, ${activeChild.name}`}</h2><p>{lang === "es" ? "Escucha, juega y aprende. Cada misión abre la siguiente." : "Listen, play and learn. Each mission unlocks the next."}</p></div><div className="assessment-badge"><span>🏅</span><b>{activeChild.readingAssessmentScore ?? readingScore}/5</b><small>{lang === "es" ? "Misión inicial" : "First mission"}</small></div></div><div className="reading-lesson-grid">{readingLessons[lang].map((lesson,index) => { const number=index+1; const completed=activeChild.readingCompletedLessons?.includes(number); const available=completed || number === (activeChild.readingLevel || 1); return <article className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`} key={lesson.title}><span>{completed ? "✓" : available ? number : "🔒"}</span><div><small>{lang === "es" ? `LECCIÓN ${number}` : `LESSON ${number}`}</small><b>{lesson.title}</b><p>{lesson.skill}</p></div>{available && <button onClick={() => startReadingLesson(number)}>{completed ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}</article>; })}</div></div>}
 
           {readingStage === 7 && readingLesson && (() => { const lesson=readingLessons[lang][readingLesson-1]; const exercise=lesson.exercises[readingExercise]; return <div className="reading-lesson-player"><div className="reading-exercise-head"><button onClick={() => setReadingLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button><span>{lang === "es" ? `Ejercicio ${readingExercise+1} de 5` : `Activity ${readingExercise+1} of 5`}</span></div><div className="reading-exercise-progress"><i style={{width:`${((readingExercise+(readingLessonDone?1:0))/5)*100}%`}}/></div><div className="lesson-book">{exercise.icon || (exercise.kind === "picture" ? readingPicture(exercise.answer || "") : "📖")}</div><span className="section-kicker">{lesson.skill.toUpperCase()}</span><h2>{lesson.title}</h2>{exercise.story && <div className="reading-story">{exercise.story}</div>}<div className={exercise.display.length > 45 ? "reading-display sentence" : "reading-display"}>{exercise.display}</div><p>{exercise.prompt}</p><button className="listen-button" onClick={() => readingVoice(exercise.sound)}>🔊 {lang === "es" ? "Escuchar" : "Listen"}</button>{exercise.kind === "listen" && !readingLessonDone && <button className="repeat-confirm" onClick={() => void completeReadingExercise()}>✓ {lang === "es" ? "Ya lo escuché y repetí" : "I listened and repeated"}</button>}{(exercise.kind === "choice" || exercise.kind === "picture") && !readingLessonDone && <div className={exercise.kind === "picture" ? "lesson-answer-grid picture-answers" : "lesson-answer-grid"}>{exercise.options?.map((option) => <button disabled={readingBusy} key={option} onClick={() => answerReadingLesson(option)}>{exercise.kind === "picture" && <span>{readingPicture(option)}</span>}<b>{option}</b></button>)}</div>}{exercise.kind === "build" && !readingLessonDone && <><div className="assembled-word">{readingBuild.length ? readingBuild.join(" + ") : (lang === "es" ? "Toca las sílabas en orden" : "Tap the syllables in order")}</div><div className="syllable-options">{exercise.options?.map((option,index) => <button key={`${option}-${index}`} onClick={() => chooseReadingSyllable(option)}>{option}</button>)}</div><button className="clear-build" onClick={() => setReadingBuild([])}>{lang === "es" ? "Borrar intento" : "Clear attempt"}</button></>}{readingFeedback && <div className="reading-feedback">{readingFeedback}</div>}{readingLessonDone && <button className="button primary next-reading-lesson" onClick={() => readingLesson < 18 ? startReadingLesson(readingLesson+1) : setReadingLesson(null)}>{readingLesson < 18 ? (lang === "es" ? "Siguiente lección →" : "Next lesson →") : (lang === "es" ? "Finalizar curso" : "Finish course")}</button>}</div>; })()}
+        </section>
+      </div>}
+
+      {mathOpen && activeChild && <div className="reading-backdrop math-backdrop" onMouseDown={() => setMathOpen(false)}>
+        <section className="reading-player math-player" onMouseDown={(event) => event.stopPropagation()}>
+          <header className="reading-header math-header"><button onClick={() => mathLesson ? setMathLesson(null) : setMathOpen(false)}>← {mathLesson ? (lang === "es" ? "Mapa" : "Map") : (lang === "es" ? "Mis materias" : "My subjects")}</button><div><span>LUMIMATH</span><b>{lang === "es" ? "Aventura matemática" : "Math adventure"}</b></div><div className="math-counter"><span>★</span><b>{activeChild.mathCompletedLessons?.length || 0}/36</b></div></header>
+
+          {activeChild.mathAssessmentScore === undefined && <div className="math-assessment"><div className="math-mascot">✦<span>123</span></div><span className="section-kicker">{lang === "es" ? `RETO ${mathAssessmentIndex + 1} DE 5` : `CHALLENGE ${mathAssessmentIndex + 1} OF 5`}</span><h2>{lang === "es" ? `Descubramos tu poder matemático, ${activeChild.name}` : `Let's discover your math power, ${activeChild.name}`}</h2><p>{lang === "es" ? "Elige la respuesta. Si fallas, no te preocupes: puedes volver a intentarlo." : "Choose the answer. If you miss, don't worry: you can try again."}</p><div className="math-equation">{mathAssessment[mathAssessmentIndex].display}</div><button className="listen-button" onClick={() => readingVoice(mathAssessment[mathAssessmentIndex].display)}>🔊 {lang === "es" ? "Escuchar" : "Listen"}</button><div className="math-answer-grid">{mathAssessment[mathAssessmentIndex].options.map((option) => <button disabled={mathBusy} key={option} onClick={() => void answerMathAssessment(option)}>{option}</button>)}</div>{mathFeedback && <div className="reading-feedback">{mathFeedback}</div>}<div className="reading-exercise-progress"><i style={{width:`${((mathAssessmentIndex + 1) / 5) * 100}%`}}/></div></div>}
+
+          {activeChild.mathAssessmentScore !== undefined && !mathLesson && <div className="reading-map math-map"><div className="reading-map-title"><div><span className="section-kicker">LUMIMATH · APRENDE JUGANDO</span><h2>{lang === "es" ? `Tu camino matemático, ${activeChild.name}` : `Your math path, ${activeChild.name}`}</h2><p>{lang === "es" ? "Primero suma y resta; después multiplicación y división." : "First addition and subtraction; then multiplication and division."}</p></div><div className="assessment-badge math-badge"><span>🏅</span><b>{activeChild.mathAssessmentScore}/5</b><small>{lang === "es" ? "Evaluación inicial" : "Initial assessment"}</small></div></div><div className="math-module-title"><span>1</span><div><b>{lang === "es" ? "Suma y resta" : "Addition and subtraction"}</b><small>18 {lang === "es" ? "lecciones" : "lessons"}</small></div></div><div className="reading-lesson-grid math-lesson-grid">{mathLessons.map((lesson,index) => { const number=index+1; const completed=activeChild.mathCompletedLessons?.includes(number); const available=completed || number === (activeChild.mathLevel || 1); return <div key={lesson.es}>{index === 18 && <div className="math-module-title second"><span>2</span><div><b>{lang === "es" ? "Multiplicación y división" : "Multiplication and division"}</b><small>18 {lang === "es" ? "lecciones" : "lessons"}</small></div></div>}<article className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`}><span>{completed ? "✓" : available ? number : "🔒"}</span><div><small>{lang === "es" ? `LECCIÓN ${number}` : `LESSON ${number}`}</small><b>{lesson.icon} {lang === "es" ? lesson.es : lesson.en}</b><p>{lang === "es" ? lesson.skillEs : lesson.skillEn}</p></div>{available && <button onClick={() => startMathLesson(number)}>{completed ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}</article></div>; })}</div></div>}
+
+          {activeChild.mathAssessmentScore !== undefined && mathLesson && (() => { const lesson=mathLessons[mathLesson-1]; const problem=lesson.problems[mathExercise]; return <div className="reading-lesson-player math-lesson-player"><div className="reading-exercise-head"><button onClick={() => setMathLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button><span>{lang === "es" ? `Ejercicio ${mathExercise+1} de 5` : `Activity ${mathExercise+1} of 5`}</span></div><div className="reading-exercise-progress"><i style={{width:`${((mathExercise+(mathLessonDone?1:0))/5)*100}%`}}/></div><div className="math-lesson-icon">{lesson.icon}</div><span className="section-kicker">{(lang === "es" ? lesson.skillEs : lesson.skillEn).toUpperCase()}</span><h2>{lang === "es" ? lesson.es : lesson.en}</h2><p>{lang === "es" ? "Observa, piensa y elige la respuesta correcta." : "Look, think, and choose the correct answer."}</p><div className={problem.display.length > 25 ? "math-equation word-problem" : "math-equation"}>{problem.display}</div><button className="listen-button" onClick={() => readingVoice(problem.display)}>🔊 {lang === "es" ? "Escuchar reto" : "Hear challenge"}</button>{!mathLessonDone && <div className="math-answer-grid">{mathOptions(problem, lang).map((option) => <button disabled={mathBusy} key={option} onClick={() => void answerMathLesson(option)}>{option}</button>)}</div>}{mathFeedback && <div className="reading-feedback">{mathFeedback}</div>}{mathLessonDone && <button className="button primary next-reading-lesson" onClick={() => mathLesson < 36 ? startMathLesson(mathLesson+1) : setMathLesson(null)}>{mathLesson < 36 ? (lang === "es" ? "Siguiente lección →" : "Next lesson →") : (lang === "es" ? "Finalizar curso" : "Finish course")}</button>}</div>; })()}
         </section>
       </div>}
 
