@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lumi | Plataforma educativa bilingüe",
+  title: "Lumi Academy | Plataforma educativa bilingüe",
   description: "Plataforma educativa bilingüe de dactilografía, lectura, matemáticas, inglés y nuevas áreas de aprendizaje.",
   other: {
     "codex-preview": "development",
