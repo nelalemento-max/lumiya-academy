@@ -49,6 +49,9 @@ type ChildProfile = {
   mathLevel?: number;
   mathCompletedLessons?: number[];
   mathAssessmentScore?: number;
+  englishLevel?: number;
+  englishCompletedLessons?: number[];
+  englishAssessmentScore?: number;
 };
 
 type CourseLesson = {
@@ -268,6 +271,35 @@ function mathOptions(problem: MathProblem, language: "es" | "en") {
   return [...new Set(candidates)].slice(0, 3);
 }
 
+type EnglishWord = { word: string; meaning: string; icon: string };
+type EnglishLesson = { title: string; module: number; moduleEs: string; moduleEn: string; mechanicEs: string; mechanicEn: string; words: EnglishWord[] };
+const ew = (items: Array<[string,string,string]>): EnglishWord[] => items.map(([word, meaning, icon]) => ({ word, meaning, icon }));
+const englishLessons: EnglishLesson[] = [
+  {title:"Hello & Goodbye",module:1,moduleEs:"Mis primeras palabras y emociones",moduleEn:"My first words and emotions",mechanicEs:"Saluda a quienes llegan y despídete de quienes se van.",mechanicEn:"Greet characters who arrive and say goodbye when they leave.",words:ew([["Hello","Hola","👋"],["Hi","Hola","😊"],["Goodbye","Adiós","🚪"],["Bye","Chau","🙋"]])},
+  {title:"How Are You Today?",module:1,moduleEs:"Mis primeras palabras y emociones",moduleEn:"My first words and emotions",mechanicEs:"Reconoce la emoción y forma una frase: I am happy.",mechanicEn:"Recognize the emotion and build a sentence: I am happy.",words:ew([["Happy","Feliz","😊"],["Sad","Triste","😢"],["Angry","Enojado","😠"],["Tired","Cansado","🥱"]])},
+  {title:"Numbers 1 to 5",module:1,moduleEs:"Mis primeras palabras y emociones",moduleEn:"My first words and emotions",mechanicEs:"Escucha el número y cuenta la cantidad correcta de globos.",mechanicEn:"Hear the number and count the correct number of balloons.",words:ew([["One","Uno","🎈"],["Two","Dos","🎈🎈"],["Three","Tres","🎈🎈🎈"],["Four","Cuatro","4️⃣"],["Five","Cinco","5️⃣"]])},
+  {title:"Primary Colors",module:1,moduleEs:"Mis primeras palabras y emociones",moduleEn:"My first words and emotions",mechanicEs:"Escucha el color y elige la pintura correcta.",mechanicEn:"Hear the color and choose the correct paint.",words:ew([["Red","Rojo","🔴"],["Blue","Azul","🔵"],["Yellow","Amarillo","🟡"],["Green","Verde","🟢"]])},
+  {title:"Body Parts",module:2,moduleEs:"Mi cuerpo y mi entorno",moduleEn:"My body and my surroundings",mechanicEs:"Arma el robot eligiendo la parte del cuerpo indicada.",mechanicEn:"Build the robot by choosing the requested body part.",words:ew([["Head","Cabeza","🙂"],["Eyes","Ojos","👀"],["Ears","Orejas","👂"],["Nose","Nariz","👃"],["Mouth","Boca","👄"]])},
+  {title:"Family Members",module:2,moduleEs:"Mi cuerpo y mi entorno",moduleEn:"My body and my surroundings",mechanicEs:"Completa el árbol familiar con cada personaje.",mechanicEn:"Complete the family tree with each person.",words:ew([["Mom","Mamá","👩"],["Dad","Papá","👨"],["Brother","Hermano","👦"],["Sister","Hermana","👧"],["Baby","Bebé","👶"]])},
+  {title:"Classroom Objects",module:2,moduleEs:"Mi cuerpo y mi entorno",moduleEn:"My body and my surroundings",mechanicEs:"Encuentra el objeto y guárdalo en la mochila mágica.",mechanicEn:"Find the object and place it in the magic backpack.",words:ew([["Pencil","Lápiz","✏️"],["Book","Libro","📘"],["Chair","Silla","🪑"],["Bag","Mochila","🎒"]])},
+  {title:"Numbers 6 to 10",module:2,moduleEs:"Mi cuerpo y mi entorno",moduleEn:"My body and my surroundings",mechanicEs:"Relaciona el número escrito con su pronunciación.",mechanicEn:"Match the written number to its pronunciation.",words:ew([["Six","Seis","6️⃣"],["Seven","Siete","7️⃣"],["Eight","Ocho","8️⃣"],["Nine","Nueve","9️⃣"],["Ten","Diez","🔟"]])},
+  {title:"Farm Animals",module:3,moduleEs:"Animales y comida",moduleEn:"Animals and food",mechanicEs:"Escucha el sonido y abre la puerta del animal correcto.",mechanicEn:"Hear the sound and open the correct animal's door.",words:ew([["Cow","Vaca","🐄"],["Dog","Perro","🐶"],["Cat","Gato","🐱"],["Duck","Pato","🦆"],["Pig","Cerdo","🐷"]])},
+  {title:"Fruits",module:3,moduleEs:"Animales y comida",moduleEn:"Animals and food",mechanicEs:"Atrapa solamente la fruta que Lumi pronuncia.",mechanicEn:"Catch only the fruit Lumi says.",words:ew([["Apple","Manzana","🍎"],["Banana","Plátano","🍌"],["Orange","Naranja","🍊"],["Grape","Uva","🍇"]])},
+  {title:"Food & Preferences",module:3,moduleEs:"Animales y comida",moduleEn:"Animals and food",mechanicEs:"Alimenta a la mascota y expresa lo que te gusta.",mechanicEn:"Feed the pet and say what you like.",words:ew([["Pizza","Pizza","🍕"],["Milk","Leche","🥛"],["Water","Agua","💧"],["Bread","Pan","🍞"],["I like","Me gusta","😋"]])},
+  {title:"Wild Animals",module:3,moduleEs:"Animales y comida",moduleEn:"Animals and food",mechanicEs:"Encuentra los animales ocultos en el safari.",mechanicEn:"Find the hidden animals on safari.",words:ew([["Lion","León","🦁"],["Elephant","Elefante","🐘"],["Monkey","Mono","🐒"],["Bird","Ave","🐦"]])},
+  {title:"Basic Shapes",module:4,moduleEs:"Mi mundo diario",moduleEn:"My everyday world",mechanicEs:"Sigue la forma y reconoce su nombre en inglés.",mechanicEn:"Trace the shape and recognize its English name.",words:ew([["Circle","Círculo","⚪"],["Square","Cuadrado","⬜"],["Triangle","Triángulo","🔺"],["Star","Estrella","⭐"]])},
+  {title:"Weather & Nature",module:4,moduleEs:"Mi mundo diario",moduleEn:"My everyday world",mechanicEs:"Cambia el clima del paisaje según la instrucción.",mechanicEn:"Change the landscape weather by following the instruction.",words:ew([["Sunny","Soleado","☀️"],["Rainy","Lluvioso","🌧️"],["Windy","Ventoso","💨"],["Cold","Frío","🥶"],["Hot","Caluroso","🥵"]])},
+  {title:"Clothes",module:4,moduleEs:"Mi mundo diario",moduleEn:"My everyday world",mechanicEs:"Viste al personaje con la prenda indicada.",mechanicEn:"Dress the character with the requested item.",words:ew([["Shirt","Camisa","👕"],["Pants","Pantalones","👖"],["Shoes","Zapatos","👟"],["Hat","Sombrero","🧢"]])},
+  {title:"Action Verbs",module:5,moduleEs:"Acción y consolidación",moduleEn:"Action and consolidation",mechanicEs:"Elige el verbo para mover al personaje.",mechanicEn:"Choose the verb to move the character.",words:ew([["Run","Correr","🏃"],["Jump","Saltar","🤸"],["Dance","Bailar","💃"],["Sleep","Dormir","😴"]])},
+  {title:"Parts of the House",module:5,moduleEs:"Acción y consolidación",moduleEn:"Action and consolidation",mechanicEs:"Abre las puertas y explora cada habitación.",mechanicEn:"Open the doors and explore each room.",words:ew([["Bedroom","Dormitorio","🛏️"],["Kitchen","Cocina","🍳"],["Bathroom","Baño","🛁"],["Living room","Sala","🛋️"]])},
+  {title:"Ultimate Review Challenge",module:5,moduleEs:"Acción y consolidación",moduleEn:"Action and consolidation",mechanicEs:"Supera cinco estaciones y consigue tu diploma LumiEnglish.",mechanicEn:"Complete five stations and earn your LumiEnglish diploma.",words:ew([["Hello","Hola","👋"],["Happy","Feliz","😊"],["Apple","Manzana","🍎"],["Lion","León","🦁"],["Jump","Saltar","🤸"]])},
+];
+
+function englishChoices(lesson: EnglishLesson, word: EnglishWord) {
+  const choices = [word, ...lesson.words.filter((item) => item.word !== word.word).slice(0, 2)];
+  return choices.sort((a, b) => (a.word.length + word.word.length) % 3 - (b.word.length + word.word.length) % 3);
+}
+
 function readingPicture(word: string) {
   const pictures: Record<string,string> = { mono:"🐒",pan:"🍞",mapa:"🗺️",pelota:"⚽",mano:"✋",papá:"👨",pollo:"🐥",mesa:"🪑",puerta:"🚪",sol:"☀️",luna:"🌙",sapo:"🐸",silla:"🪑",loro:"🦜",lápiz:"✏️",libro:"📘",perro:"🐶",gato:"🐱",pato:"🦆",casa:"🏠",nido:"🪺",dado:"🎲",nube:"☁️",dedo:"☝️",nariz:"👃",rosa:"🌹",cama:"🛏️",ratón:"🐭",coco:"🥥",cohete:"🚀",monkey:"🐒",bread:"🍞",map:"🗺️",ball:"⚽",hand:"✋",dad:"👨",chicken:"🐥",table:"🪑",door:"🚪",sun:"☀️",moon:"🌙",frog:"🐸",chair:"🪑",parrot:"🦜",pencil:"✏️",book:"📘",dog:"🐶",cat:"🐱",duck:"🦆",house:"🏠",nest:"🪺",dice:"🎲",cloud:"☁️",finger:"☝️",nose:"👃",rose:"🌹",bed:"🛏️",mouse:"🐭",coconut:"🥥",rocket:"🚀" };
   return pictures[word.toLowerCase()] || "🖼️";
@@ -353,6 +385,15 @@ export default function Home() {
   const [mathLessonDone, setMathLessonDone] = useState(false);
   const [mathFeedback, setMathFeedback] = useState("");
   const [mathBusy, setMathBusy] = useState(false);
+  const [englishOpen, setEnglishOpen] = useState(false);
+  const [englishAssessmentIndex, setEnglishAssessmentIndex] = useState(0);
+  const [englishAssessmentScore, setEnglishAssessmentScore] = useState(0);
+  const [englishLesson, setEnglishLesson] = useState<number | null>(null);
+  const [englishStep, setEnglishStep] = useState(0);
+  const [englishLessonDone, setEnglishLessonDone] = useState(false);
+  const [englishFeedback, setEnglishFeedback] = useState("");
+  const [englishBusy, setEnglishBusy] = useState(false);
+  const [englishListening, setEnglishListening] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
@@ -784,6 +825,126 @@ export default function Home() {
     } finally { setMathBusy(false); }
   }
 
+  const englishAssessment = [
+    { prompt: "👋", answer: "Hello", options: ["Hello", "Goodbye", "Happy"] },
+    { prompt: "🔴", answer: "Red", options: ["Blue", "Red", "Green"] },
+    { prompt: "🐶", answer: "Dog", options: ["Cat", "Cow", "Dog"] },
+    { prompt: "3️⃣", answer: "Three", options: ["Two", "Three", "Five"] },
+    { prompt: "🍎", answer: "Apple", options: ["Banana", "Apple", "Bread"] },
+  ];
+
+  function openEnglishCourse() {
+    if (!activeChild) return;
+    setEnglishOpen(true);
+    setEnglishLesson(null);
+    setEnglishFeedback("");
+    if (activeChild.englishAssessmentScore === undefined) {
+      setEnglishAssessmentIndex(0);
+      setEnglishAssessmentScore(0);
+      window.setTimeout(() => readingVoice(`Hello, ${activeChild.name}! Let's discover your English adventure.`), 200);
+    }
+  }
+
+  async function answerEnglishAssessment(option: string) {
+    if (!account || !activeChild || englishBusy) return;
+    const challenge = englishAssessment[englishAssessmentIndex];
+    if (option !== challenge.answer) {
+      setEnglishFeedback(lang === "es" ? "No te preocupes. Escucha otra vez y prueba de nuevo." : "Don't worry. Listen again and try once more.");
+      playTone("error");
+      return;
+    }
+    const score = englishAssessmentScore + 1;
+    setEnglishAssessmentScore(score);
+    playTone("correct");
+    if (englishAssessmentIndex < englishAssessment.length - 1) {
+      setEnglishFeedback(lang === "es" ? "¡Excelente! Siguiente palabra." : "Excellent! Next word.");
+      window.setTimeout(() => { setEnglishAssessmentIndex((value) => value + 1); setEnglishFeedback(""); }, 450);
+      return;
+    }
+    setEnglishBusy(true);
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { englishAssessmentScore: score, englishLevel: 1, englishCompletedLessons: [], subjects: arrayUnion("english") });
+      const updated = { ...activeChild, englishAssessmentScore: score, englishLevel: 1, englishCompletedLessons: [], subjects: [...new Set([...(activeChild.subjects || []), "english"])] };
+      setActiveChild(updated);
+      setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+      setEnglishFeedback("");
+      speakFeedback("Great job! Your English adventure is ready.", true);
+    } finally { setEnglishBusy(false); }
+  }
+
+  function startEnglishLesson(lessonNumber: number) {
+    setEnglishLesson(lessonNumber);
+    setEnglishStep(0);
+    setEnglishLessonDone(false);
+    setEnglishFeedback("");
+    const lesson = englishLessons[lessonNumber - 1];
+    window.setTimeout(() => readingVoice(`${lesson.title}. ${lesson.words.map((word) => word.word).join(", ")}`), 180);
+  }
+
+  async function advanceEnglishStep() {
+    if (!account || !activeChild || !englishLesson || englishBusy) return;
+    if (englishStep < 4) {
+      playTone("correct");
+      setEnglishFeedback(lang === "es" ? "¡Muy bien! Continuemos." : "Great job! Let's continue.");
+      window.setTimeout(() => { setEnglishStep((value) => value + 1); setEnglishFeedback(""); }, 450);
+      return;
+    }
+    setEnglishBusy(true);
+    playTone("complete");
+    const completed = activeChild.englishCompletedLessons || [];
+    const firstCompletion = !completed.includes(englishLesson);
+    const nextLevel = firstCompletion && englishLesson >= (activeChild.englishLevel || 1) ? Math.min(18, englishLesson + 1) : (activeChild.englishLevel || 1);
+    const updated = { ...activeChild, englishLevel: nextLevel, englishCompletedLessons: firstCompletion ? [...completed, englishLesson] : completed, stars: activeChild.stars + (firstCompletion ? 2 : 0) };
+    try {
+      await updateDoc(doc(db, "parents", account.uid, "children", activeChild.id), { englishLevel: nextLevel, englishCompletedLessons: arrayUnion(englishLesson), stars: updated.stars, lastEnglishAt: serverTimestamp() });
+      setActiveChild(updated);
+      setChildren((profiles) => profiles.map((profile) => profile.id === updated.id ? updated : profile));
+      setEnglishFeedback(lang === "es" ? "¡Lección completada! Ganaste dos estrellas." : "Lesson complete! You earned two stars.");
+      setEnglishLessonDone(true);
+    } finally { setEnglishBusy(false); }
+  }
+
+  function answerEnglishPractice(option: string) {
+    if (!englishLesson || englishLessonDone) return;
+    const lesson = englishLessons[englishLesson - 1];
+    const target = lesson.words[englishStep === 2 ? 1 % lesson.words.length : 3 % lesson.words.length];
+    if (option !== target.word) {
+      setEnglishFeedback(lang === "es" ? "Casi. Presiona el audio y escucha con atención." : "Almost. Press the audio and listen carefully.");
+      playTone("error");
+      return;
+    }
+    void advanceEnglishStep();
+  }
+
+  function startEnglishPronunciation() {
+    if (!englishLesson || typeof window === "undefined") return;
+    type RecognitionResult = { 0: { transcript: string } };
+    type RecognitionEvent = { results: { 0: RecognitionResult } };
+    type RecognitionInstance = { lang: string; interimResults: boolean; maxAlternatives: number; onresult: ((event: RecognitionEvent) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void };
+    type RecognitionConstructor = new () => RecognitionInstance;
+    const browserWindow = window as unknown as { SpeechRecognition?: RecognitionConstructor; webkitSpeechRecognition?: RecognitionConstructor };
+    const Recognition = browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition;
+    if (!Recognition) {
+      setEnglishFeedback(lang === "es" ? "Tu navegador no tiene reconocimiento de voz. Repite en voz alta y presiona «Ya lo dije»." : "Voice recognition is unavailable. Repeat aloud and press “I said it”.");
+      return;
+    }
+    const lesson = englishLessons[englishLesson - 1];
+    const target = lesson.words[2 % lesson.words.length].word.toLowerCase();
+    const recognition = new Recognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const heard = event.results[0][0].transcript.toLowerCase();
+      if (heard.includes(target)) { setEnglishFeedback(`✓ ${heard}`); playTone("correct"); window.setTimeout(() => void advanceEnglishStep(), 500); }
+      else { setEnglishFeedback(lang === "es" ? `Escuché “${heard}”. Probemos otra vez.` : `I heard “${heard}”. Let's try again.`); playTone("error"); }
+    };
+    recognition.onerror = () => setEnglishFeedback(lang === "es" ? "No pude escuchar con claridad. Puedes intentarlo otra vez o usar «Ya lo dije»." : "I couldn't hear clearly. Try again or use “I said it”.");
+    recognition.onend = () => setEnglishListening(false);
+    setEnglishListening(true);
+    recognition.start();
+  }
+
   function startChildLesson() {
     if (activeChild) startCourseLesson(activeChild.level || 1);
   }
@@ -918,8 +1079,8 @@ export default function Home() {
       </section>
 
       <section className="course-strip" id="courses">
-        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "TRES CURRÍCULOS DISPONIBLES" : "THREE CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Mecanografía · Lectura · Matemáticas" : "Typing · Reading · Mathematics"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada niño." : "Progressive paths, short activities, and individual progress for every child."}</p></div>
-        <div className="course-progress"><span><b>03</b><small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small></span><div><i style={{width:"100%"}}/></div></div>
+        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "CUATRO CURRÍCULOS DISPONIBLES" : "FOUR CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Mecanografía · Lectura · Matemáticas · Inglés" : "Typing · Reading · Mathematics · English"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada niño." : "Progressive paths, short activities, and individual progress for every child."}</p></div>
+        <div className="course-progress"><span><b>04</b><small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small></span><div><i style={{width:"100%"}}/></div></div>
       </section>
 
       <section className="education-path" aria-label={lang === "es" ? "Áreas educativas" : "Learning areas"}>
@@ -929,8 +1090,8 @@ export default function Home() {
             ["⌨", lang === "es" ? "Mecanografía" : "Typing", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
             ["📖", lang === "es" ? "Lectura" : "Reading", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
             ["🔢", lang === "es" ? "Matemáticas" : "Mathematics", lang === "es" ? "36 lecciones · Disponible" : "36 lessons · Available"],
-            ["🌎", lang === "es" ? "Inglés" : "English", lang === "es" ? "Próximamente" : "Coming soon"],
-          ].map((area, index) => <article className={index < 3 ? "available" : ""} key={area[1]}><span>{area[0]}</span><div><b>{area[1]}</b><small>{area[2]}</small></div></article>)}
+            ["🌎", lang === "es" ? "Inglés" : "English", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
+          ].map((area) => <article className="available" key={area[1]}><span>{area[0]}</span><div><b>{area[1]}</b><small>{area[2]}</small></div></article>)}
         </div>
       </section>
 
@@ -1014,7 +1175,7 @@ export default function Home() {
               <button className="active"><span>⌨</span><b>{lang === "es" ? "Mecanografía" : "Typing"}</b><small>{lang === "es" ? "En curso" : "In progress"}</small></button>
               <button className="reading-subject" onClick={openReadingCourse}><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{activeChild.readingAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.readingCompletedLessons?.length || 0} de 18` : `${activeChild.readingCompletedLessons?.length || 0} of 18`)}</small></button>
               <button className="math-subject" onClick={openMathCourse}><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{activeChild.mathAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.mathCompletedLessons?.length || 0} de 36` : `${activeChild.mathCompletedLessons?.length || 0} of 36`)}</small></button>
-              <button disabled><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{lang === "es" ? "Próximamente" : "Coming soon"}</small></button>
+              <button className="english-subject" onClick={openEnglishCourse}><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{activeChild.englishAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.englishCompletedLessons?.length || 0} de 18` : `${activeChild.englishCompletedLessons?.length || 0} of 18`)}</small></button>
             </div>
           </section>
 
@@ -1078,6 +1239,18 @@ export default function Home() {
           {activeChild.mathAssessmentScore !== undefined && !mathLesson && <div className="reading-map math-map"><div className="reading-map-title"><div><span className="section-kicker">LUMIMATH · APRENDE JUGANDO</span><h2>{lang === "es" ? `Tu camino matemático, ${activeChild.name}` : `Your math path, ${activeChild.name}`}</h2><p>{lang === "es" ? "Primero suma y resta; después multiplicación y división." : "First addition and subtraction; then multiplication and division."}</p></div><div className="assessment-badge math-badge"><span>🏅</span><b>{activeChild.mathAssessmentScore}/5</b><small>{lang === "es" ? "Evaluación inicial" : "Initial assessment"}</small></div></div><div className="math-module-title"><span>1</span><div><b>{lang === "es" ? "Suma y resta" : "Addition and subtraction"}</b><small>18 {lang === "es" ? "lecciones" : "lessons"}</small></div></div><div className="reading-lesson-grid math-lesson-grid">{mathLessons.map((lesson,index) => { const number=index+1; const completed=activeChild.mathCompletedLessons?.includes(number); const available=completed || number === (activeChild.mathLevel || 1); return <div key={lesson.es}>{index === 18 && <div className="math-module-title second"><span>2</span><div><b>{lang === "es" ? "Multiplicación y división" : "Multiplication and division"}</b><small>18 {lang === "es" ? "lecciones" : "lessons"}</small></div></div>}<article className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`}><span>{completed ? "✓" : available ? number : "🔒"}</span><div><small>{lang === "es" ? `LECCIÓN ${number}` : `LESSON ${number}`}</small><b>{lesson.icon} {lang === "es" ? lesson.es : lesson.en}</b><p>{lang === "es" ? lesson.skillEs : lesson.skillEn}</p></div>{available && <button onClick={() => startMathLesson(number)}>{completed ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}</article></div>; })}</div></div>}
 
           {activeChild.mathAssessmentScore !== undefined && mathLesson && (() => { const lesson=mathLessons[mathLesson-1]; const problem=lesson.problems[mathExercise]; return <div className="reading-lesson-player math-lesson-player"><div className="reading-exercise-head"><button onClick={() => setMathLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button><span>{lang === "es" ? `Ejercicio ${mathExercise+1} de 5` : `Activity ${mathExercise+1} of 5`}</span></div><div className="reading-exercise-progress"><i style={{width:`${((mathExercise+(mathLessonDone?1:0))/5)*100}%`}}/></div><div className="math-lesson-icon">{lesson.icon}</div><span className="section-kicker">{(lang === "es" ? lesson.skillEs : lesson.skillEn).toUpperCase()}</span><h2>{lang === "es" ? lesson.es : lesson.en}</h2><p>{lang === "es" ? "Observa, piensa y elige la respuesta correcta." : "Look, think, and choose the correct answer."}</p><div className={problem.display.length > 25 ? "math-equation word-problem" : "math-equation"}>{problem.display}</div><button className="listen-button" onClick={() => readingVoice(problem.display)}>🔊 {lang === "es" ? "Escuchar reto" : "Hear challenge"}</button>{!mathLessonDone && <div className="math-answer-grid">{mathOptions(problem, lang).map((option) => <button disabled={mathBusy} key={option} onClick={() => void answerMathLesson(option)}>{option}</button>)}</div>}{mathFeedback && <div className="reading-feedback">{mathFeedback}</div>}{mathLessonDone && <button className="button primary next-reading-lesson" onClick={() => mathLesson < 36 ? startMathLesson(mathLesson+1) : setMathLesson(null)}>{mathLesson < 36 ? (lang === "es" ? "Siguiente lección →" : "Next lesson →") : (lang === "es" ? "Finalizar curso" : "Finish course")}</button>}</div>; })()}
+        </section>
+      </div>}
+
+      {englishOpen && activeChild && <div className="reading-backdrop english-backdrop" onMouseDown={() => setEnglishOpen(false)}>
+        <section className="reading-player english-player" onMouseDown={(event) => event.stopPropagation()}>
+          <header className="reading-header english-header"><button onClick={() => englishLesson ? setEnglishLesson(null) : setEnglishOpen(false)}>← {englishLesson ? (lang === "es" ? "Mapa" : "Map") : (lang === "es" ? "Mis materias" : "My subjects")}</button><div><span>LUMIENGLISH</span><b>{lang === "es" ? "Inglés interactivo" : "Interactive English"}</b></div><div className="english-counter"><span>🏆</span><b>{activeChild.englishCompletedLessons?.length || 0}/18</b></div></header>
+
+          {activeChild.englishAssessmentScore === undefined && <div className="english-assessment"><div className="english-world">🌎<span>Hello!</span></div><span className="section-kicker">{lang === "es" ? `PALABRA ${englishAssessmentIndex + 1} DE 5` : `WORD ${englishAssessmentIndex + 1} OF 5`}</span><h2>{lang === "es" ? `Descubramos cuánto inglés conoces, ${activeChild.name}` : `Let's discover how much English you know, ${activeChild.name}`}</h2><p>{lang === "es" ? "Mira la imagen, escucha las opciones y elige la palabra correcta." : "Look at the picture, hear the options, and choose the correct word."}</p><div className="english-assessment-icon">{englishAssessment[englishAssessmentIndex].prompt}</div><button className="listen-button" onClick={() => englishAssessment[englishAssessmentIndex].options.forEach((option,index) => window.setTimeout(() => readingVoice(option), index * 650))}>🔊 {lang === "es" ? "Escuchar opciones" : "Hear options"}</button><div className="english-choice-grid">{englishAssessment[englishAssessmentIndex].options.map((option) => <button disabled={englishBusy} key={option} onClick={() => void answerEnglishAssessment(option)} onMouseEnter={() => readingVoice(option)}>{option}</button>)}</div>{englishFeedback && <div className="reading-feedback">{englishFeedback}</div>}<div className="english-progress"><i style={{width:`${((englishAssessmentIndex + 1) / 5) * 100}%`}}/></div></div>}
+
+          {activeChild.englishAssessmentScore !== undefined && !englishLesson && <div className="reading-map english-map"><div className="reading-map-title"><div><span className="section-kicker">LUMIENGLISH · LISTEN · PLAY · SPEAK</span><h2>{lang === "es" ? `Tu aventura en inglés, ${activeChild.name}` : `Your English adventure, ${activeChild.name}`}</h2><p>{lang === "es" ? "Escucha, juega, pronuncia y gana estrellas en cada lección." : "Listen, play, speak, and earn stars in every lesson."}</p></div><div className="assessment-badge english-badge"><span>🏅</span><b>{activeChild.englishAssessmentScore}/5</b><small>{lang === "es" ? "Evaluación inicial" : "Initial assessment"}</small></div></div><div className="reading-lesson-grid english-lesson-grid">{englishLessons.map((lesson,index) => { const number=index+1; const completed=activeChild.englishCompletedLessons?.includes(number); const available=completed || number === (activeChild.englishLevel || 1); const beginsModule=index===0 || englishLessons[index-1].module!==lesson.module; return <div key={lesson.title}>{beginsModule && <div className="english-module-title"><span>{lesson.module}</span><div><b>{lang === "es" ? lesson.moduleEs : lesson.moduleEn}</b><small>{lang === "es" ? "MÓDULO" : "MODULE"} {lesson.module}</small></div></div>}<article className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`}><span>{completed ? "✓" : available ? number : "🔒"}</span><div><small>{lang === "es" ? `LECCIÓN ${number}` : `LESSON ${number}`}</small><b>{lesson.words[0].icon} {lesson.title}</b><p>{lang === "es" ? lesson.mechanicEs : lesson.mechanicEn}</p></div>{available && <button onClick={() => startEnglishLesson(number)}>{completed ? (lang === "es" ? "Repetir" : "Repeat") : (lang === "es" ? "Empezar" : "Start")}</button>}</article></div>; })}</div></div>}
+
+          {activeChild.englishAssessmentScore !== undefined && englishLesson && (() => { const lesson=englishLessons[englishLesson-1]; const practiceWord=lesson.words[englishStep===2 ? 1 % lesson.words.length : englishStep===3 ? 2 % lesson.words.length : 3 % lesson.words.length]; const stageNames=lang==="es" ? ["Introducción","Tarjetas con audio","Práctica interactiva","Pronunciación","Evaluación y recompensa"] : ["Introduction","Audio flashcards","Interactive practice","Pronunciation","Quiz and reward"]; return <div className="english-lesson-player"><div className="reading-exercise-head"><button onClick={() => setEnglishLesson(null)}>← {lang === "es" ? "Mapa" : "Map"}</button><span>{englishStep+1}/5 · {stageNames[englishStep]}</span></div><div className="english-progress"><i style={{width:`${((englishStep+(englishLessonDone?1:0))/5)*100}%`}}/></div><span className="section-kicker">{lang === "es" ? `MÓDULO ${lesson.module}` : `MODULE ${lesson.module}`}</span><h2>{lesson.title}</h2>{englishStep===0 && <div className="english-stage"><div className="english-scene">{lesson.words.map((word) => <span key={word.word}>{word.icon}</span>)}</div><p>{lang === "es" ? lesson.mechanicEs : lesson.mechanicEn}</p><button className="button primary" onClick={() => { readingVoice(`${lesson.title}. ${lesson.words.map((word) => word.word).join(", ")}`); void advanceEnglishStep(); }}>▶ {lang === "es" ? "Escuchar y comenzar" : "Listen and begin"}</button></div>}{englishStep===1 && <div className="english-stage"><p>{lang === "es" ? "Presiona cada tarjeta para escuchar su pronunciación." : "Press each card to hear its pronunciation."}</p><div className="english-flashcards">{lesson.words.map((word) => <button key={word.word} onClick={() => readingVoice(word.word)}><span>{word.icon}</span><b>{word.word}</b><small>{word.meaning}</small><i>🔊</i></button>)}</div><button className="button primary" onClick={() => void advanceEnglishStep()}>✓ {lang === "es" ? "Escuché las palabras" : "I heard the words"}</button></div>}{(englishStep===2 || englishStep===4) && !englishLessonDone && <div className="english-stage"><p>{englishStep===2 ? (lang === "es" ? "Escucha y selecciona la imagen correcta." : "Listen and select the correct picture.") : (lang === "es" ? "Último reto: elige la palabra correcta." : "Final challenge: choose the correct word.")}</p><button className="english-sound-orb" onClick={() => readingVoice(practiceWord.word)}>🔊<small>{lang === "es" ? "Escuchar" : "Listen"}</small></button><div className="english-picture-choices">{englishChoices(lesson,practiceWord).map((word) => <button key={word.word} onClick={() => answerEnglishPractice(word.word)}><span>{word.icon}</span><b>{word.word}</b></button>)}</div></div>}{englishStep===3 && <div className="english-stage pronunciation-stage"><p>{lang === "es" ? "Presiona el micrófono y di la palabra en inglés." : "Press the microphone and say the English word."}</p><div className="pronunciation-word"><span>{practiceWord.icon}</span><b>{practiceWord.word}</b><small>{practiceWord.meaning}</small></div><button className={`microphone-button ${englishListening ? "listening" : ""}`} onClick={startEnglishPronunciation}>🎙️<small>{englishListening ? (lang === "es" ? "Escuchando…" : "Listening…") : (lang === "es" ? "Pronunciar" : "Speak")}</small></button><button className="said-it-button" onClick={() => void advanceEnglishStep()}>{lang === "es" ? "Ya lo dije en voz alta" : "I said it aloud"}</button></div>}{englishFeedback && <div className="reading-feedback">{englishFeedback}</div>}{englishLessonDone && <div className="english-reward"><span>🏆</span><h3>{lang === "es" ? "¡Dos estrellas para ti!" : "Two stars for you!"}</h3><button className="button primary" onClick={() => englishLesson < 18 ? startEnglishLesson(englishLesson+1) : setEnglishLesson(null)}>{englishLesson < 18 ? (lang === "es" ? "Siguiente lección →" : "Next lesson →") : (lang === "es" ? "Finalizar curso" : "Finish course")}</button></div>}</div>; })()}
         </section>
       </div>}
 
