@@ -113,7 +113,7 @@ const lessonAlternatives: Record<"es" | "en", string[][]> = {
     ["escribir con calma ayuda", "practicar teclado es genial"], ["Lumi aprende Contigo", "Bolivia Escribe Feliz"],
     ["escribo lento, luego rapido.", "mi teclado, mi aventura."], ["¿seguimos? ¡claro que si!", "¿preparado? ¡vamos juntos!"],
     ["cada practica mejora mi ritmo", "mis dedos escriben con confianza"], ["escribo con precision y buen ritmo", "cada tecla me acerca a mi meta"],
-    ["con practica puedo lograr grandes cosas.", "lumiya me ayuda a crecer cada dia."],
+    ["con practica puedo lograr grandes cosas.", "lumi me ayuda a crecer cada dia."],
   ],
   en: [
     [], ["sad lad fall ask", "all lads ask"], ["glass fish had gas", "a glad fish has gas"],
@@ -124,21 +124,21 @@ const lessonAlternatives: Record<"es" | "en", string[][]> = {
     ["typing calmly feels great", "practice makes typing easier"], ["Lumi Learns With Me", "Bolivia Types Today"],
     ["i type slowly, then quickly.", "my keyboard, my adventure."], ["are we ready? yes, we are!", "can we type? let us begin!"],
     ["every practice improves my rhythm", "my fingers type with confidence"], ["i type with accuracy and rhythm", "every key brings me closer"],
-    ["with practice i can achieve great things.", "lumiya helps me grow every day."],
+    ["with practice i can achieve great things.", "lumi helps me grow every day."],
   ],
 };
 
 const copy = {
   es: {
     nav: ["Cursos", "Cómo funciona", "Planes", "Familias"], login: "Ingresar", start: "Comenzar ahora",
-    eyebrow: "Plataforma educativa bilingüe para niños", titleA: "Aprender hoy.", titleB: "Crecer para siempre.",
+    eyebrow: "Plataforma educativa bilingüe", titleA: "Aprender hoy.", titleB: "Crecer para siempre.",
     intro: "Una experiencia educativa divertida y segura para que cada niño aprenda a su ritmo, acompañado por Lumi.",
     trial: "Probar una lección", plans: "Ver planes familiares", trusted: "Primer curso disponible",
-    course: "Mecanografía divertida", courseDesc: "Aprende a escribir con todos los dedos mientras juegas.",
+    course: "Dactilografía divertida", courseDesc: "Aprende a escribir con todos los dedos mientras juegas.",
     progress: "Tu progreso de hoy", lesson: "Lección 1 de 18", practice: "Práctica rápida",
     practiceHint: "Escribe las letras resaltadas usando los dedos correctos.", settings: "Personalizar", reset: "Reiniciar",
     done: "¡Excelente! Completaste la práctica.", accuracy: "Precisión", streak: "Racha", stars: "Estrellas",
-    why: "Mucho más que escribir rápido", whySub: "Lumiya convierte cada práctica en un pequeño logro.",
+    why: "Mucho más que escribir rápido", whySub: "Lumi convierte cada práctica en un pequeño logro.",
     benefits: [["Aprende jugando", "Misiones cortas, premios y escenarios que mantienen la motivación."], ["Avanza a su ritmo", "Ejercicios que se adaptan a las teclas que cada niño necesita reforzar."], ["Acompañamiento familiar", "Los padres ven avances, tiempo de práctica y habilidades dominadas."]],
     familyTitle: "Un plan para cada familia", familySub: "Perfiles separados, progreso individual y acceso desde cualquier computadora.",
     month: "/mes", choose: "Elegir plan", popular: "Más elegido", planNames: ["Individual", "Familia", "Familia Plus"],
@@ -148,13 +148,13 @@ const copy = {
   },
   en: {
     nav: ["Courses", "How it works", "Plans", "Families"], login: "Log in", start: "Start now",
-    eyebrow: "Bilingual learning platform for children", titleA: "Learn today.", titleB: "Grow forever.",
+    eyebrow: "Bilingual learning platform", titleA: "Learn today.", titleB: "Grow forever.",
     intro: "A fun and safe learning experience where every child grows at their own pace, guided by Lumi.",
     trial: "Try a lesson", plans: "See family plans", trusted: "First course available", course: "Fun Typing",
     courseDesc: "Learn to type with every finger while you play.", progress: "Today’s progress", lesson: "Lesson 1 of 18",
     practice: "Quick practice", practiceHint: "Type the highlighted letters using the correct fingers.", settings: "Customize",
     reset: "Reset", done: "Great job! You completed the practice.", accuracy: "Accuracy", streak: "Streak", stars: "Stars",
-    why: "Much more than typing fast", whySub: "Lumiya turns every practice into a small achievement.",
+    why: "Much more than typing fast", whySub: "Lumi turns every practice into a small achievement.",
     benefits: [["Learn through play", "Short missions, rewards and worlds that keep children motivated."], ["Grow at their pace", "Exercises adapt to the keys each child needs to reinforce."], ["Family guidance", "Parents see progress, practice time and mastered skills."]],
     familyTitle: "A plan for every family", familySub: "Separate profiles, individual progress and access from any computer.",
     month: "/month", choose: "Choose plan", popular: "Most popular", planNames: ["Individual", "Family", "Family Plus"],
@@ -1067,9 +1067,9 @@ export default function Home() {
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Lumiya Academy">
+        <a className="brand" href="#top" aria-label="Lumi">
           <span className="brand-mark"><i>L</i><b>✦</b></span>
-          <span><strong>Lumiya</strong><small>ACADEMY</small></span>
+          <span><strong>Lumi</strong></span>
         </a>
         <nav>{t.nav.map((item, i) => <a key={item} href={["#courses", "#how", "#plans", "#families"][i]}>{item}</a>)}</nav>
         <div className="header-actions">
@@ -1087,8 +1087,8 @@ export default function Home() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <div className="eyebrow"><span>✦</span>{t.eyebrow}</div>
-          <h1>{t.titleA}<br/><em>{t.titleB}</em></h1>
+          <h1 className="hero-platform-title"><span>✦</span>{t.eyebrow}</h1>
+          <h2 className="hero-slogan">{t.titleA}<br/><em>{t.titleB}</em></h2>
           <p>{t.intro}</p>
           <div className="hero-buttons">
             <a className="button primary" href="#practice">{t.trial} <span>→</span></a>
@@ -1097,7 +1097,7 @@ export default function Home() {
           <div className="mini-proof"><span className="avatar-stack"><i>☺</i><i>★</i><i>♥</i></span><span><b>{t.trusted}</b><small>{t.course}</small></span></div>
         </div>
 
-        <div className="hero-visual" aria-label="Lumiya learning preview">
+        <div className="hero-visual" aria-label="Lumi learning preview">
           <div className="orbit orbit-one"/><div className="orbit orbit-two"/>
           <div className="lumi"><span className="ray r1"/><span className="ray r2"/><span className="ray r3"/><span className="ray r4"/><div className="lumi-body"><i>•</i><i>•</i><b>⌣</b></div><div className="lumi-tail"/></div>
           <div className="floating-card card-progress"><span className="round-icon purple">✓</span><div><small>{t.progress}</small><b>3 {lang === "es" ? "lecciones" : "lessons"}</b></div></div>
@@ -1108,15 +1108,15 @@ export default function Home() {
       </section>
 
       <section className="course-strip" id="courses">
-        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "CUATRO CURRÍCULOS DISPONIBLES" : "FOUR CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Mecanografía · Lectura · Matemáticas · Inglés" : "Typing · Reading · Mathematics · English"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada niño." : "Progressive paths, short activities, and individual progress for every child."}</p></div>
+        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "CUATRO CURRÍCULOS DISPONIBLES" : "FOUR CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Dactilografía · Lectura · Matemáticas · Inglés" : "Typing · Reading · Mathematics · English"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada estudiante." : "Progressive paths, short activities, and individual progress for every student."}</p></div>
         <div className="course-progress"><span><b>04</b><small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small></span><div><i style={{width:"100%"}}/></div></div>
       </section>
 
       <section className="education-path" aria-label={lang === "es" ? "Áreas educativas" : "Learning areas"}>
-        <div className="education-path-copy"><span className="section-kicker">{lang === "es" ? "ESCUELA DIGITAL LUMIYA" : "LUMIYA DIGITAL SCHOOL"}</span><h2>{lang === "es" ? "Una escuela que crece con cada niño" : "A school that grows with every child"}</h2><p>{lang === "es" ? "Comenzamos con mecanografía y avanzaremos hacia las habilidades fundamentales para aprender con confianza." : "We begin with typing and grow toward the essential skills children need to learn confidently."}</p></div>
+        <div className="education-path-copy"><span className="section-kicker">{lang === "es" ? "ESCUELA DIGITAL LUMI" : "LUMI DIGITAL SCHOOL"}</span><h2>{lang === "es" ? "Una escuela que crece con cada estudiante" : "A school that grows with every student"}</h2><p>{lang === "es" ? "Comenzamos con dactilografía y avanzaremos hacia las habilidades fundamentales para aprender con confianza." : "We begin with typing and grow toward the essential skills every student needs to learn confidently."}</p></div>
         <div className="education-area-grid">
           {[
-            ["⌨", lang === "es" ? "Mecanografía" : "Typing", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
+            ["⌨", lang === "es" ? "Dactilografía" : "Typing", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
             ["📖", lang === "es" ? "Lectura" : "Reading", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
             ["🔢", lang === "es" ? "Matemáticas" : "Mathematics", lang === "es" ? "36 lecciones · Disponible" : "36 lessons · Available"],
             ["🌎", lang === "es" ? "Inglés" : "English", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
@@ -1143,7 +1143,7 @@ export default function Home() {
       </section>
 
       <section className="benefits" id="how">
-        <div className="section-heading"><span className="section-kicker">{lang === "es" ? "APRENDER CON LUMIYA" : "LEARN WITH LUMIYA"}</span><h2>{t.why}</h2><p>{t.whySub}</p></div>
+        <div className="section-heading"><span className="section-kicker">{lang === "es" ? "APRENDER CON LUMI" : "LEARN WITH LUMI"}</span><h2>{t.why}</h2><p>{t.whySub}</p></div>
         <div className="benefit-grid">{t.benefits.map((benefit, index) => <article key={benefit[0]}><span className={`benefit-icon icon-${index}`}>{["✦", "↗", "♡"][index]}</span><h3>{benefit[0]}</h3><p>{benefit[1]}</p></article>)}</div>
       </section>
 
@@ -1152,9 +1152,9 @@ export default function Home() {
         <div className="plan-grid">{[35, 59, 79].map((price, index) => <article key={price} className={index === 1 ? "featured" : ""}>{index === 1 && <span className="popular">{t.popular}</span>}<h3>{t.planNames[index]}</h3><p>{t.planKids[index]}</p><div className="price"><b>{price} Bs</b><span>{t.month}</span></div><ul><li>✓ {lang === "es" ? "Acceso a todos los cursos activos" : "Access to all active courses"}</li><li>✓ {lang === "es" ? "Progreso y certificados" : "Progress and certificates"}</li><li>✓ {lang === "es" ? "Panel para padres" : "Parent dashboard"}</li></ul><button onClick={() => account ? setFamilyOpen(true) : openAccount("login")} className={`button ${index === 1 ? "primary" : "secondary"}`}>{t.choose}</button></article>)}</div>
       </section>
 
-      <section className="family-banner" id="families"><div><span>✦</span><h2>{lang === "es" ? "Cada niño tiene su propia forma de brillar." : "Every child has their own way to shine."}</h2><p>{lang === "es" ? "Lumiya se adapta a su ritmo, sus intereses y sus necesidades." : "Lumiya adapts to their pace, interests and needs."}</p></div><button className="button light" onClick={() => account ? setFamilyOpen(true) : openAccount("login")}>{t.login} →</button></section>
+      <section className="family-banner" id="families"><div><span>✦</span><h2>{lang === "es" ? "Cada estudiante tiene su propia forma de brillar." : "Every student has their own way to shine."}</h2><p>{lang === "es" ? "Lumi se adapta a su ritmo, sus intereses y sus necesidades." : "Lumi adapts to their pace, interests and needs."}</p></div><button className="button light" onClick={() => account ? setFamilyOpen(true) : openAccount("login")}>{t.login} →</button></section>
 
-      <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a><p>© 2026 Lumiya Academy · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
+      <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumi</strong></span></a><p>© 2026 Lumi · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
 
       {settingsOpen && activeChild && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">{activeChild.name.toUpperCase()}</span><h2>{lang === "es" ? "Configurar su teclado" : "Keyboard settings"}</h2><p>{lang === "es" ? "Estas preferencias se guardarán únicamente para este estudiante." : "These preferences are saved only for this student."}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><div className={`keyboard-settings-preview preview-${world} ${bigText ? "large" : ""}`}><span>{hands ? "☝  A S D F   J K L Ñ  ☝" : "A S D F   J K L Ñ"}</span><small>{sound ? "🔊" : "🔇"} {lang === "es" ? "Vista previa" : "Preview"}</small></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{lang === "es" ? "Sonidos de acierto y error" : "Success and error sounds"}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button disabled={settingsBusy} className="button primary panel-save" onClick={saveStudentSettings}>{settingsBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Guardar configuración" : "Save settings")}</button>{settingsMessage && <p className={`settings-message ${settingsMessage.includes("No ") || settingsMessage.includes("Could ") ? "error" : ""}`}>{settingsMessage}</p>}</aside></div>}
 
@@ -1162,7 +1162,7 @@ export default function Home() {
         <section className="auth-card" onMouseDown={(event) => event.stopPropagation()}>
           <button className="modal-close" onClick={() => setAuthOpen(false)}>×</button>
           <span className="brand-mark auth-logo"><i>L</i><b>✦</b></span>
-          <span className="section-kicker">LUMIYA ACADEMY</span>
+          <span className="section-kicker">LUMI</span>
           <h2>{authMode === "login" ? (lang === "es" ? "Bienvenido de nuevo" : "Welcome back") : (lang === "es" ? "Crea tu cuenta familiar" : "Create your family account")}</h2>
           <p>{authMode === "login" ? (lang === "es" ? "Ingresa para continuar el aprendizaje." : "Log in to continue learning.") : (lang === "es" ? "El adulto crea la cuenta y luego agrega los perfiles infantiles." : "An adult creates the account and then adds child profiles.")}</p>
           <form onSubmit={submitAccount}>
@@ -1182,7 +1182,7 @@ export default function Home() {
         <section className="student-dashboard" onMouseDown={(event) => event.stopPropagation()}>
           <header className="student-topbar">
             <button className="student-family-back" onClick={() => { setActiveChild(null); setFamilyOpen(true); }}>← {lang === "es" ? "Mi familia" : "My family"}</button>
-            <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumiya</strong><small>ACADEMY</small></span></a>
+            <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumi</strong></span></a>
             <div className="student-top-actions"><button className="student-settings" onClick={() => { setSettingsMessage(""); setSettingsOpen(true); }}>⚙ {lang === "es" ? "Mi teclado" : "My keyboard"}</button><button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button></div>
           </header>
 
@@ -1201,7 +1201,7 @@ export default function Home() {
           <section className="student-subjects">
             <div><span className="section-kicker">{activeChild.gradeBand === "secondary" ? (lang === "es" ? "SECUNDARIA" : "SECONDARY") : (lang === "es" ? "PRIMARIA" : "PRIMARY")}</span><h3>{lang === "es" ? "Mis materias" : "My subjects"}</h3></div>
             <div className="subject-tabs">
-              <button className="active"><span>⌨</span><b>{lang === "es" ? "Mecanografía" : "Typing"}</b><small>{lang === "es" ? "En curso" : "In progress"}</small></button>
+              <button className="active"><span>⌨</span><b>{lang === "es" ? "Dactilografía" : "Typing"}</b><small>{lang === "es" ? "En curso" : "In progress"}</small></button>
               <button className="reading-subject" onClick={openReadingCourse}><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{activeChild.readingAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.readingCompletedLessons?.length || 0} de 18` : `${activeChild.readingCompletedLessons?.length || 0} of 18`)}</small></button>
               <button className="math-subject" onClick={openMathCourse}><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{activeChild.mathAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.mathCompletedLessons?.length || 0} de 36` : `${activeChild.mathCompletedLessons?.length || 0} of 36`)}</small></button>
               <button className="english-subject" onClick={openEnglishCourse}><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{activeChild.englishAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.englishCompletedLessons?.length || 0} de 18` : `${activeChild.englishCompletedLessons?.length || 0} of 18`)}</small></button>
@@ -1345,12 +1345,12 @@ export default function Home() {
 
       {familyOpen && account && <div className="modal-backdrop family-backdrop" onMouseDown={() => setFamilyOpen(false)}>
         <aside className="family-panel" onMouseDown={(event) => event.stopPropagation()}>
-          <div className="settings-head family-heading"><div><span className="section-kicker">{lang === "es" ? "MI CUENTA LUMIYA" : "MY LUMIYA ACCOUNT"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email} · {lang === "es" ? "Cuenta familiar" : "Family account"}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
+          <div className="settings-head family-heading"><div><span className="section-kicker">{lang === "es" ? "MI CUENTA LUMI" : "MY LUMI ACCOUNT"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email} · {lang === "es" ? "Cuenta familiar" : "Family account"}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
           <div className="family-summary"><span><b>{children.length}</b><small>{lang === "es" ? "Estudiantes" : "Students"}</small></span><span><b>{children.reduce((total, child) => total + (child.completedLessons?.length || 0), 0)}</b><small>{lang === "es" ? "Lecciones completadas" : "Completed lessons"}</small></span><span><b>{children.reduce((total, child) => total + child.stars, 0)}</b><small>{t.stars}</small></span></div>
           {children.length > 0 && <>
             <div className="family-section-title"><div><h3>{lang === "es" ? "Estudiantes inscritos" : "Enrolled students"}</h3><p>{lang === "es" ? "Elige un estudiante para ver sus materias, configurar su teclado y continuar aprendiendo." : "Choose a student to see subjects, configure their keyboard and continue learning."}</p></div></div>
             <div className="children-grid">
-              {children.map((child) => { const completed = child.completedLessons?.length || 0; const progress = Math.round((completed / 18) * 100); return <button className="child-card progress-child-card" onClick={() => enterChildSpace(child)} key={child.id}><span>{child.avatar}</span><div className="child-card-main"><div><b>{child.name}</b><em>{child.gradeBand === "secondary" ? (lang === "es" ? "Secundaria" : "Secondary") : (lang === "es" ? "Primaria" : "Primary")}</em></div><small>{child.age} {lang === "es" ? "años" : "years"} · {lang === "es" ? `Lección ${Math.max(1, child.level)} de 18` : `Lesson ${Math.max(1, child.level)} of 18`}</small><div className="child-progress"><i style={{ width: `${progress}%` }}/></div><small className="child-progress-label"><b>{progress}%</b> {lang === "es" ? "de Mecanografía" : "of Typing"}</small><div className="child-subject-pills"><span>⌨ {lang === "es" ? "Mecanografía" : "Typing"}</span><span className="future-subject">+ {lang === "es" ? "Materias" : "Subjects"}</span></div></div><i>→</i></button>; })}
+              {children.map((child) => { const completed = child.completedLessons?.length || 0; const progress = Math.round((completed / 18) * 100); return <button className="child-card progress-child-card" onClick={() => enterChildSpace(child)} key={child.id}><span>{child.avatar}</span><div className="child-card-main"><div><b>{child.name}</b><em>{child.gradeBand === "secondary" ? (lang === "es" ? "Secundaria" : "Secondary") : (lang === "es" ? "Primaria" : "Primary")}</em></div><small>{child.age} {lang === "es" ? "años" : "years"} · {lang === "es" ? `Lección ${Math.max(1, child.level)} de 18` : `Lesson ${Math.max(1, child.level)} of 18`}</small><div className="child-progress"><i style={{ width: `${progress}%` }}/></div><small className="child-progress-label"><b>{progress}%</b> {lang === "es" ? "de Dactilografía" : "of Typing"}</small><div className="child-subject-pills"><span>⌨ {lang === "es" ? "Dactilografía" : "Typing"}</span><span className="future-subject">+ {lang === "es" ? "Materias" : "Subjects"}</span></div></div><i>→</i></button>; })}
             </div>
           </>}
           <form className="child-form" onSubmit={addChildProfile}>
