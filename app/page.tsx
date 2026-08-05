@@ -170,6 +170,35 @@ const rows = [
   ["Z", "X", "C", "V", "B", "N", "M"],
 ];
 
+type VisualKey = { label: string; values?: string[]; wide?: string };
+
+const typingKeyboard: Record<"es" | "en", VisualKey[][]> = {
+  es: [
+    [{label:"º",values:["º","ª"]},{label:"1\n!",values:["1","!"]},{label:'2\n"',values:["2",'"']},{label:"3\n#",values:["3","#"]},{label:"4\n$",values:["4","$"]},{label:"5\n%",values:["5","%"]},{label:"6\n&",values:["6","&"]},{label:"7\n/",values:["7","/"]},{label:"8\n(",values:["8","("]},{label:"9\n)",values:["9",")"]},{label:"0\n=",values:["0","="]},{label:"'\n?",values:["'","?"]},{label:"¿\n¡",values:["¿","¡"]},{label:"⌫",wide:"backspace"}],
+    [{label:"Tab",wide:"tab"},..."QWERTYUIOP".split("").map(label=>({label,values:[label.toLowerCase(),label]})),{label:"´\n¨",values:["´","¨"]},{label:"+\n*",values:["+","*"]}],
+    [{label:"Bloq",wide:"caps"},..."ASDFGHJKLÑ".split("").map(label=>({label,values:[label.toLowerCase(),label]})),{label:"{\n[",values:["{","["]},{label:"}\n]",values:["}","]"]},{label:"Enter",wide:"enter"}],
+    [{label:"Shift",wide:"shift"},..."ZXCVBNM".split("").map(label=>({label,values:[label.toLowerCase(),label]})),{label:";\n,",values:[";",","]},{label:":\n.",values:[":","."]},{label:"_\n-",values:["_","-"]},{label:"Shift",wide:"shift"}],
+  ],
+  en: [
+    [{label:"`\n~",values:["`","~"]},{label:"1\n!",values:["1","!"]},{label:"2\n@",values:["2","@"]},{label:"3\n#",values:["3","#"]},{label:"4\n$",values:["4","$"]},{label:"5\n%",values:["5","%"]},{label:"6\n^",values:["6","^"]},{label:"7\n&",values:["7","&"]},{label:"8\n*",values:["8","*"]},{label:"9\n(",values:["9","("]},{label:"0\n)",values:["0",")"]},{label:"-\n_",values:["-","_"]},{label:"=\n+",values:["=","+"]},{label:"⌫",wide:"backspace"}],
+    [{label:"Tab",wide:"tab"},..."QWERTYUIOP".split("").map(label=>({label,values:[label.toLowerCase(),label]})),{label:"[\n{",values:["[","{"]},{label:"]\n}",values:["]","}"]},{label:"\\\n|",values:["\\","|"]}],
+    [{label:"Caps",wide:"caps"},..."ASDFGHJKL".split("").map(label=>({label,values:[label.toLowerCase(),label]})),{label:";\n:",values:[";",":"]},{label:"'\n\"",values:["'",'"']},{label:"Enter",wide:"enter"}],
+    [{label:"Shift",wide:"shift"},..."ZXCVBNM".split("").map(label=>({label,values:[label.toLowerCase(),label]})),{label:",\n<",values:[",","<"]},{label:".\n>",values:[".",">"]},{label:"/\n?",values:["/","?"]},{label:"Shift",wide:"shift"}],
+  ],
+};
+
+function visualKeyMatches(key: VisualKey, expected: string) {
+  return key.values?.includes(expected) || false;
+}
+
+function needsShift(expected: string) {
+  if (!expected || expected === " ") return false;
+  if (/^[A-ZÁÉÍÓÚÜÑ]$/.test(expected)) return true;
+  return langShiftSymbols.has(expected);
+}
+
+const langShiftSymbols = new Set(["!", "?", '"', "#", "$", "%", "&", "/", "(", ")", "=", "ª", "¡", "¨", "*", "{", "}", "_", "~", "@", "^", "+", "|", ":", "<", ">"]);
+
 type ReadingExercise = { kind: "listen" | "choice" | "picture" | "build"; display: string; sound: string; prompt: string; options?: string[]; answer?: string; icon?: string; story?: string };
 type ReadingLesson = { title: string; skill: string; exercises: ReadingExercise[] };
 
@@ -553,7 +582,7 @@ export default function Home() {
     () =>
       target.split("").map((letter, index) => (
         <span key={index} className={index < typed ? "typed" : index === typed ? "current-letter" : ""}>
-          {letter === " " ? "·" : letter}
+          {letter === " " ? "\u00A0" : letter}
         </span>
       )),
     [target, typed],
@@ -1273,7 +1302,7 @@ export default function Home() {
 
               {!courseResult ? <>
                 <div className="course-target" aria-live="polite">
-                  {courseTarget.split("").map((letter, index) => <span key={index} className={index < courseTyped ? "done" : index === courseTyped ? "now" : ""}>{letter === " " ? "·" : letter}</span>)}
+                  {courseTarget.split("").map((letter, index) => <span key={index} className={`${letter === " " ? "space-character" : ""} ${index < courseTyped ? "done" : index === courseTyped ? "now" : ""}`}>{letter === " " ? "\u00A0" : letter}</span>)}
                 </div>
                 <input autoFocus className="course-capture" value="" onChange={() => {}} onKeyDown={handleCourseKey} autoComplete="off" autoCapitalize="off" aria-label={lang === "es" ? "Escribe el ejercicio" : "Type the exercise"} placeholder={lang === "es" ? "Haz clic aquí y comienza…" : "Click here and start…"}/>
                 <div className="finger-instruction"><span>☝</span><div><small>{lang === "es" ? "DEDO CORRECTO" : "CORRECT FINGER"}</small><b>{fingerNames[activeFinger][lang]}</b></div></div>
@@ -1290,12 +1319,13 @@ export default function Home() {
                       <span className={`guide-thumb right-thumb ${activeFinger === "thumb" ? "finger-active" : ""} ${pressedFinger === "thumb" ? "finger-pressed" : ""}`}><i/></span>
                     </div>
                   </div>}
-                  <div className="course-keyboard">
-                    {rows.map((row, rowIndex) => <div key={rowIndex}>{row.map((rawKey) => {
-                      const key = lang === "en" && rawKey === "Ñ" ? ";" : rawKey;
-                      return <span className={courseCurrent.toUpperCase() === key ? "active" : ""} key={key}>{key}</span>;
+                  <div className="course-keyboard" aria-label={lang === "es" ? "Teclado español completo" : "Full English keyboard"}>
+                    {typingKeyboard[lang].map((row, rowIndex) => <div className={`physical-row row-${rowIndex}`} key={rowIndex}>{row.map((key, keyIndex) => {
+                      const active = visualKeyMatches(key, courseCurrent);
+                      const shiftActive = key.wide === "shift" && needsShift(courseCurrent);
+                      return <span className={`${key.wide ? `key-${key.wide}` : ""} ${active || shiftActive ? "active" : ""}`} key={`${key.label}-${keyIndex}`}>{key.label.split("\n").map((part, partIndex)=><i key={partIndex}>{part}</i>)}</span>;
                     })}</div>)}
-                    <div><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}>SPACE</span></div>
+                    <div className="physical-row space-row"><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}><i>{lang === "es" ? "ESPACIO" : "SPACE"}</i></span></div>
                   </div>
                 </div>
                 <div className="course-live-stats"><span><b>{courseLesson === 1 ? `${courseTyped}/${courseTarget.length}` : `${liveAccuracy}%`}</b><small>{courseLesson === 1 ? (lang === "es" ? "Teclas ubicadas" : "Keys found") : t.accuracy}</small></span><span><b>{courseMistakes}</b><small>{lang === "es" ? "Intentos" : "Attempts"}</small></span><span><b>{courseTyped}/{courseTarget.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span></div>
