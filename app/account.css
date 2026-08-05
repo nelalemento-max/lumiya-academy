@@ -11,7 +11,7 @@
   .hand-guide{min-width:820px}
   .guide-hand{transform:none!important;bottom:1px!important}
   .left-guide-hand{left:19.4%!important;transform-origin:center!important}
-  .right-guide-hand{left:55.5%!important;right:auto!important;transform-origin:center!important}
+  .right-guide-hand{left:54%!important;right:auto!important;transform-origin:center!important}
 }
 
 @media (max-width: 600px) {
@@ -111,7 +111,7 @@
 .finger-instruction { width: fit-content; min-width: 205px; margin: 0 auto 9px; padding: 8px 13px; border-radius: 13px; background: #eeecff; border: 1px solid #d9d5ff; display: flex; align-items: center; justify-content: center; gap: 9px; color: #30276d; }.finger-instruction > span { font-size: 22px; color: #6257e8; }.finger-instruction div { display: flex; flex-direction: column; }.finger-instruction small { color: #817aa9; font-size: 7px; letter-spacing: 1.3px; font-weight: 900; }.finger-instruction b { font-size: 12px; text-transform: capitalize; margin-top: 2px; }
 .course-keyboard-wrap { max-width: 900px; margin: auto; position: relative; }
 .hand-guide { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; border-radius: 18px; }
-.guide-hand { position: absolute; width: 235px; height: 150px; bottom: 1px; opacity: .48; filter: drop-shadow(0 3px 3px #2b285233); }.left-guide-hand { left: 19.4%; }.right-guide-hand { left: 55.5%; }
+.guide-hand { position: absolute; width: 235px; height: 150px; bottom: 1px; opacity: .48; filter: drop-shadow(0 3px 3px #2b285233); }.left-guide-hand { left: 19.4%; }.right-guide-hand { left: 54%; }
 .guide-palm { position: absolute; width: 175px; height: 66px; bottom: 1px; left: 34px; border-radius: 48% 48% 35% 35%; background: rgba(98,87,232,.22); border: 2px solid rgba(98,87,232,.35); }
 .guide-finger,.guide-thumb { --finger:#6257e8; position: absolute; display: block; border-radius: 18px 18px 11px 11px; background: color-mix(in srgb,var(--finger) 28%,transparent); border: 2px solid color-mix(in srgb,var(--finger) 55%,transparent); transition: opacity .15s,transform .15s,background .15s,box-shadow .15s; }
 .guide-finger { width: 31px; bottom: 55px; }.guide-finger i,.guide-thumb i { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: color-mix(in srgb,var(--finger) 80%,white); left: 50%; top: 7px; transform: translateX(-50%); opacity: .78; }
