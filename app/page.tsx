@@ -79,7 +79,7 @@ const courseLessons: Record<"es" | "en", CourseLesson[]> = {
     { title: "Signos y preguntas", skill: "¿ ? ¡ !", target: "¿listos? ¡vamos a escribir!" },
     { title: "Frases fluidas", skill: "Ritmo continuo", target: "cada dia escribo con mayor precision" },
     { title: "Desafío de velocidad", skill: "Mantén 85% o más", target: "lumi acompaña mi aventura de aprender" },
-    { title: "Reto de la estrella", skill: "Graduación LumiType", target: "aprender hoy, crecer para siempre." },
+    { title: "Reto de palabras por minuto", skill: "Velocidad, precisión y resistencia", target: "cada dia practico con calma y precision. mis dedos encuentran cada tecla mientras mantengo un ritmo constante. escribir mejor me ayuda a estudiar, crear y comunicar mis ideas. hoy completo este desafio con confianza porque aprender un poco cada dia me permite crecer y alcanzar nuevas metas." },
   ],
   en: [
     { title: "Place your fingers", skill: "Feel the guides on F and J", target: "fjasdkl;" },
@@ -99,7 +99,7 @@ const courseLessons: Record<"es" | "en", CourseLesson[]> = {
     { title: "Question marks", skill: "Questions and excitement", target: "are you ready? let us type!" },
     { title: "Fluent sentences", skill: "Continuous rhythm", target: "every day i type with more precision" },
     { title: "Speed challenge", skill: "Keep 85% or more", target: "lumi guides my learning adventure" },
-    { title: "Star challenge", skill: "LumiType graduation", target: "learn today, grow forever." },
+    { title: "Words per minute challenge", skill: "Speed, accuracy and endurance", target: "every day i practice with calm and accuracy. my fingers find each key while i keep a steady rhythm. typing better helps me study, create, and share my ideas. today i complete this challenge with confidence because learning a little every day helps me grow and reach new goals." },
   ],
 };
 
@@ -113,7 +113,7 @@ const lessonAlternatives: Record<"es" | "en", string[][]> = {
     ["escribir con calma ayuda", "practicar teclado es genial"], ["Lumi aprende Contigo", "Bolivia Escribe Feliz"],
     ["escribo lento, luego rapido.", "mi teclado, mi aventura."], ["¿seguimos? ¡claro que si!", "¿preparado? ¡vamos juntos!"],
     ["cada practica mejora mi ritmo", "mis dedos escriben con confianza"], ["escribo con precision y buen ritmo", "cada tecla me acerca a mi meta"],
-    ["con practica puedo lograr grandes cosas.", "lumi me ayuda a crecer cada dia."],
+    ["practico cada dia para escribir mejor. mantengo la mirada en la pantalla y dejo que mis dedos encuentren las teclas. con paciencia, precision y un ritmo constante puedo compartir mis ideas con claridad y confianza.", "escribir con rapidez requiere calma y practica. respiro, acomodo mis manos y avanzo palabra por palabra. cada ejercicio fortalece mis dedos y me ayuda a estudiar, crear y aprender mucho mejor."],
   ],
   en: [
     [], ["sad lad fall ask", "all lads ask"], ["glass fish had gas", "a glad fish has gas"],
@@ -124,7 +124,7 @@ const lessonAlternatives: Record<"es" | "en", string[][]> = {
     ["typing calmly feels great", "practice makes typing easier"], ["Lumi Learns With Me", "Bolivia Types Today"],
     ["i type slowly, then quickly.", "my keyboard, my adventure."], ["are we ready? yes, we are!", "can we type? let us begin!"],
     ["every practice improves my rhythm", "my fingers type with confidence"], ["i type with accuracy and rhythm", "every key brings me closer"],
-    ["with practice i can achieve great things.", "lumi helps me grow every day."],
+    ["i practice every day to type better. i keep my eyes on the screen and let my fingers find the keys. with patience, accuracy, and a steady rhythm i can share my ideas clearly and confidently.", "typing quickly takes calm and practice. i breathe, place my hands, and move forward one word at a time. every exercise strengthens my fingers and helps me study, create, and learn much better."],
   ],
 };
 
@@ -363,6 +363,9 @@ function fingerForKey(key: string): FingerId {
 
 export default function Home() {
   const [lang, setLang] = useState<"es" | "en">("es");
+  const [quickSubject, setQuickSubject] = useState<"typing" | "reading" | "math" | "english">("typing");
+  const [quickRound, setQuickRound] = useState(0);
+  const [quickFeedback, setQuickFeedback] = useState("");
   const [typed, setTyped] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -385,7 +388,9 @@ export default function Home() {
   const [courseTarget, setCourseTarget] = useState("");
   const [courseMistakes, setCourseMistakes] = useState(0);
   const [courseBusy, setCourseBusy] = useState(false);
-  const [courseResult, setCourseResult] = useState<{ passed: boolean; accuracy: number; stars: number } | null>(null);
+  const [courseResult, setCourseResult] = useState<{ passed: boolean; accuracy: number; stars: number; wpm?: number } | null>(null);
+  const [courseStartedAt, setCourseStartedAt] = useState<number | null>(null);
+  const [courseElapsedSeconds, setCourseElapsedSeconds] = useState(0);
   const [pressedFinger, setPressedFinger] = useState<FingerId | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [childName, setChildName] = useState("");
@@ -430,6 +435,11 @@ export default function Home() {
   const current = target[typed] ?? "";
   const accuracy = typed + mistakes === 0 ? 100 : Math.round((typed / (typed + mistakes)) * 100);
   const worlds = ["classroom", "space", "ocean"];
+  const quickChallenges = {
+    reading: lang === "es" ? [{ prompt: "¿Cuál palabra corresponde a 🐶?", options: ["perro", "gato", "pato"], answer: "perro" }, { prompt: "Completa: 🏠 es una…", options: ["casa", "mesa", "masa"], answer: "casa" }] : [{ prompt: "Which word matches 🐶?", options: ["dog", "cat", "duck"], answer: "dog" }, { prompt: "Complete: 🏠 is a…", options: ["house", "mouse", "horse"], answer: "house" }],
+    math: lang === "es" ? [{ prompt: "¿Cuánto es 7 + 5?", options: ["10", "12", "14"], answer: "12" }, { prompt: "¿Cuánto es 15 − 6?", options: ["8", "9", "11"], answer: "9" }] : [{ prompt: "What is 7 + 5?", options: ["10", "12", "14"], answer: "12" }, { prompt: "What is 15 − 6?", options: ["8", "9", "11"], answer: "9" }],
+    english: lang === "es" ? [{ prompt: "¿Qué significa “apple”?", options: ["Manzana 🍎", "Naranja 🍊", "Uva 🍇"], answer: "Manzana 🍎" }, { prompt: "¿Qué significa “happy”?", options: ["Feliz 😊", "Triste 😢", "Cansado 😴"], answer: "Feliz 😊" }] : [{ prompt: "Choose the picture for “apple”", options: ["Apple 🍎", "Orange 🍊", "Grape 🍇"], answer: "Apple 🍎" }, { prompt: "Choose the face for “happy”", options: ["Happy 😊", "Sad 😢", "Tired 😴"], answer: "Happy 😊" }],
+  };
 
   useEffect(() => onAuthStateChanged(auth, async (currentAccount) => {
     setAccount(currentAccount);
@@ -453,6 +463,12 @@ export default function Home() {
     window.addEventListener("keydown", advanceWithEnter);
     return () => window.removeEventListener("keydown", advanceWithEnter);
   }, [courseResult, courseLesson, courseBusy]);
+
+  useEffect(() => {
+    if (courseLesson !== 18 || courseResult || !courseStartedAt) return;
+    const timer = window.setInterval(() => setCourseElapsedSeconds(Math.max(1, Math.floor((Date.now() - courseStartedAt) / 1000))), 1000);
+    return () => window.clearInterval(timer);
+  }, [courseLesson, courseResult, courseStartedAt]);
 
   useEffect(() => {
     if (!readingOpen || readingStage >= 7) return;
@@ -603,6 +619,18 @@ export default function Home() {
   function resetPractice() {
     setTyped(0);
     setMistakes(0);
+  }
+
+  function chooseQuickAnswer(answer: string, correct: string) {
+    const right = answer === correct;
+    setQuickFeedback(right ? (lang === "es" ? "¡Yey! Respuesta correcta." : "Yay! Correct answer.") : (lang === "es" ? "No te preocupes. Observa y prueba otra vez." : "Don't worry. Look carefully and try again."));
+    right ? celebrateCorrect(1) : reactToError();
+  }
+
+  function nextQuickRound() {
+    setQuickRound((round) => round + 1);
+    setQuickFeedback("");
+    resetPractice();
   }
 
   function enterChildSpace(child: ChildProfile) {
@@ -992,6 +1020,8 @@ export default function Home() {
     setCourseTyped(0);
     setCourseMistakes(0);
     setCourseResult(null);
+    setCourseStartedAt(Date.now());
+    setCourseElapsedSeconds(0);
     setPressedFinger(null);
     if (safeLesson === 1) {
       window.setTimeout(() => speakFeedback(lang === "es"
@@ -1005,7 +1035,9 @@ export default function Home() {
     const finalAccuracy = Math.round((courseTarget.length / (courseTarget.length + finalMistakes)) * 100);
     const passed = lessonNumber === 1 || finalAccuracy >= 80;
     const earnedStars = finalAccuracy >= 95 ? 3 : finalAccuracy >= 88 ? 2 : passed ? 1 : 0;
-    setCourseResult({ passed, accuracy: finalAccuracy, stars: earnedStars });
+    const elapsed = Math.max(1, courseElapsedSeconds || (courseStartedAt ? Math.floor((Date.now() - courseStartedAt) / 1000) : 1));
+    const wpm = lessonNumber === 18 ? Math.round((courseTarget.length / 5) / (elapsed / 60)) : undefined;
+    setCourseResult({ passed, accuracy: finalAccuracy, stars: earnedStars, wpm });
     if (!passed) {
       speakFeedback(lang === "es" ? "Respira. ¡Vamos otra vez!" : "Take a breath. Let's try again!", true);
       return;
@@ -1067,9 +1099,9 @@ export default function Home() {
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Lumi">
+        <a className="brand" href="#top" aria-label="Lumi Academy">
           <span className="brand-mark"><i>L</i><b>✦</b></span>
-          <span><strong>Lumi</strong></span>
+          <span><strong>Lumi</strong><small>ACADEMY</small></span>
         </a>
         <nav>{t.nav.map((item, i) => <a key={item} href={["#courses", "#how", "#plans", "#families"][i]}>{item}</a>)}</nav>
         <div className="header-actions">
@@ -1125,20 +1157,23 @@ export default function Home() {
       </section>
 
       <section className={`practice-section ${worlds[world]}`} id="practice">
-        <div className="section-heading"><span className="section-kicker">LUMITYPE</span><h2>{t.practice}</h2><p>{t.practiceHint}</p></div>
+        <div className="section-heading"><span className="section-kicker">LUMI ACADEMY</span><h2>{t.practice}</h2><p>{lang === "es" ? "Elige un curso y entrena una habilidad en pocos minutos." : "Choose a course and train one skill in just a few minutes."}</p></div>
         <div className="practice-shell">
-          <div className="practice-top">
-            <span className="lesson-pill">{t.lesson}</span>
-            <div className="practice-actions"><button onClick={resetPractice}>↻ {t.reset}</button></div>
+          <div className="quick-subjects" role="tablist" aria-label={lang === "es" ? "Cursos de práctica rápida" : "Quick practice courses"}>
+            {([['typing','⌨',lang === 'es' ? 'Dactilografía' : 'Typing'],['reading','📖',lang === 'es' ? 'Lectura' : 'Reading'],['math','🔢',lang === 'es' ? 'Matemáticas' : 'Mathematics'],['english','🌎',lang === 'es' ? 'Inglés' : 'English']] as const).map(([id,icon,label]) => <button key={id} role="tab" aria-selected={quickSubject === id} className={quickSubject === id ? "active" : ""} onClick={() => { setQuickSubject(id); setQuickFeedback(""); }}>{icon}<span>{label}</span></button>)}
           </div>
-          <div className={`typing-prompt ${bigText ? "large" : ""}`}>{typed >= target.length ? <b className="complete">{t.done}</b> : renderedTarget}</div>
+          <div className="practice-top">
+            <span className="lesson-pill">{lang === "es" ? "Práctica de 2 minutos" : "2-minute practice"}</span>
+            <div className="practice-actions"><button onClick={nextQuickRound}>↻ {quickSubject === "typing" ? t.reset : (lang === "es" ? "Otro reto" : "Next challenge")}</button></div>
+          </div>
+          {quickSubject === "typing" ? <><div className={`typing-prompt ${bigText ? "large" : ""}`}>{typed >= target.length ? <b className="complete">{t.done}</b> : renderedTarget}</div>
           <input autoComplete="off" autoCapitalize="off" aria-label={t.practiceHint} className="typing-capture" value="" onKeyDown={handleKey} onChange={() => {}} placeholder={lang === "es" ? "Haz clic aquí y comienza a escribir…" : "Click here and start typing…"}/>
           <div className="keyboard">
             {rows.map((row, rowIndex) => <div className="key-row" key={rowIndex}>{row.map((key) => <span key={key} className={current.toUpperCase() === key ? "active-key" : ""}>{key}</span>)}</div>)}
             <div className="space-key"><span className={current === " " ? "active-key" : ""}>SPACE</span></div>
           </div>
           {hands && <div className="hands"><span className="left-hand">☝</span><span className="right-hand">☝</span></div>}
-          <div className="practice-stats"><span><b>{accuracy}%</b><small>{t.accuracy}</small></span><span><b>{typed}/{target.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span><span><b>{Math.max(1, Math.round(typed / 2))}</b><small>{t.stars}</small></span></div>
+          <div className="practice-stats"><span><b>{accuracy}%</b><small>{t.accuracy}</small></span><span><b>{typed}/{target.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span><span><b>{Math.max(1, Math.round(typed / 2))}</b><small>{t.stars}</small></span></div></> : (() => { const challenge = quickChallenges[quickSubject][quickRound % quickChallenges[quickSubject].length]; return <div className="quick-challenge"><span className="quick-icon">{quickSubject === "reading" ? "📚" : quickSubject === "math" ? "🧩" : "🎧"}</span><h3>{challenge.prompt}</h3>{quickSubject === "english" && <button className="quick-listen" onClick={() => readingVoice(quickRound % 2 === 0 ? "apple" : "happy")}>🔊 {lang === "es" ? "Escuchar palabra" : "Listen"}</button>}<div className="quick-options">{challenge.options.map((option) => <button key={option} onClick={() => chooseQuickAnswer(option, challenge.answer)}>{option}</button>)}</div>{quickFeedback && <p className={quickFeedback.includes("Yey") || quickFeedback.includes("Yay") ? "correct" : "try"}>{quickFeedback}</p>}</div>; })()}
         </div>
       </section>
 
@@ -1154,7 +1189,7 @@ export default function Home() {
 
       <section className="family-banner" id="families"><div><span>✦</span><h2>{lang === "es" ? "Cada estudiante tiene su propia forma de brillar." : "Every student has their own way to shine."}</h2><p>{lang === "es" ? "Lumi se adapta a su ritmo, sus intereses y sus necesidades." : "Lumi adapts to their pace, interests and needs."}</p></div><button className="button light" onClick={() => account ? setFamilyOpen(true) : openAccount("login")}>{t.login} →</button></section>
 
-      <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumi</strong></span></a><p>© 2026 Lumi · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
+      <footer><a className="brand footer-brand" href="#top"><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumi</strong><small>ACADEMY</small></span></a><p>© 2026 Lumi Academy · {t.footer}</p><div><a href="#">Privacidad</a><a href="#">Ayuda</a></div></footer>
 
       {settingsOpen && activeChild && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><aside className="settings-panel" onMouseDown={(e) => e.stopPropagation()}><div className="settings-head"><div><span className="section-kicker">{activeChild.name.toUpperCase()}</span><h2>{lang === "es" ? "Configurar su teclado" : "Keyboard settings"}</h2><p>{lang === "es" ? "Estas preferencias se guardarán únicamente para este estudiante." : "These preferences are saved only for this student."}</p></div><button onClick={() => setSettingsOpen(false)}>×</button></div><div className={`keyboard-settings-preview preview-${world} ${bigText ? "large" : ""}`}><span>{hands ? "☝  A S D F   J K L Ñ  ☝" : "A S D F   J K L Ñ"}</span><small>{sound ? "🔊" : "🔇"} {lang === "es" ? "Vista previa" : "Preview"}</small></div><label>{t.theme}</label><div className="choice-row">{t.themes.map((theme, index) => <button className={world === index ? "selected" : ""} key={theme} onClick={() => setWorld(index)}><i className={`theme-dot dot-${index}`}/>{theme}</button>)}</div><div className="toggle-row"><span>{t.hands}</span><button className={hands ? "toggle on" : "toggle"} onClick={() => setHands(!hands)}><i/></button></div><div className="toggle-row"><span>{lang === "es" ? "Sonidos de acierto y error" : "Success and error sounds"}</span><button className={sound ? "toggle on" : "toggle"} onClick={() => setSound(!sound)}><i/></button></div><div className="toggle-row"><span>{t.big}</span><button className={bigText ? "toggle on" : "toggle"} onClick={() => setBigText(!bigText)}><i/></button></div><button disabled={settingsBusy} className="button primary panel-save" onClick={saveStudentSettings}>{settingsBusy ? (lang === "es" ? "Guardando…" : "Saving…") : (lang === "es" ? "Guardar configuración" : "Save settings")}</button>{settingsMessage && <p className={`settings-message ${settingsMessage.includes("No ") || settingsMessage.includes("Could ") ? "error" : ""}`}>{settingsMessage}</p>}</aside></div>}
 
@@ -1182,7 +1217,7 @@ export default function Home() {
         <section className="student-dashboard" onMouseDown={(event) => event.stopPropagation()}>
           <header className="student-topbar">
             <button className="student-family-back" onClick={() => { setActiveChild(null); setFamilyOpen(true); }}>← {lang === "es" ? "Mi familia" : "My family"}</button>
-            <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumi</strong></span></a>
+            <a className="brand" href="#top" onClick={() => setActiveChild(null)}><span className="brand-mark"><i>L</i><b>✦</b></span><span><strong>Lumi</strong><small>ACADEMY</small></span></a>
             <div className="student-top-actions"><button className="student-settings" onClick={() => { setSettingsMessage(""); setSettingsOpen(true); }}>⚙ {lang === "es" ? "Mi teclado" : "My keyboard"}</button><button className="student-close" onClick={() => setActiveChild(null)} aria-label={lang === "es" ? "Cerrar" : "Close"}>×</button></div>
           </header>
 
@@ -1298,7 +1333,7 @@ export default function Home() {
             <div className="course-progress-line"><i style={{ width: `${(courseTyped / Math.max(1, courseTarget.length)) * 100}%` }}/></div>
 
             <div className="course-player-body">
-              <div className="course-title"><span>{activeChild.avatar}</span><div><small>{lesson.skill}</small><h2>{lesson.title}</h2><p>{courseLesson === 1 ? (lang === "es" ? "Busca las pequeñas ranuras de F y J, acomoda allí tus índices y presiona todas las teclas iluminadas." : "Find the small guides on F and J, place your index fingers there and press every highlighted key.") : (lang === "es" ? "Escribe el ejercicio con calma. Necesitas 80% de precisión para avanzar." : "Type calmly. You need 80% accuracy to move forward.")}</p></div></div>
+              <div className="course-title"><span>{activeChild.avatar}</span><div><small>{lesson.skill}</small><h2>{lesson.title}</h2><p>{courseLesson === 1 ? (lang === "es" ? "Busca las pequeñas ranuras de F y J, acomoda allí tus índices y presiona todas las teclas iluminadas." : "Find the small guides on F and J, place your index fingers there and press every highlighted key.") : courseLesson === 18 ? (lang === "es" ? "Escribe el texto completo. Verás tus palabras por minuto en tiempo real y necesitas 80% de precisión." : "Type the full text. You will see your words per minute live and need 80% accuracy.") : (lang === "es" ? "Escribe el ejercicio con calma. Necesitas 80% de precisión para avanzar." : "Type calmly. You need 80% accuracy to move forward.")}</p></div></div>
 
               {!courseResult ? <>
                 <div className="course-target" aria-live="polite">
@@ -1328,13 +1363,13 @@ export default function Home() {
                     <div className="physical-row space-row"><span className={`course-space ${courseCurrent === " " ? "active" : ""}`}><i>{lang === "es" ? "ESPACIO" : "SPACE"}</i></span></div>
                   </div>
                 </div>
-                <div className="course-live-stats"><span><b>{courseLesson === 1 ? `${courseTyped}/${courseTarget.length}` : `${liveAccuracy}%`}</b><small>{courseLesson === 1 ? (lang === "es" ? "Teclas ubicadas" : "Keys found") : t.accuracy}</small></span><span><b>{courseMistakes}</b><small>{lang === "es" ? "Intentos" : "Attempts"}</small></span><span><b>{courseTyped}/{courseTarget.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span></div>
+                <div className="course-live-stats"><span><b>{courseLesson === 1 ? `${courseTyped}/${courseTarget.length}` : `${liveAccuracy}%`}</b><small>{courseLesson === 1 ? (lang === "es" ? "Teclas ubicadas" : "Keys found") : t.accuracy}</small></span><span><b>{courseLesson === 18 ? Math.round((courseTyped / 5) / (Math.max(1, courseElapsedSeconds) / 60)) : courseMistakes}</b><small>{courseLesson === 18 ? (lang === "es" ? "Palabras/min" : "Words/min") : (lang === "es" ? "Intentos" : "Attempts")}</small></span><span><b>{courseTyped}/{courseTarget.length}</b><small>{lang === "es" ? "Progreso" : "Progress"}</small></span></div>
               </> : <div className={`course-result ${courseResult.passed ? "passed" : "retry"}`}>
                 <div className="result-lumi">{courseResult.passed ? "🌟" : "💪"}</div>
                 <span>{courseResult.passed ? (lang === "es" ? "¡LECCIÓN COMPLETADA!" : "LESSON COMPLETE!") : (lang === "es" ? "¡CASI LO LOGRAS!" : "ALMOST THERE!")}</span>
                 <h2>{courseResult.passed ? (lang === "es" ? `¡Excelente, ${activeChild.name}!` : `Great job, ${activeChild.name}!`) : (lang === "es" ? "Vamos a intentarlo otra vez" : "Let's try one more time")}</h2>
                 <p>{courseResult.passed ? (lang === "es" ? "Tu avance quedó guardado y abriste una nueva lección." : "Your progress is saved and a new lesson is unlocked.") : (lang === "es" ? "Practica más despacio para alcanzar 80% de precisión." : "Slow down to reach 80% accuracy.")}</p>
-                <div className="result-score"><span><b>{courseResult.accuracy}%</b><small>{t.accuracy}</small></span><span><b>{courseResult.stars ? "★".repeat(courseResult.stars) : "—"}</b><small>{t.stars}</small></span></div>
+                <div className={`result-score ${courseResult.wpm !== undefined ? "with-wpm" : ""}`}><span><b>{courseResult.accuracy}%</b><small>{t.accuracy}</small></span>{courseResult.wpm !== undefined && <span><b>{courseResult.wpm}</b><small>{lang === "es" ? "Palabras/min" : "Words/min"}</small></span>}<span><b>{courseResult.stars ? "★".repeat(courseResult.stars) : "—"}</b><small>{t.stars}</small></span></div>
                 <button disabled={courseBusy} className="button primary" onClick={() => courseResult.passed && courseLesson < 18 ? startCourseLesson(courseLesson + 1) : startCourseLesson(courseLesson, !courseResult.passed)}>{courseBusy ? (lang === "es" ? "Guardando…" : "Saving…") : courseResult.passed && courseLesson < 18 ? (lang === "es" ? "Siguiente lección" : "Next lesson") : courseResult.passed ? (lang === "es" ? "Repetir reto" : "Repeat challenge") : (lang === "es" ? "Practicar con otro ejercicio" : "Practice with another exercise")}</button>
                 <small className="enter-hint">↵ {lang === "es" ? "También puedes presionar Enter" : "You can also press Enter"}</small>
               </div>}
