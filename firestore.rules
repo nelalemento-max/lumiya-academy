@@ -2,6 +2,17 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email in ["nelalemento@gmail.com"];
+    }
+
+    function isActiveTeacher() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/courseCreators/$(request.auth.token.email))
+        && get(/databases/$(database)/documents/courseCreators/$(request.auth.token.email)).data.active == true;
+    }
+
     match /parents/{parentId} {
       allow create: if request.auth != null
         && request.auth.uid == parentId
@@ -18,15 +29,27 @@ service cloud.firestore {
 
     match /courses/{courseId} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email in ["nelalemento@gmail.com"];
+      allow write: if isOwner();
 
       match /lessons/{lessonId} {
         allow read: if resource.data.published == true
-          || (request.auth != null && request.auth.token.email in ["nelalemento@gmail.com"]);
-        allow create, update, delete: if request.auth != null
-          && request.auth.token.email in ["nelalemento@gmail.com"];
+          || isOwner()
+          || (isActiveTeacher() && resource.data.creatorEmail == request.auth.token.email);
+        allow create: if isOwner()
+          || (isActiveTeacher() && request.resource.data.creatorEmail == request.auth.token.email);
+        allow update: if isOwner()
+          || (isActiveTeacher()
+            && resource.data.creatorEmail == request.auth.token.email
+            && request.resource.data.creatorEmail == resource.data.creatorEmail);
+        allow delete: if isOwner()
+          || (isActiveTeacher() && resource.data.creatorEmail == request.auth.token.email);
       }
+    }
+
+    match /courseCreators/{creatorEmail} {
+      allow read: if isOwner()
+        || (request.auth != null && request.auth.token.email == creatorEmail);
+      allow create, update, delete: if isOwner();
     }
   }
 }
