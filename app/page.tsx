@@ -388,16 +388,16 @@ const copy = {
     accuracy: "Precisión",
     streak: "Racha",
     stars: "Estrellas",
-    why: "Mucho más que escribir rápido",
-    whySub: "Lumi convierte cada práctica en un pequeño logro.",
+    why: "Mucho más que aprender una materia",
+    whySub: "Lumi reúne distintas formas de aprender, practicar y crecer.",
     benefits: [
       [
         "Aprende jugando",
-        "Misiones cortas, premios y escenarios que mantienen la motivación.",
+        "Misiones cortas, actividades y premios que mantienen la motivación en cada curso.",
       ],
       [
         "Avanza a su ritmo",
-        "Ejercicios que se adaptan a las teclas que cada niño necesita reforzar.",
+        "Cada materia permite practicar, repetir y avanzar según sus necesidades.",
       ],
       [
         "Acompañamiento familiar",
@@ -446,16 +446,16 @@ const copy = {
     accuracy: "Accuracy",
     streak: "Streak",
     stars: "Stars",
-    why: "Much more than typing fast",
-    whySub: "Lumi turns every practice into a small achievement.",
+    why: "Much more than learning one subject",
+    whySub: "Lumi brings together different ways to learn, practice and grow.",
     benefits: [
       [
         "Learn through play",
-        "Short missions, rewards and worlds that keep children motivated.",
+        "Short missions, activities and rewards keep students motivated in every course.",
       ],
       [
         "Grow at their pace",
-        "Exercises adapt to the keys each child needs to reinforce.",
+        "Every subject lets students practice, repeat and grow at their own pace.",
       ],
       [
         "Family guidance",
@@ -2267,6 +2267,7 @@ function fingerForKey(key: string): FingerId {
 
 export default function Home() {
   const [lang, setLang] = useState<"es" | "en">("es");
+  const [curriculumSearch, setCurriculumSearch] = useState("");
   const [quickSubject, setQuickSubject] = useState<
     "typing" | "reading" | "math" | "english"
   >("typing");
@@ -3997,7 +3998,7 @@ export default function Home() {
         </a>
         <nav>
           {t.nav.map((item, i) => (
-            <a key={item} href={["#courses", "#how", "#plans", "#families"][i]}>
+            <a key={item} href={["#courses", "#how", "#courses", "#families"][i]}>
               {item}
             </a>
           ))}
@@ -4076,20 +4077,9 @@ export default function Home() {
             <a className="button primary" href="#practice">
               {t.trial} <span>→</span>
             </a>
-            <a className="button secondary" href="#plans">
+            <a className="button secondary" href="#courses">
               {t.plans}
             </a>
-          </div>
-          <div className="mini-proof">
-            <span className="avatar-stack">
-              <i>☺</i>
-              <i>★</i>
-              <i>♥</i>
-            </span>
-            <span>
-              <b>{t.trusted}</b>
-              <small>{t.course}</small>
-            </span>
           </div>
         </div>
 
@@ -4134,102 +4124,44 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="course-strip" id="courses">
-        <span className="course-icon">🎓</span>
-        <div>
-          <small>
-            {lang === "es"
-              ? "CINCO CURRÍCULOS DISPONIBLES"
-              : "FIVE CURRICULA AVAILABLE"}
-          </small>
-          <h2>
-            {lang === "es"
-              ? "Dactilografía · Lectura · Matemáticas · Inglés · Historia"
-              : "Typing · Reading · Mathematics · English · History"}
-          </h2>
-          <p>
-            {lang === "es"
-              ? "Caminos progresivos, actividades cortas y avance individual para cada estudiante."
-              : "Progressive paths, short activities, and individual progress for every student."}
-          </p>
-        </div>
-        <div className="course-progress">
-          <span>
-            <b>05</b>
-            <small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small>
-          </span>
-          <div>
-            <i style={{ width: "100%" }} />
-          </div>
-        </div>
-      </section>
-
       <section
-        className="education-path"
+        className="education-path curriculum-board"
+        id="courses"
         aria-label={lang === "es" ? "Áreas educativas" : "Learning areas"}
       >
-        <div className="education-path-copy">
-          <span className="section-kicker">
-            {lang === "es" ? "ESCUELA DIGITAL LUMI" : "LUMI DIGITAL SCHOOL"}
-          </span>
-          <h2>
-            {lang === "es"
-              ? "Una escuela que crece con cada estudiante"
-              : "A school that grows with every student"}
-          </h2>
-          <p>
-            {lang === "es"
-              ? "Comenzamos con dactilografía y avanzaremos hacia las habilidades fundamentales para aprender con confianza."
-              : "We begin with typing and grow toward the essential skills every student needs to learn confidently."}
-          </p>
+        <div className="curriculum-board-heading">
+          <div>
+            <span className="section-kicker">{lang === "es" ? "PIZARRA DE APRENDIZAJE" : "LEARNING BOARD"}</span>
+            <h2>{lang === "es" ? "Currículos disponibles" : "Available curricula"}</h2>
+            <p>{lang === "es" ? "Busca una materia, descubre sus actividades y encuentra el curso adecuado para cada estudiante." : "Search for a subject, discover its activities and find the right course for each student."}</p>
+          </div>
+          <label className="curriculum-search">
+            <span>⌕</span>
+            <input value={curriculumSearch} onChange={(event) => setCurriculumSearch(event.target.value)} placeholder={lang === "es" ? "Buscar cursos o materias…" : "Search courses or subjects…"} />
+            {curriculumSearch && <button onClick={() => setCurriculumSearch("")}>×</button>}
+          </label>
         </div>
-        <div className="education-area-grid">
-          {[
-            [
-              "⌨",
-              lang === "es" ? "Dactilografía" : "Typing",
-              lang === "es"
-                ? "18 lecciones · Disponible"
-                : "18 lessons · Available",
-            ],
-            [
-              "📖",
-              lang === "es" ? "Lectura" : "Reading",
-              lang === "es"
-                ? "18 lecciones · Disponible"
-                : "18 lessons · Available",
-            ],
-            [
-              "🔢",
-              lang === "es" ? "Matemáticas" : "Mathematics",
-              lang === "es"
-                ? "36 lecciones · Disponible"
-                : "36 lessons · Available",
-            ],
-            [
-              "🌎",
-              lang === "es" ? "Inglés" : "English",
-              lang === "es"
-                ? "18 lecciones · Disponible"
-                : "18 lessons · Available",
-            ],
-            [
-              "🏛️",
-              lang === "es" ? "Historia y cultura" : "History and culture",
-              lang === "es"
-                ? "Videos y cuestionarios · Disponible"
-                : "Videos and quizzes · Available",
-            ],
-          ].map((area) => (
-            <article className="available" key={area[1]}>
-              <span>{area[0]}</span>
-              <div>
-                <b>{area[1]}</b>
-                <small>{area[2]}</small>
-              </div>
-            </article>
-          ))}
-        </div>
+        {(() => {
+          const baseCurricula = [
+            { id: "typing", icon: "⌨", title: lang === "es" ? "Dactilografía" : "Typing", detail: lang === "es" ? "18 lecciones · Precisión, velocidad y palabras por minuto" : "18 lessons · Accuracy, speed and words per minute", color: "purple" },
+            { id: "reading", icon: "📖", title: lang === "es" ? "Lectura" : "Reading", detail: lang === "es" ? "18 lecciones · Sonidos, palabras y comprensión" : "18 lessons · Sounds, words and comprehension", color: "turquoise" },
+            { id: "math", icon: "🔢", title: lang === "es" ? "Matemáticas" : "Mathematics", detail: lang === "es" ? "36 lecciones · Retos, lógica y resolución" : "36 lessons · Challenges, logic and problem solving", color: "yellow" },
+            { id: "english", icon: "🌎", title: lang === "es" ? "Inglés" : "English", detail: lang === "es" ? "18 lecciones · Vocabulario, escucha y pronunciación" : "18 lessons · Vocabulary, listening and pronunciation", color: "coral" },
+          ];
+          const teacherCurricula = visibleHistoryLessons.map((lesson) => ({ id: lesson.id, icon: "🏛️", title: lang === "es" ? lesson.titleEs : lesson.titleEn, detail: `${lesson.country} · ${lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Gratis" : "Free"} · ${lesson.creatorName || "Lumi Academy"}`, color: "blue", lesson }));
+          const boardItems = [...baseCurricula, ...teacherCurricula].filter((item) => `${item.title} ${item.detail}`.toLocaleLowerCase().includes(curriculumSearch.trim().toLocaleLowerCase()));
+          return <div className="curriculum-board-shell">
+            <div className="curriculum-scroll">
+              {boardItems.map((item) => <article className={`curriculum-card curriculum-${item.color}`} key={item.id}>
+                <span className="curriculum-icon">{item.icon}</span>
+                <div><small>{lang === "es" ? "CURSO DISPONIBLE" : "AVAILABLE COURSE"}</small><h3>{item.title}</h3><p>{item.detail}</p></div>
+                <button onClick={() => "lesson" in item && item.lesson ? (item.lesson.price > 0 && !hasHistoryAccess(item.lesson) ? beginCoursePurchase(item.lesson) : activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(item.lesson!), 0)) : account ? setFamilyOpen(true) : openAccount("login")) : account ? setFamilyOpen(true) : openAccount("login")}>{lang === "es" ? "Ver curso →" : "View course →"}</button>
+              </article>)}
+              {boardItems.length === 0 && <div className="curriculum-empty"><span>🔎</span><b>{lang === "es" ? "No encontramos ese curso" : "We couldn't find that course"}</b><p>{lang === "es" ? "Prueba buscando otra materia o palabra." : "Try another subject or keyword."}</p></div>}
+            </div>
+            <div className="curriculum-scroll-hint"><span>↔</span>{lang === "es" ? "Desliza para ver más currículos" : "Scroll to see more curricula"}</div>
+          </div>;
+        })()}
       </section>
 
       <section className={`practice-section ${worlds[world]}`} id="practice">
@@ -4432,31 +4364,6 @@ export default function Home() {
               <p>{benefit[1]}</p>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="plans" id="plans">
-        <div className="section-heading">
-          <span className="section-kicker">
-            {lang === "es" ? "CURSOS DISPONIBLES" : "AVAILABLE COURSES"}
-          </span>
-          <h2>{lang === "es" ? "Elige un curso para cada estudiante" : "Choose a course for each student"}</h2>
-          <p>{lang === "es" ? "Cada maestro define el precio de su curso. Compra una vez y sigue el avance desde tu cuenta familiar." : "Each teacher sets the course price. Purchase access and follow progress from your family account."}</p>
-        </div>
-        <div className="course-market-grid">
-          {visibleHistoryLessons.length ? visibleHistoryLessons.map((lesson) => (
-            <article key={lesson.id}>
-              <span className="market-course-icon">🏛️</span>
-              <small>{lesson.country.toUpperCase()} · {lesson.level === "both" ? "PRIMARIA Y SECUNDARIA" : lesson.level.toUpperCase()}</small>
-              <h3>{lang === "es" ? lesson.titleEs : lesson.titleEn}</h3>
-              <p>{lang === "es" ? lesson.descriptionEs : lesson.descriptionEn}</p>
-              <div className="market-teacher">🧑‍🏫 {lesson.creatorName || "Lumi Academy"}</div>
-              <div className="market-price"><b>{lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Gratis" : "Free"}</b><span>{lang === "es" ? "por estudiante" : "per student"}</span></div>
-              <button className="button primary" onClick={() => lesson.price > 0 && !hasHistoryAccess(lesson) ? beginCoursePurchase(lesson) : activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(lesson), 0)) : account ? setFamilyOpen(true) : openAccount("login")}>{hasHistoryAccess(lesson) ? lang === "es" ? "Comenzar curso" : "Start course" : lang === "es" ? "Comprar curso" : "Buy course"}</button>
-            </article>
-          )) : (
-            <article className="market-coming"><span className="market-course-icon">✦</span><h3>{lang === "es" ? "Nuevos cursos en preparación" : "New courses in preparation"}</h3><p>{lang === "es" ? "Los maestros podrán publicar aquí sus cursos, precio y contenido." : "Teachers will publish their courses, prices and content here."}</p></article>
-          )}
         </div>
       </section>
 
