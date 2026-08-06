@@ -13,6 +13,7 @@ import {
   addDoc,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   getDocs,
   orderBy,
@@ -52,7 +53,14 @@ type ChildProfile = {
   englishLevel?: number;
   englishCompletedLessons?: number[];
   englishAssessmentScore?: number;
+  historyCompletedLessons?: string[];
 };
+
+type HistoryQuestion = { question: string; options: string[]; answer: number; explanation: string };
+type HistoryLesson = { id: string; order: number; titleEs: string; titleEn: string; country: string; level: "primary" | "secondary" | "both"; youtubeUrl: string; descriptionEs: string; descriptionEn: string; published: boolean; questions: HistoryQuestion[] };
+
+const ADMIN_EMAILS = ["nelalemento@gmail.com"];
+const sampleHistoryLesson: HistoryLesson = { id:"bolivia-independencia", order:1, titleEs:"La independencia de Bolivia", titleEn:"The independence of Bolivia", country:"Bolivia", level:"both", youtubeUrl:"https://www.youtube.com/watch?v=dQw4w9WgXcQ", descriptionEs:"Descubre los hechos y personajes que acompañaron el nacimiento de Bolivia.", descriptionEn:"Discover the events and people behind the birth of Bolivia.", published:true, questions:[{question:"¿En qué año se declaró la independencia de Bolivia?",options:["1825","1810","1879"],answer:0,explanation:"Bolivia declaró su independencia el 6 de agosto de 1825."},{question:"¿Cuál es la capital constitucional de Bolivia?",options:["La Paz","Sucre","Santa Cruz"],answer:1,explanation:"Sucre es la capital constitucional de Bolivia."},{question:"¿Qué documento formalizó el nacimiento de la nueva República?",options:["Acta de Independencia","Tratado de Tordesillas","Carta de Jamaica"],answer:0,explanation:"El Acta de Independencia formalizó la creación de la República."}] };
 
 type CourseLesson = {
   title: string;
@@ -428,6 +436,18 @@ export default function Home() {
   const [englishFeedback, setEnglishFeedback] = useState("");
   const [englishBusy, setEnglishBusy] = useState(false);
   const [englishListening, setEnglishListening] = useState(false);
+  const [historyLessons, setHistoryLessons] = useState<HistoryLesson[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLesson, setHistoryLesson] = useState<HistoryLesson | null>(null);
+  const [historyQuestion, setHistoryQuestion] = useState(0);
+  const [historyScore, setHistoryScore] = useState(0);
+  const [historyFeedback, setHistoryFeedback] = useState("");
+  const [historyDone, setHistoryDone] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminEditingId, setAdminEditingId] = useState<string | null>(null);
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminMessage, setAdminMessage] = useState("");
+  const [historyDraft, setHistoryDraft] = useState<HistoryLesson>({...sampleHistoryLesson,id:"",youtubeUrl:"",published:false});
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastFunnyErrorRef = useRef(0);
   const t = copy[lang];
@@ -435,6 +455,8 @@ export default function Home() {
   const current = target[typed] ?? "";
   const accuracy = typed + mistakes === 0 ? 100 : Math.round((typed / (typed + mistakes)) * 100);
   const worlds = ["classroom", "space", "ocean"];
+  const isAdmin = !!account?.email && ADMIN_EMAILS.includes(account.email.toLowerCase());
+  const visibleHistoryLessons = (historyLessons.length ? historyLessons : [sampleHistoryLesson]).filter((lesson) => lesson.published && (!activeChild || lesson.level === "both" || lesson.level === activeChild.gradeBand));
   const quickChallenges = {
     reading: lang === "es" ? [{ prompt: "¿Cuál palabra corresponde a 🐶?", options: ["perro", "gato", "pato"], answer: "perro" }, { prompt: "Completa: 🏠 es una…", options: ["casa", "mesa", "masa"], answer: "casa" }] : [{ prompt: "Which word matches 🐶?", options: ["dog", "cat", "duck"], answer: "dog" }, { prompt: "Complete: 🏠 is a…", options: ["house", "mouse", "horse"], answer: "house" }],
     math: lang === "es" ? [{ prompt: "¿Cuánto es 7 + 5?", options: ["10", "12", "14"], answer: "12" }, { prompt: "¿Cuánto es 15 − 6?", options: ["8", "9", "11"], answer: "9" }] : [{ prompt: "What is 7 + 5?", options: ["10", "12", "14"], answer: "12" }, { prompt: "What is 15 − 6?", options: ["8", "9", "11"], answer: "9" }],
@@ -445,6 +467,7 @@ export default function Home() {
     setAccount(currentAccount);
     if (currentAccount) {
       await loadChildren(currentAccount.uid);
+      await loadHistoryLessons();
     } else {
       setChildren([]);
       setFamilyOpen(false);
@@ -480,6 +503,50 @@ export default function Home() {
     const snapshot = await getDocs(query(collection(db, "parents", uid, "children"), orderBy("createdAt", "asc")));
     setChildren(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) as ChildProfile[]);
   }
+
+  async function loadHistoryLessons() {
+    const snapshot = await getDocs(query(collection(db, "courses", "history-culture", "lessons"), orderBy("order", "asc")));
+    setHistoryLessons(snapshot.docs.map((item) => ({id:item.id,...item.data()})) as HistoryLesson[]);
+  }
+
+  function youtubeEmbed(url: string) {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+    return match ? `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0` : "";
+  }
+
+  function openHistoryCourse() { setHistoryOpen(true); setHistoryLesson(null); setHistoryDone(false); }
+  function startHistoryLesson(lesson: HistoryLesson) { setHistoryLesson(lesson); setHistoryQuestion(0); setHistoryScore(0); setHistoryFeedback(""); setHistoryDone(false); }
+
+  async function answerHistory(answer: number) {
+    if (!historyLesson || historyFeedback) return;
+    const currentQuestion = historyLesson.questions[historyQuestion];
+    const correct = answer === currentQuestion.answer;
+    if (correct) { setHistoryScore((score) => score + 1); playTone("correct"); }
+    else playTone("error");
+    setHistoryFeedback(`${correct ? "✓" : "💡"} ${currentQuestion.explanation}`);
+  }
+
+  async function nextHistoryQuestion() {
+    if (!historyLesson || !activeChild || !account) return;
+    if (historyQuestion < historyLesson.questions.length - 1) { setHistoryQuestion((value) => value + 1); setHistoryFeedback(""); return; }
+    const finalScore = historyScore + (historyFeedback.startsWith("✓") ? 0 : 0);
+    const passed = Math.round((finalScore / historyLesson.questions.length) * 100) >= 80;
+    setHistoryDone(true);
+    if (passed) {
+      await updateDoc(doc(db,"parents",account.uid,"children",activeChild.id),{historyCompletedLessons:arrayUnion(historyLesson.id),stars:activeChild.stars+2,lastHistoryAt:serverTimestamp()});
+      const updated={...activeChild,historyCompletedLessons:[...new Set([...(activeChild.historyCompletedLessons||[]),historyLesson.id])],stars:activeChild.stars+2};
+      setActiveChild(updated); setChildren((profiles)=>profiles.map((profile)=>profile.id===updated.id?updated:profile));
+    }
+  }
+
+  function newHistoryDraft() { setAdminEditingId(null); setHistoryDraft({...sampleHistoryLesson,id:"",titleEs:"",titleEn:"",country:"",youtubeUrl:"",descriptionEs:"",descriptionEn:"",published:false,questions:[{question:"",options:["","",""],answer:0,explanation:""}]}); setAdminMessage(""); }
+  function editHistoryLesson(lesson: HistoryLesson) { setAdminEditingId(lesson.id); setHistoryDraft(JSON.parse(JSON.stringify(lesson))); setAdminMessage(""); }
+  async function saveHistoryLesson() {
+    if (!isAdmin || !historyDraft.titleEs.trim() || !youtubeEmbed(historyDraft.youtubeUrl) || historyDraft.questions.some((q)=>!q.question.trim()||q.options.some((o)=>!o.trim()))) { setAdminMessage(lang==="es"?"Completa el título, un enlace válido de YouTube y todas las preguntas.":"Complete the title, a valid YouTube link, and every question."); return; }
+    setAdminBusy(true);
+    try { const id=adminEditingId||historyDraft.titleEs.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); await setDoc(doc(db,"courses","history-culture","lessons",id),{...historyDraft,id,updatedAt:serverTimestamp(),updatedBy:account?.email}); await loadHistoryLessons(); setAdminEditingId(id); setAdminMessage(lang==="es"?"Lección guardada correctamente.":"Lesson saved successfully."); } finally { setAdminBusy(false); }
+  }
+  async function removeHistoryLesson(id:string) { if(!isAdmin||!window.confirm(lang==="es"?"¿Eliminar esta lección?":"Delete this lesson?"))return; await deleteDoc(doc(db,"courses","history-culture","lessons",id)); await loadHistoryLessons(); newHistoryDraft(); }
 
   function playTone(kind: "correct" | "error" | "complete") {
     if (!sound || typeof window === "undefined") return;
@@ -1140,8 +1207,8 @@ export default function Home() {
       </section>
 
       <section className="course-strip" id="courses">
-        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "CUATRO CURRÍCULOS DISPONIBLES" : "FOUR CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Dactilografía · Lectura · Matemáticas · Inglés" : "Typing · Reading · Mathematics · English"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada estudiante." : "Progressive paths, short activities, and individual progress for every student."}</p></div>
-        <div className="course-progress"><span><b>04</b><small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small></span><div><i style={{width:"100%"}}/></div></div>
+        <span className="course-icon">🎓</span><div><small>{lang === "es" ? "CINCO CURRÍCULOS DISPONIBLES" : "FIVE CURRICULA AVAILABLE"}</small><h2>{lang === "es" ? "Dactilografía · Lectura · Matemáticas · Inglés · Historia" : "Typing · Reading · Mathematics · English · History"}</h2><p>{lang === "es" ? "Caminos progresivos, actividades cortas y avance individual para cada estudiante." : "Progressive paths, short activities, and individual progress for every student."}</p></div>
+        <div className="course-progress"><span><b>05</b><small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small></span><div><i style={{width:"100%"}}/></div></div>
       </section>
 
       <section className="education-path" aria-label={lang === "es" ? "Áreas educativas" : "Learning areas"}>
@@ -1152,6 +1219,7 @@ export default function Home() {
             ["📖", lang === "es" ? "Lectura" : "Reading", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
             ["🔢", lang === "es" ? "Matemáticas" : "Mathematics", lang === "es" ? "36 lecciones · Disponible" : "36 lessons · Available"],
             ["🌎", lang === "es" ? "Inglés" : "English", lang === "es" ? "18 lecciones · Disponible" : "18 lessons · Available"],
+            ["🏛️", lang === "es" ? "Historia y cultura" : "History and culture", lang === "es" ? "Videos y cuestionarios · Disponible" : "Videos and quizzes · Available"],
           ].map((area) => <article className="available" key={area[1]}><span>{area[0]}</span><div><b>{area[1]}</b><small>{area[2]}</small></div></article>)}
         </div>
       </section>
@@ -1240,6 +1308,7 @@ export default function Home() {
               <button className="reading-subject" onClick={openReadingCourse}><span>📖</span><b>{lang === "es" ? "Lectura" : "Reading"}</b><small>{activeChild.readingAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.readingCompletedLessons?.length || 0} de 18` : `${activeChild.readingCompletedLessons?.length || 0} of 18`)}</small></button>
               <button className="math-subject" onClick={openMathCourse}><span>🔢</span><b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b><small>{activeChild.mathAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.mathCompletedLessons?.length || 0} de 36` : `${activeChild.mathCompletedLessons?.length || 0} of 36`)}</small></button>
               <button className="english-subject" onClick={openEnglishCourse}><span>🌎</span><b>{lang === "es" ? "Inglés" : "English"}</b><small>{activeChild.englishAssessmentScore === undefined ? (lang === "es" ? "Evaluación inicial" : "Initial assessment") : (lang === "es" ? `${activeChild.englishCompletedLessons?.length || 0} de 18` : `${activeChild.englishCompletedLessons?.length || 0} of 18`)}</small></button>
+              <button className="history-subject" onClick={openHistoryCourse}><span>🏛️</span><b>{lang === "es" ? "Historia y cultura" : "History and culture"}</b><small>{lang === "es" ? `${activeChild.historyCompletedLessons?.length || 0} completadas` : `${activeChild.historyCompletedLessons?.length || 0} completed`}</small></button>
             </div>
           </section>
 
@@ -1318,6 +1387,12 @@ export default function Home() {
         </section>
       </div>}
 
+      {historyOpen && activeChild && <div className="reading-backdrop history-backdrop" onMouseDown={() => setHistoryOpen(false)}><section className="reading-player history-player" onMouseDown={(event)=>event.stopPropagation()}>
+        <header className="reading-header history-header"><button onClick={()=>historyLesson?setHistoryLesson(null):setHistoryOpen(false)}>← {historyLesson?(lang==="es"?"Mapa":"Map"):(lang==="es"?"Mis materias":"My subjects")}</button><div><span>LUMIHISTORY</span><b>{lang==="es"?"Historia y cultura":"History and culture"}</b></div><div className="history-counter">🏛️ <b>{activeChild.historyCompletedLessons?.length||0}/{visibleHistoryLessons.length}</b></div></header>
+        {!historyLesson && <div className="history-map"><div className="reading-map-title"><div><span className="section-kicker">VIDEO · DESCUBRE · RESPONDE</span><h2>{lang==="es"?`Viaja por la historia, ${activeChild.name}`:`Travel through history, ${activeChild.name}`}</h2><p>{lang==="es"?"Mira cada video, responde el cuestionario y consigue al menos 80% para completar la misión.":"Watch each video, answer the quiz, and score at least 80% to complete the mission."}</p></div></div><div className="history-lesson-grid">{visibleHistoryLessons.map((lesson,index)=><article key={lesson.id} className={activeChild.historyCompletedLessons?.includes(lesson.id)?"completed":""}><span>{activeChild.historyCompletedLessons?.includes(lesson.id)?"✓":index+1}</span><div><small>{lesson.country.toUpperCase()} · {lesson.level==="both"?(lang==="es"?"TODOS LOS NIVELES":"ALL LEVELS"):lesson.level.toUpperCase()}</small><b>{lang==="es"?lesson.titleEs:lesson.titleEn}</b><p>{lang==="es"?lesson.descriptionEs:lesson.descriptionEn}</p></div><button onClick={()=>startHistoryLesson(lesson)}>{activeChild.historyCompletedLessons?.includes(lesson.id)?(lang==="es"?"Repetir":"Repeat"):(lang==="es"?"Comenzar":"Start")}</button></article>)}</div></div>}
+        {historyLesson && <div className="history-lesson-player"><div className="history-title"><span>🏛️</span><div><small>{historyLesson.country}</small><h2>{lang==="es"?historyLesson.titleEs:historyLesson.titleEn}</h2></div></div><div className="history-learning-layout"><div className="history-video"><iframe src={youtubeEmbed(historyLesson.youtubeUrl)} title={lang==="es"?historyLesson.titleEs:historyLesson.titleEn} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/><p>{lang==="es"?historyLesson.descriptionEs:historyLesson.descriptionEn}</p></div><div className="history-quiz">{!historyDone?<><span className="section-kicker">{lang==="es"?`PREGUNTA ${historyQuestion+1} DE ${historyLesson.questions.length}`:`QUESTION ${historyQuestion+1} OF ${historyLesson.questions.length}`}</span><h3>{historyLesson.questions[historyQuestion].question}</h3><div>{historyLesson.questions[historyQuestion].options.map((option,index)=><button disabled={!!historyFeedback} key={option} onClick={()=>void answerHistory(index)}>{option}</button>)}</div>{historyFeedback&&<aside><p>{historyFeedback}</p><button className="button primary" onClick={()=>void nextHistoryQuestion()}>{historyQuestion<historyLesson.questions.length-1?(lang==="es"?"Siguiente pregunta →":"Next question →"):(lang==="es"?"Ver resultado":"See result")}</button></aside>}</>:<div className="history-result"><span>{Math.round((historyScore/historyLesson.questions.length)*100)>=80?"🏆":"💪"}</span><h3>{Math.round((historyScore/historyLesson.questions.length)*100)}%</h3><p>{Math.round((historyScore/historyLesson.questions.length)*100)>=80?(lang==="es"?"¡Misión completada! Ganaste dos estrellas.":"Mission complete! You earned two stars."):(lang==="es"?"No te preocupes. Mira nuevamente el video y vuelve a intentarlo.":"Don't worry. Watch the video again and try once more.")}</p><button className="button primary" onClick={()=>startHistoryLesson(historyLesson)}>{lang==="es"?"Repetir cuestionario":"Repeat quiz"}</button></div>}</div></div></div>}
+      </section></div>}
+
       {courseLesson && activeChild && (() => {
         const lesson = courseLessons[lang][courseLesson - 1];
         const courseCurrent = courseTarget[courseTyped] || "";
@@ -1378,10 +1453,13 @@ export default function Home() {
         </div>;
       })()}
 
+      {adminOpen && isAdmin && <div className="modal-backdrop admin-backdrop" onMouseDown={()=>setAdminOpen(false)}><section className="admin-panel" onMouseDown={(event)=>event.stopPropagation()}><header><div><span className="section-kicker">LUMI ACADEMY · ADMINISTRACIÓN</span><h2>{lang==="es"?"Cursos con video y cuestionario":"Video and quiz courses"}</h2><p>{account?.email} · {lang==="es"?"Administrador autorizado":"Authorized administrator"}</p></div><button onClick={()=>setAdminOpen(false)}>×</button></header><div className="admin-layout"><aside><button className="button primary" onClick={newHistoryDraft}>＋ {lang==="es"?"Nueva lección":"New lesson"}</button><h3>{lang==="es"?"Lecciones guardadas":"Saved lessons"}</h3>{historyLessons.length===0&&<p className="admin-empty">{lang==="es"?"Aún no hay lecciones guardadas. Crea la primera.":"No saved lessons yet. Create the first one."}</p>}{historyLessons.map((lesson)=><button className={adminEditingId===lesson.id?"selected":""} key={lesson.id} onClick={()=>editHistoryLesson(lesson)}><span>{lesson.published?"🟢":"⚪"}</span><div><b>{lesson.titleEs}</b><small>{lesson.country} · {lesson.questions.length} preguntas</small></div></button>)}</aside><main className="admin-editor"><div className="admin-form-grid"><label>{lang==="es"?"Orden":"Order"}<input type="number" min="1" value={historyDraft.order} onChange={(e)=>setHistoryDraft({...historyDraft,order:Number(e.target.value)})}/></label><label>{lang==="es"?"País o región":"Country or region"}<input value={historyDraft.country} onChange={(e)=>setHistoryDraft({...historyDraft,country:e.target.value})}/></label><label>{lang==="es"?"Nivel":"Level"}<select value={historyDraft.level} onChange={(e)=>setHistoryDraft({...historyDraft,level:e.target.value as HistoryLesson["level"]})}><option value="both">Primaria y secundaria</option><option value="primary">Primaria</option><option value="secondary">Secundaria</option></select></label><label className="publish-check"><input type="checkbox" checked={historyDraft.published} onChange={(e)=>setHistoryDraft({...historyDraft,published:e.target.checked})}/>{lang==="es"?"Publicar para estudiantes":"Publish for students"}</label></div><label>{lang==="es"?"Título en español":"Spanish title"}<input value={historyDraft.titleEs} onChange={(e)=>setHistoryDraft({...historyDraft,titleEs:e.target.value})}/></label><label>{lang==="es"?"Título en inglés":"English title"}<input value={historyDraft.titleEn} onChange={(e)=>setHistoryDraft({...historyDraft,titleEn:e.target.value})}/></label><label>{lang==="es"?"Enlace del video de YouTube":"YouTube video link"}<input placeholder="https://www.youtube.com/watch?v=..." value={historyDraft.youtubeUrl} onChange={(e)=>setHistoryDraft({...historyDraft,youtubeUrl:e.target.value})}/></label><div className="admin-form-grid"><label>{lang==="es"?"Descripción en español":"Spanish description"}<textarea value={historyDraft.descriptionEs} onChange={(e)=>setHistoryDraft({...historyDraft,descriptionEs:e.target.value})}/></label><label>{lang==="es"?"Descripción en inglés":"English description"}<textarea value={historyDraft.descriptionEn} onChange={(e)=>setHistoryDraft({...historyDraft,descriptionEn:e.target.value})}/></label></div><div className="question-editor-head"><h3>{lang==="es"?"Cuestionario":"Questionnaire"}</h3><button onClick={()=>setHistoryDraft({...historyDraft,questions:[...historyDraft.questions,{question:"",options:["","",""],answer:0,explanation:""}]})}>＋ {lang==="es"?"Agregar pregunta":"Add question"}</button></div>{historyDraft.questions.map((question,qIndex)=><section className="admin-question" key={qIndex}><header><b>{lang==="es"?`Pregunta ${qIndex+1}`:`Question ${qIndex+1}`}</b>{historyDraft.questions.length>1&&<button onClick={()=>setHistoryDraft({...historyDraft,questions:historyDraft.questions.filter((_,index)=>index!==qIndex)})}>Eliminar</button>}</header><input placeholder={lang==="es"?"Escribe la pregunta":"Write the question"} value={question.question} onChange={(e)=>{const questions=[...historyDraft.questions];questions[qIndex]={...question,question:e.target.value};setHistoryDraft({...historyDraft,questions});}}/>{question.options.map((option,oIndex)=><label className="answer-option" key={oIndex}><input type="radio" name={`answer-${qIndex}`} checked={question.answer===oIndex} onChange={()=>{const questions=[...historyDraft.questions];questions[qIndex]={...question,answer:oIndex};setHistoryDraft({...historyDraft,questions});}}/><input placeholder={`${lang==="es"?"Opción":"Option"} ${oIndex+1}`} value={option} onChange={(e)=>{const questions=[...historyDraft.questions];const options=[...question.options];options[oIndex]=e.target.value;questions[qIndex]={...question,options};setHistoryDraft({...historyDraft,questions});}}/></label>)}<textarea placeholder={lang==="es"?"Explicación que verá el estudiante":"Explanation shown to the student"} value={question.explanation} onChange={(e)=>{const questions=[...historyDraft.questions];questions[qIndex]={...question,explanation:e.target.value};setHistoryDraft({...historyDraft,questions});}}/></section>)}{adminMessage&&<p className="admin-message">{adminMessage}</p>}<div className="admin-save-row">{adminEditingId&&<button className="admin-delete" onClick={()=>void removeHistoryLesson(adminEditingId)}>{lang==="es"?"Eliminar lección":"Delete lesson"}</button>}<button className="button primary" disabled={adminBusy} onClick={()=>void saveHistoryLesson()}>{adminBusy?(lang==="es"?"Guardando…":"Saving…"):(lang==="es"?"Guardar lección":"Save lesson")}</button></div></main></div></section></div>}
+
       {familyOpen && account && <div className="modal-backdrop family-backdrop" onMouseDown={() => setFamilyOpen(false)}>
         <aside className="family-panel" onMouseDown={(event) => event.stopPropagation()}>
           <div className="settings-head family-heading"><div><span className="section-kicker">{lang === "es" ? "MI CUENTA LUMI" : "MY LUMI ACCOUNT"}</span><h2>{lang === "es" ? `Hola, ${account.displayName || "familia"}` : `Hello, ${account.displayName || "family"}`}</h2><p>{account.email} · {lang === "es" ? "Cuenta familiar" : "Family account"}</p></div><button onClick={() => setFamilyOpen(false)}>×</button></div>
           <div className="family-summary"><span><b>{children.length}</b><small>{lang === "es" ? "Estudiantes" : "Students"}</small></span><span><b>{children.reduce((total, child) => total + (child.completedLessons?.length || 0), 0)}</b><small>{lang === "es" ? "Lecciones completadas" : "Completed lessons"}</small></span><span><b>{children.reduce((total, child) => total + child.stars, 0)}</b><small>{t.stars}</small></span></div>
+          {isAdmin&&<button className="admin-access" onClick={()=>{setFamilyOpen(false);setAdminOpen(true);newHistoryDraft();}}>⚙️ <span><b>{lang==="es"?"Administrar cursos":"Manage courses"}</b><small>{lang==="es"?"Videos, preguntas y publicaciones":"Videos, questions and publishing"}</small></span>→</button>}
           {children.length > 0 && <>
             <div className="family-section-title"><div><h3>{lang === "es" ? "Estudiantes inscritos" : "Enrolled students"}</h3><p>{lang === "es" ? "Elige un estudiante para ver sus materias, configurar su teclado y continuar aprendiendo." : "Choose a student to see subjects, configure their keyboard and continue learning."}</p></div></div>
             <div className="children-grid">
