@@ -457,7 +457,7 @@ export default function Home() {
   const accuracy = typed + mistakes === 0 ? 100 : Math.round((typed / (typed + mistakes)) * 100);
   const worlds = ["classroom", "space", "ocean"];
   const isAdmin = !!account?.email && ADMIN_EMAILS.includes(account.email.toLowerCase());
-  const visibleHistoryLessons = (historyLessons.length ? historyLessons : [sampleHistoryLesson]).filter((lesson) => lesson.published && (!activeChild || lesson.level === "both" || lesson.level === activeChild.gradeBand));
+  const visibleHistoryLessons = historyLessons.filter((lesson) => lesson.published && (!activeChild || lesson.level === "both" || lesson.level === activeChild.gradeBand));
   const quickChallenges = {
     reading: lang === "es" ? [{ prompt: "¿Cuál palabra corresponde a 🐶?", options: ["perro", "gato", "pato"], answer: "perro" }, { prompt: "Completa: 🏠 es una…", options: ["casa", "mesa", "masa"], answer: "casa" }] : [{ prompt: "Which word matches 🐶?", options: ["dog", "cat", "duck"], answer: "dog" }, { prompt: "Complete: 🏠 is a…", options: ["house", "mouse", "horse"], answer: "house" }],
     math: lang === "es" ? [{ prompt: "¿Cuánto es 7 + 5?", options: ["10", "12", "14"], answer: "12" }, { prompt: "¿Cuánto es 15 − 6?", options: ["8", "9", "11"], answer: "9" }] : [{ prompt: "What is 7 + 5?", options: ["10", "12", "14"], answer: "12" }, { prompt: "What is 15 − 6?", options: ["8", "9", "11"], answer: "9" }],
