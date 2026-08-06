@@ -51,5 +51,20 @@ service cloud.firestore {
         || (request.auth != null && request.auth.token.email == creatorEmail);
       allow create, update, delete: if isOwner();
     }
+
+    match /coursePurchases/{purchaseId} {
+      allow create: if request.auth != null
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.buyerEmail == request.auth.token.email
+        && request.resource.data.status == "pending"
+        && request.resource.data.price >= 0
+        && request.resource.data.platformAmount == request.resource.data.price * 0.10
+        && request.resource.data.teacherAmount == request.resource.data.price * 0.90;
+      allow read: if isOwner()
+        || (request.auth != null && resource.data.buyerId == request.auth.uid)
+        || (isActiveTeacher() && resource.data.teacherEmail == request.auth.token.email);
+      allow update: if isOwner();
+      allow delete: if false;
+    }
   }
 }
