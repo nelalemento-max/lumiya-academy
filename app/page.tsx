@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 63646)
-Total output lines: 7245
-
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -80,6 +77,25 @@ type HistoryLesson = {
   published: boolean;
   questions: HistoryQuestion[];
   creatorEmail?: string;
+  creatorName?: string;
+  price: number;
+};
+type CoursePurchase = {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  teacherEmail: string;
+  teacherName: string;
+  buyerId: string;
+  buyerEmail: string;
+  childId: string;
+  childName: string;
+  paymentMethod: "cash" | "qr";
+  status: "pending" | "confirmed" | "rejected" | "refunded";
+  price: number;
+  platformAmount: number;
+  teacherAmount: number;
+  createdAt?: unknown;
 };
 type CourseCreator = {
   email: string;
@@ -102,6 +118,8 @@ const sampleHistoryLesson: HistoryLesson = {
     "Descubre los hechos y personajes que acompañaron el nacimiento de Bolivia.",
   descriptionEn: "Discover the events and people behind the birth of Bolivia.",
   published: true,
+  creatorName: "Lumi Academy",
+  price: 0,
   questions: [
     {
       question: "¿En qué año se declaró la independencia de Bolivia?",
@@ -2332,6 +2350,12 @@ export default function Home() {
   const [historyScore, setHistoryScore] = useState(0);
   const [historyFeedback, setHistoryFeedback] = useState("");
   const [historyDone, setHistoryDone] = useState(false);
+  const [purchases, setPurchases] = useState<CoursePurchase[]>([]);
+  const [purchaseLesson, setPurchaseLesson] = useState<HistoryLesson | null>(null);
+  const [purchaseChildId, setPurchaseChildId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qr">("qr");
+  const [purchaseMessage, setPurchaseMessage] = useState("");
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [creatorRole, setCreatorRole] = useState<"owner" | "teacher" | null>(
     null,
@@ -2370,6 +2394,27 @@ export default function Home() {
   );
   const editableHistoryLessons = historyLessons.filter(
     (lesson) => isAdmin || lesson.creatorEmail === account?.email?.toLowerCase(),
+  );
+  const confirmedCourseIds = new Set(
+    purchases
+      .filter(
+        (purchase) =>
+          purchase.status === "confirmed" &&
+          (!activeChild || purchase.childId === activeChild.id),
+      )
+      .map((purchase) => purchase.courseId),
+  );
+  const reportTotals = purchases.reduce(
+    (totals, purchase) => {
+      if (purchase.status === "confirmed") {
+        totals.sales += purchase.price;
+        totals.platform += purchase.platformAmount;
+        totals.teachers += purchase.teacherAmount;
+      }
+      if (purchase.status === "pending") totals.pending += 1;
+      return totals;
+    },
+    { sales: 0, platform: 0, teachers: 0, pending: 0 },
   );
   const quickChallenges = {
     reading:
@@ -2460,12 +2505,15 @@ export default function Home() {
           await loadCreatorRole(currentAccount);
           await loadChildren(currentAccount.uid);
           await loadHistoryLessons();
+          await loadPurchases(currentAccount);
         } else {
           setChildren([]);
           setFamilyOpen(false);
           setActiveChild(null);
           setCreatorRole(null);
           setAdminOpen(false);
+          setPurchases([]);
+          await loadHistoryLessons();
         }
       }),
     [],
@@ -2518,6 +2566,22 @@ export default function Home() {
         ...item.data(),
       })) as ChildProfile[],
     );
+  }
+
+  async function loadPurchases(user = auth.currentUser) {
+    if (!user?.email) return setPurchases([]);
+    const email = user.email.toLowerCase();
+    let purchasesQuery;
+    if (ADMIN_EMAILS.includes(email)) {
+      purchasesQuery = query(collection(db, "coursePurchases"));
+    } else {
+      const creator = await getDoc(doc(db, "courseCreators", email));
+      purchasesQuery = creator.exists() && creator.data().active === true
+        ? query(collection(db, "coursePurchases"), where("teacherEmail", "==", email))
+        : query(collection(db, "coursePurchases"), where("buyerId", "==", user.uid));
+    }
+    const snapshot = await getDocs(purchasesQuery);
+    setPurchases(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) as CoursePurchase[]);
   }
 
   async function loadHistoryLessons() {
@@ -2580,6 +2644,8 @@ export default function Home() {
       creatorEmail: String(
         data.creatorEmail || data.updatedBy || "",
       ).toLowerCase(),
+      creatorName: String(data.creatorName || "Maestro Lumi"),
+      price: Math.max(0, Number(data.price) || 0),
     };
   }
 
@@ -2736,12 +2802,14 @@ export default function Home() {
           .replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
       const currentEmail = account?.email?.toLowerCase() || "";
       const creatorEmail = historyDraft.creatorEmail || currentEmail;
+      const creatorName = historyDraft.creatorName || account?.displayName || "Maestro Lumi";
       await setDoc(
         doc(db, "courses", "history-culture", "lessons", id),
         {
           ...historyDraft,
           id,
           creatorEmail,
+          creatorName,
           updatedAt: serverTimestamp(),
           updatedBy: currentEmail,
         },
@@ -2797,6 +2865,81 @@ export default function Home() {
       active: !creator.active,
     });
     await loadCourseCreators();
+  }
+
+  function hasHistoryAccess(lesson: HistoryLesson) {
+    return lesson.price <= 0 || isAdmin || lesson.creatorEmail === account?.email?.toLowerCase() || confirmedCourseIds.has(lesson.id);
+  }
+
+  function beginCoursePurchase(lesson: HistoryLesson) {
+    if (!account) return openAccount("login");
+    if (isAdmin || creatorRole === "teacher") return;
+    if (!children.length) {
+      setFamilyOpen(true);
+      return;
+    }
+    setPurchaseLesson(lesson);
+    setPurchaseChildId(activeChild?.id || children[0].id);
+    setPaymentMethod("qr");
+    setPurchaseMessage("");
+  }
+
+  async function createCoursePurchase() {
+    if (!account?.email || !purchaseLesson || !purchaseChildId || purchaseBusy) return;
+    const child = children.find((profile) => profile.id === purchaseChildId);
+    if (!child) return;
+    const duplicate = purchases.find(
+      (purchase) =>
+        purchase.courseId === purchaseLesson.id &&
+        purchase.childId === child.id &&
+        (purchase.status === "pending" || purchase.status === "confirmed"),
+    );
+    if (duplicate) {
+      setPurchaseMessage(
+        duplicate.status === "confirmed"
+          ? "Este estudiante ya tiene acceso al curso."
+          : "Ya existe una solicitud pendiente para este curso y estudiante.",
+      );
+      return;
+    }
+    setPurchaseBusy(true);
+    const price = Math.max(0, purchaseLesson.price);
+    try {
+      await addDoc(collection(db, "coursePurchases"), {
+        courseId: purchaseLesson.id,
+        courseTitle: purchaseLesson.titleEs,
+        teacherEmail: purchaseLesson.creatorEmail || ADMIN_EMAILS[0],
+        teacherName: purchaseLesson.creatorName || "Lumi Academy",
+        buyerId: account.uid,
+        buyerEmail: account.email.toLowerCase(),
+        childId: child.id,
+        childName: child.name,
+        paymentMethod,
+        status: "pending",
+        price,
+        platformAmount: Math.round(price * 10) / 100,
+        teacherAmount: Math.round(price * 90) / 100,
+        createdAt: serverTimestamp(),
+      });
+      await loadPurchases(account);
+      setPurchaseMessage(
+        paymentMethod === "qr"
+          ? "Solicitud registrada. Realiza el pago QR y espera la confirmación de Lumi Academy."
+          : "Solicitud registrada. El acceso se habilitará cuando Lumi Academy confirme el pago en efectivo.",
+      );
+    } finally {
+      setPurchaseBusy(false);
+    }
+  }
+
+  async function updatePurchaseStatus(purchase: CoursePurchase, status: "confirmed" | "rejected" | "refunded") {
+    if (!isAdmin) return;
+    await updateDoc(doc(db, "coursePurchases", purchase.id), {
+      status,
+      reviewedAt: serverTimestamp(),
+      reviewedBy: account?.email?.toLowerCase() || "",
+    });
+    await loadPurchases(account);
   }
 
   function playTone(kind: "correct" | "error" | "complete") {
@@ -3891,11 +4034,20 @@ export default function Home() {
           {account ? (
             <button
               className="account-button"
-              onClick={() => setFamilyOpen(true)}
+              onClick={() => {
+                if (isCourseCreator) {
+                  setAdminOpen(true);
+                  void loadPurchases(account);
+                } else setFamilyOpen(true);
+              }}
             >
-              <span>{account.displayName?.charAt(0).toUpperCase() || "F"}</span>
+              <span>{account.displayName?.charAt(0).toUpperCase() || (isAdmin ? "A" : "F")}</span>
               {account.displayName ||
-                (lang === "es" ? "Mi familia" : "My family")}
+                (isAdmin
+                  ? lang === "es" ? "Mi administración" : "My administration"
+                  : creatorRole === "teacher"
+                    ? lang === "es" ? "Mi panel docente" : "My teacher panel"
+                    : lang === "es" ? "Mi familia" : "My family")}
             </button>
           ) : (
             <button
@@ -3934,7 +4086,404 @@ export default function Home() {
               <i>★</i>
               <i>♥</i>
             </span>
-  …3646 tokens truncated…me="brand footer-brand" href="#top">
+            <span>
+              <b>{t.trusted}</b>
+              <small>{t.course}</small>
+            </span>
+          </div>
+        </div>
+
+        <div className="hero-visual" aria-label="Lumi learning preview">
+          <div className="orbit orbit-one" />
+          <div className="orbit orbit-two" />
+          <div className="lumi">
+            <span className="ray r1" />
+            <span className="ray r2" />
+            <span className="ray r3" />
+            <span className="ray r4" />
+            <div className="lumi-body">
+              <i>•</i>
+              <i>•</i>
+              <b>⌣</b>
+            </div>
+            <div className="lumi-tail" />
+          </div>
+          <div className="floating-card card-progress">
+            <span className="round-icon purple">✓</span>
+            <div>
+              <small>{t.progress}</small>
+              <b>3 {lang === "es" ? "lecciones" : "lessons"}</b>
+            </div>
+          </div>
+          <div className="floating-card card-streak">
+            <span>🔥</span>
+            <div>
+              <b>5 {lang === "es" ? "días" : "days"}</b>
+              <small>{t.streak}</small>
+            </div>
+          </div>
+          <div className="floating-key k1">A</div>
+          <div className="floating-key k2">S</div>
+          <div className="floating-key k3">D</div>
+          <div className="keyboard-mini">
+            <div>Q W E R T Y U I O P</div>
+            <div>A S D F G H J K L Ñ</div>
+            <div>Z X C V B N M</div>
+            <span />
+          </div>
+        </div>
+      </section>
+
+      <section className="course-strip" id="courses">
+        <span className="course-icon">🎓</span>
+        <div>
+          <small>
+            {lang === "es"
+              ? "CINCO CURRÍCULOS DISPONIBLES"
+              : "FIVE CURRICULA AVAILABLE"}
+          </small>
+          <h2>
+            {lang === "es"
+              ? "Dactilografía · Lectura · Matemáticas · Inglés · Historia"
+              : "Typing · Reading · Mathematics · English · History"}
+          </h2>
+          <p>
+            {lang === "es"
+              ? "Caminos progresivos, actividades cortas y avance individual para cada estudiante."
+              : "Progressive paths, short activities, and individual progress for every student."}
+          </p>
+        </div>
+        <div className="course-progress">
+          <span>
+            <b>05</b>
+            <small>{lang === "es" ? "CURSOS ACTIVOS" : "ACTIVE COURSES"}</small>
+          </span>
+          <div>
+            <i style={{ width: "100%" }} />
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="education-path"
+        aria-label={lang === "es" ? "Áreas educativas" : "Learning areas"}
+      >
+        <div className="education-path-copy">
+          <span className="section-kicker">
+            {lang === "es" ? "ESCUELA DIGITAL LUMI" : "LUMI DIGITAL SCHOOL"}
+          </span>
+          <h2>
+            {lang === "es"
+              ? "Una escuela que crece con cada estudiante"
+              : "A school that grows with every student"}
+          </h2>
+          <p>
+            {lang === "es"
+              ? "Comenzamos con dactilografía y avanzaremos hacia las habilidades fundamentales para aprender con confianza."
+              : "We begin with typing and grow toward the essential skills every student needs to learn confidently."}
+          </p>
+        </div>
+        <div className="education-area-grid">
+          {[
+            [
+              "⌨",
+              lang === "es" ? "Dactilografía" : "Typing",
+              lang === "es"
+                ? "18 lecciones · Disponible"
+                : "18 lessons · Available",
+            ],
+            [
+              "📖",
+              lang === "es" ? "Lectura" : "Reading",
+              lang === "es"
+                ? "18 lecciones · Disponible"
+                : "18 lessons · Available",
+            ],
+            [
+              "🔢",
+              lang === "es" ? "Matemáticas" : "Mathematics",
+              lang === "es"
+                ? "36 lecciones · Disponible"
+                : "36 lessons · Available",
+            ],
+            [
+              "🌎",
+              lang === "es" ? "Inglés" : "English",
+              lang === "es"
+                ? "18 lecciones · Disponible"
+                : "18 lessons · Available",
+            ],
+            [
+              "🏛️",
+              lang === "es" ? "Historia y cultura" : "History and culture",
+              lang === "es"
+                ? "Videos y cuestionarios · Disponible"
+                : "Videos and quizzes · Available",
+            ],
+          ].map((area) => (
+            <article className="available" key={area[1]}>
+              <span>{area[0]}</span>
+              <div>
+                <b>{area[1]}</b>
+                <small>{area[2]}</small>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={`practice-section ${worlds[world]}`} id="practice">
+        <div className="section-heading">
+          <span className="section-kicker">LUMI ACADEMY</span>
+          <h2>{t.practice}</h2>
+          <p>
+            {lang === "es"
+              ? "Elige un curso y entrena una habilidad en pocos minutos."
+              : "Choose a course and train one skill in just a few minutes."}
+          </p>
+        </div>
+        <div className="practice-shell">
+          <div
+            className="quick-subjects"
+            role="tablist"
+            aria-label={
+              lang === "es"
+                ? "Cursos de práctica rápida"
+                : "Quick practice courses"
+            }
+          >
+            {(
+              [
+                ["typing", "⌨", lang === "es" ? "Dactilografía" : "Typing"],
+                ["reading", "📖", lang === "es" ? "Lectura" : "Reading"],
+                ["math", "🔢", lang === "es" ? "Matemáticas" : "Mathematics"],
+                ["english", "🌎", lang === "es" ? "Inglés" : "English"],
+              ] as const
+            ).map(([id, icon, label]) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={quickSubject === id}
+                className={quickSubject === id ? "active" : ""}
+                onClick={() => {
+                  setQuickSubject(id);
+                  setQuickFeedback("");
+                }}
+              >
+                {icon}
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="practice-top">
+            <span className="lesson-pill">
+              {lang === "es" ? "Práctica de 2 minutos" : "2-minute practice"}
+            </span>
+            <div className="practice-actions">
+              <button onClick={nextQuickRound}>
+                ↻{" "}
+                {quickSubject === "typing"
+                  ? t.reset
+                  : lang === "es"
+                    ? "Otro reto"
+                    : "Next challenge"}
+              </button>
+            </div>
+          </div>
+          {quickSubject === "typing" ? (
+            <>
+              <div className={`typing-prompt ${bigText ? "large" : ""}`}>
+                {typed >= target.length ? (
+                  <b className="complete">{t.done}</b>
+                ) : (
+                  renderedTarget
+                )}
+              </div>
+              <input
+                autoComplete="off"
+                autoCapitalize="off"
+                aria-label={t.practiceHint}
+                className="typing-capture"
+                value=""
+                onKeyDown={handleKey}
+                onChange={() => {}}
+                placeholder={
+                  lang === "es"
+                    ? "Haz clic aquí y comienza a escribir…"
+                    : "Click here and start typing…"
+                }
+              />
+              <div className="keyboard">
+                {rows.map((row, rowIndex) => (
+                  <div className="key-row" key={rowIndex}>
+                    {row.map((key) => (
+                      <span
+                        key={key}
+                        className={
+                          current.toUpperCase() === key ? "active-key" : ""
+                        }
+                      >
+                        {key}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+                <div className="space-key">
+                  <span className={current === " " ? "active-key" : ""}>
+                    SPACE
+                  </span>
+                </div>
+              </div>
+              {hands && (
+                <div className="hands">
+                  <span className="left-hand">☝</span>
+                  <span className="right-hand">☝</span>
+                </div>
+              )}
+              <div className="practice-stats">
+                <span>
+                  <b>{accuracy}%</b>
+                  <small>{t.accuracy}</small>
+                </span>
+                <span>
+                  <b>
+                    {typed}/{target.length}
+                  </b>
+                  <small>{lang === "es" ? "Progreso" : "Progress"}</small>
+                </span>
+                <span>
+                  <b>{Math.max(1, Math.round(typed / 2))}</b>
+                  <small>{t.stars}</small>
+                </span>
+              </div>
+            </>
+          ) : (
+            (() => {
+              const challenge =
+                quickChallenges[quickSubject][
+                  quickRound % quickChallenges[quickSubject].length
+                ];
+              return (
+                <div className="quick-challenge">
+                  <span className="quick-icon">
+                    {quickSubject === "reading"
+                      ? "📚"
+                      : quickSubject === "math"
+                        ? "🧩"
+                        : "🎧"}
+                  </span>
+                  <h3>{challenge.prompt}</h3>
+                  {quickSubject === "english" && (
+                    <button
+                      className="quick-listen"
+                      onClick={() =>
+                        readingVoice(quickRound % 2 === 0 ? "apple" : "happy")
+                      }
+                    >
+                      🔊 {lang === "es" ? "Escuchar palabra" : "Listen"}
+                    </button>
+                  )}
+                  <div className="quick-options">
+                    {challenge.options.map((option) => (
+                      <button
+                        key={option}
+                        onClick={() =>
+                          chooseQuickAnswer(option, challenge.answer)
+                        }
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  {quickFeedback && (
+                    <p
+                      className={
+                        quickFeedback.includes("Yey") ||
+                        quickFeedback.includes("Yay")
+                          ? "correct"
+                          : "try"
+                      }
+                    >
+                      {quickFeedback}
+                    </p>
+                  )}
+                </div>
+              );
+            })()
+          )}
+        </div>
+      </section>
+
+      <section className="benefits" id="how">
+        <div className="section-heading">
+          <span className="section-kicker">
+            {lang === "es" ? "APRENDER CON LUMI" : "LEARN WITH LUMI"}
+          </span>
+          <h2>{t.why}</h2>
+          <p>{t.whySub}</p>
+        </div>
+        <div className="benefit-grid">
+          {t.benefits.map((benefit, index) => (
+            <article key={benefit[0]}>
+              <span className={`benefit-icon icon-${index}`}>
+                {["✦", "↗", "♡"][index]}
+              </span>
+              <h3>{benefit[0]}</h3>
+              <p>{benefit[1]}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="plans" id="plans">
+        <div className="section-heading">
+          <span className="section-kicker">
+            {lang === "es" ? "CURSOS DISPONIBLES" : "AVAILABLE COURSES"}
+          </span>
+          <h2>{lang === "es" ? "Elige un curso para cada estudiante" : "Choose a course for each student"}</h2>
+          <p>{lang === "es" ? "Cada maestro define el precio de su curso. Compra una vez y sigue el avance desde tu cuenta familiar." : "Each teacher sets the course price. Purchase access and follow progress from your family account."}</p>
+        </div>
+        <div className="course-market-grid">
+          {visibleHistoryLessons.length ? visibleHistoryLessons.map((lesson) => (
+            <article key={lesson.id}>
+              <span className="market-course-icon">🏛️</span>
+              <small>{lesson.country.toUpperCase()} · {lesson.level === "both" ? "PRIMARIA Y SECUNDARIA" : lesson.level.toUpperCase()}</small>
+              <h3>{lang === "es" ? lesson.titleEs : lesson.titleEn}</h3>
+              <p>{lang === "es" ? lesson.descriptionEs : lesson.descriptionEn}</p>
+              <div className="market-teacher">🧑‍🏫 {lesson.creatorName || "Lumi Academy"}</div>
+              <div className="market-price"><b>{lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Gratis" : "Free"}</b><span>{lang === "es" ? "por estudiante" : "per student"}</span></div>
+              <button className="button primary" onClick={() => lesson.price > 0 && !hasHistoryAccess(lesson) ? beginCoursePurchase(lesson) : activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(lesson), 0)) : account ? setFamilyOpen(true) : openAccount("login")}>{hasHistoryAccess(lesson) ? lang === "es" ? "Comenzar curso" : "Start course" : lang === "es" ? "Comprar curso" : "Buy course"}</button>
+            </article>
+          )) : (
+            <article className="market-coming"><span className="market-course-icon">✦</span><h3>{lang === "es" ? "Nuevos cursos en preparación" : "New courses in preparation"}</h3><p>{lang === "es" ? "Los maestros podrán publicar aquí sus cursos, precio y contenido." : "Teachers will publish their courses, prices and content here."}</p></article>
+          )}
+        </div>
+      </section>
+
+      <section className="family-banner" id="families">
+        <div>
+          <span>✦</span>
+          <h2>
+            {lang === "es"
+              ? "Cada estudiante tiene su propia forma de brillar."
+              : "Every student has their own way to shine."}
+          </h2>
+          <p>
+            {lang === "es"
+              ? "Lumi se adapta a su ritmo, sus intereses y sus necesidades."
+              : "Lumi adapts to their pace, interests and needs."}
+          </p>
+        </div>
+        <button
+          className="button light"
+          onClick={() => (account ? setFamilyOpen(true) : openAccount("login"))}
+        >
+          {t.login} →
+        </button>
+      </section>
+
+      <footer>
+        <a className="brand footer-brand" href="#top">
           <span className="brand-mark">
             <i>L</i>
             <b>✦</b>
@@ -5727,17 +6276,16 @@ export default function Home() {
                             ? lesson.descriptionEs
                             : lesson.descriptionEn}
                         </p>
+                        <small className="course-teacher-name">
+                          {lesson.creatorName || "Lumi Academy"} · {lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "GRATIS" : "FREE"}
+                        </small>
                       </div>
-                      <button onClick={() => startHistoryLesson(lesson)}>
-                        {activeChild.historyCompletedLessons?.includes(
-                          lesson.id,
-                        )
-                          ? lang === "es"
-                            ? "Repetir"
-                            : "Repeat"
-                          : lang === "es"
-                            ? "Comenzar"
-                            : "Start"}
+                      <button onClick={() => hasHistoryAccess(lesson) ? startHistoryLesson(lesson) : beginCoursePurchase(lesson)}>
+                        {hasHistoryAccess(lesson)
+                          ? activeChild.historyCompletedLessons?.includes(lesson.id)
+                            ? lang === "es" ? "Repetir" : "Repeat"
+                            : lang === "es" ? "Comenzar" : "Start"
+                          : lang === "es" ? `Comprar · ${lesson.price} Bs` : `Buy · ${lesson.price} Bs`}
                       </button>
                     </article>
                   ))}
@@ -6263,6 +6811,32 @@ export default function Home() {
           );
         })()}
 
+      {purchaseLesson && account && (
+        <div className="modal-backdrop purchase-backdrop" onMouseDown={() => setPurchaseLesson(null)}>
+          <section className="purchase-panel" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="purchase-close" onClick={() => setPurchaseLesson(null)}>×</button>
+            <span className="section-kicker">COMPRA SEGURA · LUMI ACADEMY</span>
+            <h2>{lang === "es" ? purchaseLesson.titleEs : purchaseLesson.titleEn}</h2>
+            <p>{purchaseLesson.creatorName || "Lumi Academy"}</p>
+            <div className="purchase-price"><b>{purchaseLesson.price} Bs</b><small>{lang === "es" ? "Acceso para un estudiante" : "Access for one student"}</small></div>
+            <label>
+              {lang === "es" ? "¿Quién realizará el curso?" : "Who will take the course?"}
+              <select value={purchaseChildId} onChange={(event) => setPurchaseChildId(event.target.value)}>
+                {children.map((child) => <option value={child.id} key={child.id}>{child.avatar} {child.name}</option>)}
+              </select>
+            </label>
+            <div className="payment-options">
+              <button className={paymentMethod === "qr" ? "selected" : ""} onClick={() => setPaymentMethod("qr")}><span>▦</span><b>Pago QR</b><small>{lang === "es" ? "Confirmación manual" : "Manual confirmation"}</small></button>
+              <button className={paymentMethod === "cash" ? "selected" : ""} onClick={() => setPaymentMethod("cash")}><span>💵</span><b>{lang === "es" ? "Efectivo" : "Cash"}</b><small>{lang === "es" ? "Registrar entrega" : "Register payment"}</small></button>
+            </div>
+            <aside className="commission-note"><span>Lumi Academy 10%: {(purchaseLesson.price * .1).toFixed(2)} Bs</span><span>Maestro 90%: {(purchaseLesson.price * .9).toFixed(2)} Bs</span></aside>
+            {purchaseMessage && <p className="purchase-message">{purchaseMessage}</p>}
+            <button className="button primary purchase-submit" disabled={purchaseBusy} onClick={() => void createCoursePurchase()}>{purchaseBusy ? "Registrando…" : lang === "es" ? "Registrar solicitud de compra" : "Register purchase request"}</button>
+            <small className="purchase-help">{lang === "es" ? "El curso se habilitará después de confirmar el pago." : "The course will unlock after payment confirmation."}</small>
+          </section>
+        </div>
+      )}
+
       {adminOpen && isCourseCreator && (
         <div
           className="modal-backdrop admin-backdrop"
@@ -6277,11 +6851,9 @@ export default function Home() {
                 <span className="section-kicker">
                   LUMI ACADEMY · {isAdmin ? "ADMINISTRACIÓN" : "DOCENTES"}
                 </span>
-                <h2>
-                  {lang === "es"
-                    ? "Cursos con video y cuestionario"
-                    : "Video and quiz courses"}
-                </h2>
+                <h2>{isAdmin
+                  ? lang === "es" ? "Reportes de Lumi Academy" : "Lumi Academy reports"
+                  : lang === "es" ? "Mis cursos y ganancias" : "My courses and earnings"}</h2>
                 <p>
                   {account?.email} ·{" "}
                   {isAdmin
@@ -6295,7 +6867,31 @@ export default function Home() {
               </div>
               <button onClick={() => setAdminOpen(false)}>×</button>
             </header>
-            <div className="admin-layout">
+            <div className={`admin-layout ${isAdmin ? "owner-only-reports" : "teacher-course-panel"}`}>
+              <section className="sales-report-panel">
+                <div className="report-card-grid">
+                  <article><span>💳</span><small>VENTAS CONFIRMADAS</small><b>{reportTotals.sales.toFixed(2)} Bs</b></article>
+                  <article><span>✦</span><small>COMISIÓN LUMI · 10%</small><b>{reportTotals.platform.toFixed(2)} Bs</b></article>
+                  <article><span>🧑‍🏫</span><small>MAESTROS · 90%</small><b>{reportTotals.teachers.toFixed(2)} Bs</b></article>
+                  <article><span>⏳</span><small>PAGOS PENDIENTES</small><b>{reportTotals.pending}</b></article>
+                </div>
+                <div className="sales-table-wrap">
+                  <h3>{isAdmin ? "VENTAS Y SOLICITUDES" : "MIS VENTAS"}</h3>
+                  {purchases.length === 0 ? <p className="admin-empty">Aún no existen ventas registradas.</p> : (
+                    <div className="sales-table">
+                      {purchases.map((purchase) => (
+                        <article key={purchase.id}>
+                          <div><b>{purchase.courseTitle}</b><small>{purchase.childName} · {purchase.buyerEmail}</small></div>
+                          <span>{purchase.paymentMethod === "qr" ? "QR" : "EFECTIVO"}</span>
+                          <strong>{purchase.price.toFixed(2)} Bs</strong>
+                          <em className={`status-${purchase.status}`}>{purchase.status === "pending" ? "PENDIENTE" : purchase.status === "confirmed" ? "CONFIRMADO" : purchase.status.toUpperCase()}</em>
+                          {isAdmin && purchase.status === "pending" && <div className="sale-actions"><button onClick={() => void updatePurchaseStatus(purchase, "confirmed")}>✓ Confirmar</button><button onClick={() => void updatePurchaseStatus(purchase, "rejected")}>Rechazar</button></div>}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
               <aside>
                 <button className="button primary" onClick={newHistoryDraft}>
                   ＋ {lang === "es" ? "Nueva lección" : "New lesson"}
@@ -6366,6 +6962,22 @@ export default function Home() {
                         })
                       }
                     />
+                  </label>
+                  <label>
+                    {lang === "es" ? "Precio por estudiante (Bs)" : "Price per student (Bs)"}
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={historyDraft.price}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          price: Math.max(0, Number(e.target.value)),
+                        })
+                      }
+                    />
+                    <small>90% maestro · 10% Lumi Academy</small>
                   </label>
                   <label>
                     {lang === "es" ? "Nivel" : "Level"}
@@ -6612,7 +7224,7 @@ export default function Home() {
         </div>
       )}
 
-      {familyOpen && account && (
+      {familyOpen && account && !isCourseCreator && (
         <div
           className="modal-backdrop family-backdrop"
           onMouseDown={() => setFamilyOpen(false)}
@@ -6664,6 +7276,18 @@ export default function Home() {
                 <small>{t.stars}</small>
               </span>
             </div>
+            {purchases.length > 0 && (
+              <section className="family-purchases">
+                <h3>{lang === "es" ? "Mis compras y accesos" : "My purchases and access"}</h3>
+                {purchases.map((purchase) => (
+                  <article key={purchase.id}>
+                    <div><b>{purchase.courseTitle}</b><small>{purchase.childName} · {purchase.paymentMethod === "qr" ? "QR" : lang === "es" ? "Efectivo" : "Cash"}</small></div>
+                    <strong>{purchase.price.toFixed(2)} Bs</strong>
+                    <span className={`status-${purchase.status}`}>{purchase.status === "pending" ? lang === "es" ? "Pendiente" : "Pending" : purchase.status === "confirmed" ? lang === "es" ? "Acceso habilitado" : "Access enabled" : purchase.status}</span>
+                  </article>
+                ))}
+              </section>
+            )}
             {children.length > 0 && (
               <>
                 <div className="family-section-title">
