@@ -6865,7 +6865,21 @@ export default function Home() {
                       : "Teacher creator"}
                 </p>
               </div>
-              <button onClick={() => setAdminOpen(false)}>×</button>
+              <div className="admin-header-actions">
+                <button
+                  className="admin-signout"
+                  onClick={() => void signOut(auth)}
+                >
+                  ↪ {lang === "es" ? "Cerrar sesión" : "Sign out"}
+                </button>
+                <button
+                  className="admin-close"
+                  aria-label={lang === "es" ? "Cerrar panel" : "Close panel"}
+                  onClick={() => setAdminOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
             </header>
             <div className={`admin-layout ${isAdmin ? "owner-only-reports" : "teacher-course-panel"}`}>
               <section className="sales-report-panel">
