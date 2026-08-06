@@ -80,6 +80,14 @@ type HistoryLesson = {
   creatorName?: string;
   price: number;
 };
+type CurriculumBoardItem = {
+  id: string;
+  icon: string;
+  title: string;
+  detail: string;
+  color: string;
+  lesson?: HistoryLesson;
+};
 type CoursePurchase = {
   id: string;
   courseId: string;
@@ -4142,20 +4150,20 @@ export default function Home() {
           </label>
         </div>
         {(() => {
-          const baseCurricula = [
+          const baseCurricula: CurriculumBoardItem[] = [
             { id: "typing", icon: "⌨", title: lang === "es" ? "Dactilografía" : "Typing", detail: lang === "es" ? "18 lecciones · Precisión, velocidad y palabras por minuto" : "18 lessons · Accuracy, speed and words per minute", color: "purple" },
             { id: "reading", icon: "📖", title: lang === "es" ? "Lectura" : "Reading", detail: lang === "es" ? "18 lecciones · Sonidos, palabras y comprensión" : "18 lessons · Sounds, words and comprehension", color: "turquoise" },
             { id: "math", icon: "🔢", title: lang === "es" ? "Matemáticas" : "Mathematics", detail: lang === "es" ? "36 lecciones · Retos, lógica y resolución" : "36 lessons · Challenges, logic and problem solving", color: "yellow" },
             { id: "english", icon: "🌎", title: lang === "es" ? "Inglés" : "English", detail: lang === "es" ? "18 lecciones · Vocabulario, escucha y pronunciación" : "18 lessons · Vocabulary, listening and pronunciation", color: "coral" },
           ];
-          const teacherCurricula = visibleHistoryLessons.map((lesson) => ({ id: lesson.id, icon: "🏛️", title: lang === "es" ? lesson.titleEs : lesson.titleEn, detail: `${lesson.country} · ${lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Gratis" : "Free"} · ${lesson.creatorName || "Lumi Academy"}`, color: "blue", lesson }));
+          const teacherCurricula: CurriculumBoardItem[] = visibleHistoryLessons.map((lesson) => ({ id: lesson.id, icon: "🏛️", title: lang === "es" ? lesson.titleEs : lesson.titleEn, detail: `${lesson.country} · ${lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Gratis" : "Free"} · ${lesson.creatorName || "Lumi Academy"}`, color: "blue", lesson }));
           const boardItems = [...baseCurricula, ...teacherCurricula].filter((item) => `${item.title} ${item.detail}`.toLocaleLowerCase().includes(curriculumSearch.trim().toLocaleLowerCase()));
           return <div className="curriculum-board-shell">
             <div className="curriculum-scroll">
               {boardItems.map((item) => <article className={`curriculum-card curriculum-${item.color}`} key={item.id}>
                 <span className="curriculum-icon">{item.icon}</span>
                 <div><small>{lang === "es" ? "CURSO DISPONIBLE" : "AVAILABLE COURSE"}</small><h3>{item.title}</h3><p>{item.detail}</p></div>
-                <button onClick={() => "lesson" in item && item.lesson ? (item.lesson.price > 0 && !hasHistoryAccess(item.lesson) ? beginCoursePurchase(item.lesson) : activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(item.lesson!), 0)) : account ? setFamilyOpen(true) : openAccount("login")) : account ? setFamilyOpen(true) : openAccount("login")}>{lang === "es" ? "Ver curso →" : "View course →"}</button>
+                <button onClick={() => item.lesson ? (item.lesson.price > 0 && !hasHistoryAccess(item.lesson) ? beginCoursePurchase(item.lesson) : activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(item.lesson!), 0)) : account ? setFamilyOpen(true) : openAccount("login")) : account ? setFamilyOpen(true) : openAccount("login")}>{lang === "es" ? "Ver curso →" : "View course →"}</button>
               </article>)}
               {boardItems.length === 0 && <div className="curriculum-empty"><span>🔎</span><b>{lang === "es" ? "No encontramos ese curso" : "We couldn't find that course"}</b><p>{lang === "es" ? "Prueba buscando otra materia o palabra." : "Try another subject or keyword."}</p></div>}
             </div>
