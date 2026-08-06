@@ -21,6 +21,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { auth, db } from "./lib/firebase";
 import "./account.css";
@@ -505,8 +506,10 @@ export default function Home() {
   }
 
   async function loadHistoryLessons() {
-    const snapshot = await getDocs(query(collection(db, "courses", "history-culture", "lessons"), orderBy("order", "asc")));
-    setHistoryLessons(snapshot.docs.map((item) => ({id:item.id,...item.data()})) as HistoryLesson[]);
+    const lessonsRef = collection(db, "courses", "history-culture", "lessons");
+    const admin = !!auth.currentUser?.email && ADMIN_EMAILS.includes(auth.currentUser.email.toLowerCase());
+    const snapshot = await getDocs(admin ? query(lessonsRef, orderBy("order", "asc")) : query(lessonsRef, where("published", "==", true)));
+    setHistoryLessons((snapshot.docs.map((item) => ({id:item.id,...item.data()})) as HistoryLesson[]).sort((a,b)=>a.order-b.order));
   }
 
   function youtubeEmbed(url: string) {
