@@ -5598,3 +5598,1870 @@ export default function Home() {
                       {lang === "es"
                         ? "Evaluación inicial"
                         : "Initial assessment"}
+                    </small>
+                  </div>
+                </div>
+                <div className="math-module-title">
+                  <span>1</span>
+                  <div>
+                    <b>
+                      {lang === "es"
+                        ? "Suma y resta"
+                        : "Addition and subtraction"}
+                    </b>
+                    <small>18 {lang === "es" ? "lecciones" : "lessons"}</small>
+                  </div>
+                </div>
+                <div className="reading-lesson-grid math-lesson-grid">
+                  {mathLessons.map((lesson, index) => {
+                    const number = index + 1;
+                    const completed =
+                      activeChild.mathCompletedLessons?.includes(number);
+                    const available =
+                      completed || number === (activeChild.mathLevel || 1);
+                    return (
+                      <div key={lesson.es}>
+                        {index === 18 && (
+                          <div className="math-module-title second">
+                            <span>2</span>
+                            <div>
+                              <b>
+                                {lang === "es"
+                                  ? "Multiplicación y división"
+                                  : "Multiplication and division"}
+                              </b>
+                              <small>
+                                18 {lang === "es" ? "lecciones" : "lessons"}
+                              </small>
+                            </div>
+                          </div>
+                        )}
+                        <article
+                          className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`}
+                        >
+                          <span>
+                            {completed ? "✓" : available ? number : "🔒"}
+                          </span>
+                          <div>
+                            <small>
+                              {lang === "es"
+                                ? `LECCIÓN ${number}`
+                                : `LESSON ${number}`}
+                            </small>
+                            <b>
+                              {lesson.icon}{" "}
+                              {lang === "es" ? lesson.es : lesson.en}
+                            </b>
+                            <p>
+                              {lang === "es" ? lesson.skillEs : lesson.skillEn}
+                            </p>
+                          </div>
+                          {available && (
+                            <button onClick={() => startMathLesson(number)}>
+                              {completed
+                                ? lang === "es"
+                                  ? "Repetir"
+                                  : "Repeat"
+                                : lang === "es"
+                                  ? "Empezar"
+                                  : "Start"}
+                            </button>
+                          )}
+                        </article>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeChild.mathAssessmentScore !== undefined &&
+              mathLesson &&
+              (() => {
+                const lesson = mathLessons[mathLesson - 1];
+                const problem = lesson.problems[mathExercise];
+                return (
+                  <div className="reading-lesson-player math-lesson-player">
+                    <div className="reading-exercise-head">
+                      <button onClick={() => setMathLesson(null)}>
+                        ← {lang === "es" ? "Mapa" : "Map"}
+                      </button>
+                      <span>
+                        {lang === "es"
+                          ? `Ejercicio ${mathExercise + 1} de 5`
+                          : `Activity ${mathExercise + 1} of 5`}
+                      </span>
+                    </div>
+                    <div className="reading-exercise-progress">
+                      <i
+                        style={{
+                          width: `${((mathExercise + (mathLessonDone ? 1 : 0)) / 5) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="math-lesson-icon">{lesson.icon}</div>
+                    <span className="section-kicker">
+                      {(lang === "es"
+                        ? lesson.skillEs
+                        : lesson.skillEn
+                      ).toUpperCase()}
+                    </span>
+                    <h2>{lang === "es" ? lesson.es : lesson.en}</h2>
+                    <p>
+                      {lang === "es"
+                        ? "Observa, piensa y elige la respuesta correcta."
+                        : "Look, think, and choose the correct answer."}
+                    </p>
+                    <div
+                      className={
+                        problem.display.length > 25
+                          ? "math-equation word-problem"
+                          : "math-equation"
+                      }
+                    >
+                      {problem.display}
+                    </div>
+                    <button
+                      className="listen-button"
+                      onClick={() => readingVoice(problem.display)}
+                    >
+                      🔊 {lang === "es" ? "Escuchar reto" : "Hear challenge"}
+                    </button>
+                    {!mathLessonDone && (
+                      <div className="math-answer-grid">
+                        {mathOptions(problem, lang).map((option) => (
+                          <button
+                            disabled={mathBusy}
+                            key={option}
+                            onClick={() => void answerMathLesson(option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {mathFeedback && (
+                      <div className="reading-feedback">{mathFeedback}</div>
+                    )}
+                    {mathLessonDone && (
+                      <button
+                        className="button primary next-reading-lesson"
+                        onClick={() =>
+                          mathLesson < 36
+                            ? startMathLesson(mathLesson + 1)
+                            : setMathLesson(null)
+                        }
+                      >
+                        {mathLesson < 36
+                          ? lang === "es"
+                            ? "Siguiente lección →"
+                            : "Next lesson →"
+                          : lang === "es"
+                            ? "Finalizar curso"
+                            : "Finish course"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+          </section>
+        </div>
+      )}
+
+      {englishOpen && activeChild && (
+        <div
+          className="reading-backdrop english-backdrop"
+          onMouseDown={() => setEnglishOpen(false)}
+        >
+          <section
+            className="reading-player english-player"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="reading-header english-header">
+              <button
+                onClick={() =>
+                  englishLesson ? setEnglishLesson(null) : setEnglishOpen(false)
+                }
+              >
+                ←{" "}
+                {englishLesson
+                  ? lang === "es"
+                    ? "Mapa"
+                    : "Map"
+                  : lang === "es"
+                    ? "Mis materias"
+                    : "My subjects"}
+              </button>
+              <div>
+                <span>LUMIENGLISH</span>
+                <b>
+                  {lang === "es" ? "Inglés interactivo" : "Interactive English"}
+                </b>
+              </div>
+              <div className="english-counter">
+                <span>🏆</span>
+                <b>{activeChild.englishCompletedLessons?.length || 0}/18</b>
+              </div>
+            </header>
+
+            {activeChild.englishAssessmentScore === undefined && (
+              <div className="english-assessment">
+                <div className="english-world">
+                  🌎<span>Hello!</span>
+                </div>
+                <span className="section-kicker">
+                  {lang === "es"
+                    ? `PALABRA ${englishAssessmentIndex + 1} DE 5`
+                    : `WORD ${englishAssessmentIndex + 1} OF 5`}
+                </span>
+                <h2>
+                  {lang === "es"
+                    ? `Descubramos cuánto inglés conoces, ${activeChild.name}`
+                    : `Let's discover how much English you know, ${activeChild.name}`}
+                </h2>
+                <p>
+                  {lang === "es"
+                    ? "Mira la imagen, escucha las opciones y elige la palabra correcta."
+                    : "Look at the picture, hear the options, and choose the correct word."}
+                </p>
+                <div className="english-assessment-icon">
+                  {englishAssessment[englishAssessmentIndex].prompt}
+                </div>
+                <button
+                  className="listen-button"
+                  onClick={() =>
+                    englishAssessment[englishAssessmentIndex].options.forEach(
+                      (option, index) =>
+                        window.setTimeout(
+                          () => readingVoice(option),
+                          index * 650,
+                        ),
+                    )
+                  }
+                >
+                  🔊 {lang === "es" ? "Escuchar opciones" : "Hear options"}
+                </button>
+                <div className="english-choice-grid">
+                  {englishAssessment[englishAssessmentIndex].options.map(
+                    (option) => (
+                      <button
+                        disabled={englishBusy}
+                        key={option}
+                        onClick={() => void answerEnglishAssessment(option)}
+                        onMouseEnter={() => readingVoice(option)}
+                      >
+                        {option}
+                      </button>
+                    ),
+                  )}
+                </div>
+                {englishFeedback && (
+                  <div className="reading-feedback">{englishFeedback}</div>
+                )}
+                <div className="english-progress">
+                  <i
+                    style={{
+                      width: `${((englishAssessmentIndex + 1) / 5) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeChild.englishAssessmentScore !== undefined &&
+              !englishLesson && (
+                <div className="reading-map english-map">
+                  <div className="reading-map-title">
+                    <div>
+                      <span className="section-kicker">
+                        LUMIENGLISH · LISTEN · PLAY · SPEAK
+                      </span>
+                      <h2>
+                        {lang === "es"
+                          ? `Tu aventura en inglés, ${activeChild.name}`
+                          : `Your English adventure, ${activeChild.name}`}
+                      </h2>
+                      <p>
+                        {lang === "es"
+                          ? "Escucha, juega, pronuncia y gana estrellas en cada lección."
+                          : "Listen, play, speak, and earn stars in every lesson."}
+                      </p>
+                    </div>
+                    <div className="assessment-badge english-badge">
+                      <span>🏅</span>
+                      <b>{activeChild.englishAssessmentScore}/5</b>
+                      <small>
+                        {lang === "es"
+                          ? "Evaluación inicial"
+                          : "Initial assessment"}
+                      </small>
+                    </div>
+                  </div>
+                  <div className="reading-lesson-grid english-lesson-grid">
+                    {englishLessons.map((lesson, index) => {
+                      const number = index + 1;
+                      const completed =
+                        activeChild.englishCompletedLessons?.includes(number);
+                      const available =
+                        completed || number === (activeChild.englishLevel || 1);
+                      const beginsModule =
+                        index === 0 ||
+                        englishLessons[index - 1].module !== lesson.module;
+                      return (
+                        <div key={lesson.title}>
+                          {beginsModule && (
+                            <div className="english-module-title">
+                              <span>{lesson.module}</span>
+                              <div>
+                                <b>
+                                  {lang === "es"
+                                    ? lesson.moduleEs
+                                    : lesson.moduleEn}
+                                </b>
+                                <small>
+                                  {lang === "es" ? "MÓDULO" : "MODULE"}{" "}
+                                  {lesson.module}
+                                </small>
+                              </div>
+                            </div>
+                          )}
+                          <article
+                            className={`${completed ? "completed" : ""} ${available ? "available" : "locked"}`}
+                          >
+                            <span>
+                              {completed ? "✓" : available ? number : "🔒"}
+                            </span>
+                            <div>
+                              <small>
+                                {lang === "es"
+                                  ? `LECCIÓN ${number}`
+                                  : `LESSON ${number}`}
+                              </small>
+                              <b>
+                                {lesson.words[0].icon} {lesson.title}
+                              </b>
+                              <p>
+                                {lang === "es"
+                                  ? lesson.mechanicEs
+                                  : lesson.mechanicEn}
+                              </p>
+                            </div>
+                            {available && (
+                              <button
+                                onClick={() => startEnglishLesson(number)}
+                              >
+                                {completed
+                                  ? lang === "es"
+                                    ? "Repetir"
+                                    : "Repeat"
+                                  : lang === "es"
+                                    ? "Empezar"
+                                    : "Start"}
+                              </button>
+                            )}
+                          </article>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            {activeChild.englishAssessmentScore !== undefined &&
+              englishLesson &&
+              (() => {
+                const lesson = englishLessons[englishLesson - 1];
+                const practiceWord =
+                  lesson.words[
+                    englishStep === 2
+                      ? 1 % lesson.words.length
+                      : englishStep === 3
+                        ? 2 % lesson.words.length
+                        : 3 % lesson.words.length
+                  ];
+                const stageNames =
+                  lang === "es"
+                    ? [
+                        "Introducción",
+                        "Tarjetas con audio",
+                        "Práctica interactiva",
+                        "Pronunciación",
+                        "Evaluación y recompensa",
+                      ]
+                    : [
+                        "Introduction",
+                        "Audio flashcards",
+                        "Interactive practice",
+                        "Pronunciation",
+                        "Quiz and reward",
+                      ];
+                return (
+                  <div className="english-lesson-player">
+                    <div className="reading-exercise-head">
+                      <button onClick={() => setEnglishLesson(null)}>
+                        ← {lang === "es" ? "Mapa" : "Map"}
+                      </button>
+                      <span>
+                        {englishStep + 1}/5 · {stageNames[englishStep]}
+                      </span>
+                    </div>
+                    <div className="english-progress">
+                      <i
+                        style={{
+                          width: `${((englishStep + (englishLessonDone ? 1 : 0)) / 5) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="section-kicker">
+                      {lang === "es"
+                        ? `MÓDULO ${lesson.module}`
+                        : `MODULE ${lesson.module}`}
+                    </span>
+                    <h2>{lesson.title}</h2>
+                    {englishStep === 0 && (
+                      <div className="english-stage">
+                        <div className="english-scene">
+                          {lesson.words.map((word) => (
+                            <span key={word.word}>{word.icon}</span>
+                          ))}
+                        </div>
+                        <p>
+                          {lang === "es"
+                            ? lesson.mechanicEs
+                            : lesson.mechanicEn}
+                        </p>
+                        <button
+                          className="button primary"
+                          onClick={() => {
+                            readingVoice(
+                              `${lesson.title}. ${lesson.words.map((word) => word.word).join(", ")}`,
+                            );
+                            void advanceEnglishStep();
+                          }}
+                        >
+                          ▶{" "}
+                          {lang === "es"
+                            ? "Escuchar y comenzar"
+                            : "Listen and begin"}
+                        </button>
+                      </div>
+                    )}
+                    {englishStep === 1 && (
+                      <div className="english-stage">
+                        <p>
+                          {lang === "es"
+                            ? "Presiona cada tarjeta para escuchar su pronunciación."
+                            : "Press each card to hear its pronunciation."}
+                        </p>
+                        <div className="english-flashcards">
+                          {lesson.words.map((word) => (
+                            <button
+                              key={word.word}
+                              onClick={() => readingVoice(word.word)}
+                            >
+                              <span>{word.icon}</span>
+                              <b>{word.word}</b>
+                              <small>{word.meaning}</small>
+                              <i>🔊</i>
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          className="button primary"
+                          onClick={() => void advanceEnglishStep()}
+                        >
+                          ✓{" "}
+                          {lang === "es"
+                            ? "Escuché las palabras"
+                            : "I heard the words"}
+                        </button>
+                      </div>
+                    )}
+                    {(englishStep === 2 || englishStep === 4) &&
+                      !englishLessonDone && (
+                        <div className="english-stage">
+                          <p>
+                            {englishStep === 2
+                              ? lang === "es"
+                                ? "Escucha y selecciona la imagen correcta."
+                                : "Listen and select the correct picture."
+                              : lang === "es"
+                                ? "Último reto: elige la palabra correcta."
+                                : "Final challenge: choose the correct word."}
+                          </p>
+                          <button
+                            className="english-sound-orb"
+                            onClick={() => readingVoice(practiceWord.word)}
+                          >
+                            🔊
+                            <small>
+                              {lang === "es" ? "Escuchar" : "Listen"}
+                            </small>
+                          </button>
+                          <div className="english-picture-choices">
+                            {englishChoices(lesson, practiceWord).map(
+                              (word) => (
+                                <button
+                                  key={word.word}
+                                  onClick={() =>
+                                    answerEnglishPractice(word.word)
+                                  }
+                                >
+                                  <span>{word.icon}</span>
+                                  <b>{word.word}</b>
+                                </button>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    {englishStep === 3 && (
+                      <div className="english-stage pronunciation-stage">
+                        <p>
+                          {lang === "es"
+                            ? "Presiona el micrófono y di la palabra en inglés."
+                            : "Press the microphone and say the English word."}
+                        </p>
+                        <div className="pronunciation-word">
+                          <span>{practiceWord.icon}</span>
+                          <b>{practiceWord.word}</b>
+                          <small>{practiceWord.meaning}</small>
+                        </div>
+                        <button
+                          className={`microphone-button ${englishListening ? "listening" : ""}`}
+                          onClick={startEnglishPronunciation}
+                        >
+                          🎙️
+                          <small>
+                            {englishListening
+                              ? lang === "es"
+                                ? "Escuchando…"
+                                : "Listening…"
+                              : lang === "es"
+                                ? "Pronunciar"
+                                : "Speak"}
+                          </small>
+                        </button>
+                        <button
+                          className="said-it-button"
+                          onClick={() => void advanceEnglishStep()}
+                        >
+                          {lang === "es"
+                            ? "Ya lo dije en voz alta"
+                            : "I said it aloud"}
+                        </button>
+                      </div>
+                    )}
+                    {englishFeedback && (
+                      <div className="reading-feedback">{englishFeedback}</div>
+                    )}
+                    {englishLessonDone && (
+                      <div className="english-reward">
+                        <span>🏆</span>
+                        <h3>
+                          {lang === "es"
+                            ? "¡Dos estrellas para ti!"
+                            : "Two stars for you!"}
+                        </h3>
+                        <button
+                          className="button primary"
+                          onClick={() =>
+                            englishLesson < 18
+                              ? startEnglishLesson(englishLesson + 1)
+                              : setEnglishLesson(null)
+                          }
+                        >
+                          {englishLesson < 18
+                            ? lang === "es"
+                              ? "Siguiente lección →"
+                              : "Next lesson →"
+                            : lang === "es"
+                              ? "Finalizar curso"
+                              : "Finish course"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+          </section>
+        </div>
+      )}
+
+      {historyOpen && activeChild && (
+        <div
+          className="reading-backdrop history-backdrop"
+          onMouseDown={() => setHistoryOpen(false)}
+        >
+          <section
+            className="reading-player history-player"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="reading-header history-header">
+              <button
+                onClick={() =>
+                  historyLesson ? setHistoryLesson(null) : setHistoryOpen(false)
+                }
+              >
+                ←{" "}
+                {historyLesson
+                  ? lang === "es"
+                    ? "Mapa"
+                    : "Map"
+                  : lang === "es"
+                    ? "Mis materias"
+                    : "My subjects"}
+              </button>
+              <div>
+                <span>LUMIHISTORY</span>
+                <b>
+                  {lang === "es" ? "Historia y cultura" : "History and culture"}
+                </b>
+              </div>
+              <div className="history-counter">
+                🏛️{" "}
+                <b>
+                  {activeChild.historyCompletedLessons?.length || 0}/
+                  {visibleHistoryLessons.length}
+                </b>
+              </div>
+            </header>
+            {!historyLesson && (
+              <div className="history-map">
+                <div className="reading-map-title">
+                  <div>
+                    <span className="section-kicker">
+                      VIDEO · DESCUBRE · RESPONDE
+                    </span>
+                    <h2>
+                      {lang === "es"
+                        ? `Viaja por la historia, ${activeChild.name}`
+                        : `Travel through history, ${activeChild.name}`}
+                    </h2>
+                    <p>
+                      {lang === "es"
+                        ? "Mira cada video, responde el cuestionario y consigue al menos 80% para completar la misión."
+                        : "Watch each video, answer the quiz, and score at least 80% to complete the mission."}
+                    </p>
+                  </div>
+                </div>
+                <div className="history-lesson-grid">
+                  {visibleHistoryLessons.map((lesson, index) => (
+                    <article
+                      key={lesson.id}
+                      className={
+                        activeChild.historyCompletedLessons?.includes(lesson.id)
+                          ? "completed"
+                          : ""
+                      }
+                    >
+                      <span>
+                        {activeChild.historyCompletedLessons?.includes(
+                          lesson.id,
+                        )
+                          ? "✓"
+                          : index + 1}
+                      </span>
+                      <div>
+                        <small>
+                          {lesson.country.toUpperCase()} ·{" "}
+                          {lesson.level === "both"
+                            ? lang === "es"
+                              ? "TODOS LOS NIVELES"
+                              : "ALL LEVELS"
+                            : lesson.level.toUpperCase()}
+                        </small>
+                        <b>{lang === "es" ? lesson.titleEs : lesson.titleEn}</b>
+                        <p>
+                          {lang === "es"
+                            ? lesson.descriptionEs
+                            : lesson.descriptionEn}
+                        </p>
+                        <small className="course-teacher-name">
+                          {lesson.creatorName || "Lumi Academy"} · {lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "GRATIS" : "FREE"}
+                        </small>
+                      </div>
+                      <button onClick={() => hasHistoryAccess(lesson) ? startHistoryLesson(lesson) : beginCoursePurchase(lesson)}>
+                        {hasHistoryAccess(lesson)
+                          ? activeChild.historyCompletedLessons?.includes(lesson.id)
+                            ? lang === "es" ? "Repetir" : "Repeat"
+                            : lang === "es" ? "Comenzar" : "Start"
+                          : lang === "es" ? `Comprar · ${lesson.price} Bs` : `Buy · ${lesson.price} Bs`}
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+            {historyLesson && (
+              <div className="history-lesson-player">
+                <div className="history-title">
+                  <span>🏛️</span>
+                  <div>
+                    <small>{historyLesson.country}</small>
+                    <h2>
+                      {lang === "es"
+                        ? historyLesson.titleEs
+                        : historyLesson.titleEn}
+                    </h2>
+                  </div>
+                </div>
+                <div className="history-learning-layout">
+                  <div className="history-video">
+                    {youtubeEmbed(historyLesson.youtubeUrl) ? (
+                      <iframe
+                        src={youtubeEmbed(historyLesson.youtubeUrl)}
+                        title={
+                          lang === "es"
+                            ? historyLesson.titleEs
+                            : historyLesson.titleEn
+                        }
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <div className="history-content-warning">
+                        🎬
+                        <b>
+                          {lang === "es"
+                            ? "El enlace del video necesita ser corregido"
+                            : "The video link needs to be corrected"}
+                        </b>
+                      </div>
+                    )}
+                    <p>
+                      {lang === "es"
+                        ? historyLesson.descriptionEs
+                        : historyLesson.descriptionEn}
+                    </p>
+                  </div>
+                  <div className="history-quiz">
+                    {historyLesson.questions.length === 0 ? (
+                      <div className="history-content-warning">
+                        📝
+                        <b>
+                          {lang === "es"
+                            ? "Esta lección todavía no tiene preguntas válidas"
+                            : "This lesson does not have valid questions yet"}
+                        </b>
+                        <p>
+                          {lang === "es"
+                            ? "El docente debe editarla y guardar al menos una pregunta con sus opciones."
+                            : "The teacher must edit it and save at least one question with options."}
+                        </p>
+                      </div>
+                    ) : !historyDone ? (
+                      <>
+                        <span className="section-kicker">
+                          {lang === "es"
+                            ? `PREGUNTA ${historyQuestion + 1} DE ${historyLesson.questions.length}`
+                            : `QUESTION ${historyQuestion + 1} OF ${historyLesson.questions.length}`}
+                        </span>
+                        <h3>
+                          {historyLesson.questions[historyQuestion].question}
+                        </h3>
+                        <div>
+                          {historyLesson.questions[historyQuestion].options.map(
+                            (option, index) => (
+                              <button
+                                disabled={!!historyFeedback}
+                                key={`${option}-${index}`}
+                                onClick={() => void answerHistory(index)}
+                              >
+                                {option}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                        {historyFeedback && (
+                          <aside>
+                            <p>{historyFeedback}</p>
+                            <button
+                              className="button primary"
+                              onClick={() => void nextHistoryQuestion()}
+                            >
+                              {historyQuestion <
+                              historyLesson.questions.length - 1
+                                ? lang === "es"
+                                  ? "Siguiente pregunta →"
+                                  : "Next question →"
+                                : lang === "es"
+                                  ? "Ver resultado"
+                                  : "See result"}
+                            </button>
+                          </aside>
+                        )}
+                      </>
+                    ) : (
+                      <div className="history-result">
+                        <span>
+                          {Math.round(
+                            (historyScore / historyLesson.questions.length) *
+                              100,
+                          ) >= 80
+                            ? "🏆"
+                            : "💪"}
+                        </span>
+                        <h3>
+                          {Math.round(
+                            (historyScore / historyLesson.questions.length) *
+                              100,
+                          )}
+                          %
+                        </h3>
+                        <p>
+                          {Math.round(
+                            (historyScore / historyLesson.questions.length) *
+                              100,
+                          ) >= 80
+                            ? lang === "es"
+                              ? "¡Misión completada! Ganaste dos estrellas."
+                              : "Mission complete! You earned two stars."
+                            : lang === "es"
+                              ? "No te preocupes. Mira nuevamente el video y vuelve a intentarlo."
+                              : "Don't worry. Watch the video again and try once more."}
+                        </p>
+                        <button
+                          className="button primary"
+                          onClick={() => startHistoryLesson(historyLesson)}
+                        >
+                          {lang === "es"
+                            ? "Repetir cuestionario"
+                            : "Repeat quiz"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {courseLesson &&
+        activeChild &&
+        (() => {
+          const lesson = courseLessons[lang][courseLesson - 1];
+          const courseCurrent = courseTarget[courseTyped] || "";
+          const activeFinger = fingerForKey(courseCurrent);
+          const liveAccuracy =
+            courseTyped + courseMistakes === 0
+              ? 100
+              : Math.round(
+                  (courseTyped / (courseTyped + courseMistakes)) * 100,
+                );
+          return (
+            <div
+              className="course-backdrop"
+              onMouseDown={() => setCourseLesson(null)}
+            >
+              <section
+                className={`course-player student-theme-${world} ${bigText ? "student-big-text" : ""}`}
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <header className="course-player-head">
+                  <button onClick={() => setCourseLesson(null)}>
+                    ← {lang === "es" ? "Mapa" : "Map"}
+                  </button>
+                  <div>
+                    <span>LUMITYPE</span>
+                    <b>
+                      {lang === "es"
+                        ? `Lección ${courseLesson} de 18`
+                        : `Lesson ${courseLesson} of 18`}
+                    </b>
+                  </div>
+                  <div className="course-player-actions">
+                    <button
+                      className={`course-sound ${sound ? "on" : ""}`}
+                      onClick={() => {
+                        if (sound && typeof window !== "undefined")
+                          window.speechSynthesis?.cancel();
+                        setSound(!sound);
+                      }}
+                      aria-label={
+                        sound
+                          ? lang === "es"
+                            ? "Silenciar sonidos"
+                            : "Mute sounds"
+                          : lang === "es"
+                            ? "Activar sonidos"
+                            : "Enable sounds"
+                      }
+                    >
+                      {sound ? "🔊" : "🔇"}
+                    </button>
+                    <button
+                      className="student-close"
+                      onClick={() => setCourseLesson(null)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </header>
+                <div className="course-progress-line">
+                  <i
+                    style={{
+                      width: `${(courseTyped / Math.max(1, courseTarget.length)) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="course-player-body">
+                  <div className="course-title">
+                    <span>{activeChild.avatar}</span>
+                    <div>
+                      <small>{lesson.skill}</small>
+                      <h2>{lesson.title}</h2>
+                      <p>
+                        {courseLesson === 1
+                          ? lang === "es"
+                            ? "Busca las pequeñas ranuras de F y J, acomoda allí tus índices y presiona todas las teclas iluminadas."
+                            : "Find the small guides on F and J, place your index fingers there and press every highlighted key."
+                          : courseLesson === 18
+                            ? lang === "es"
+                              ? "Escribe el texto completo. Verás tus palabras por minuto en tiempo real y necesitas 80% de precisión."
+                              : "Type the full text. You will see your words per minute live and need 80% accuracy."
+                            : lang === "es"
+                              ? "Escribe el ejercicio con calma. Necesitas 80% de precisión para avanzar."
+                              : "Type calmly. You need 80% accuracy to move forward."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!courseResult ? (
+                    <>
+                      <div className="course-target" aria-live="polite">
+                        {courseTarget.split("").map((letter, index) => (
+                          <span
+                            key={index}
+                            className={`${letter === " " ? "space-character" : ""} ${index < courseTyped ? "done" : index === courseTyped ? "now" : ""}`}
+                          >
+                            {letter === " " ? "\u00A0" : letter}
+                          </span>
+                        ))}
+                      </div>
+                      <input
+                        autoFocus
+                        className="course-capture"
+                        value=""
+                        onChange={() => {}}
+                        onKeyDown={handleCourseKey}
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        aria-label={
+                          lang === "es"
+                            ? "Escribe el ejercicio"
+                            : "Type the exercise"
+                        }
+                        placeholder={
+                          lang === "es"
+                            ? "Haz clic aquí y comienza…"
+                            : "Click here and start…"
+                        }
+                      />
+                      <div className="finger-instruction">
+                        <span>☝</span>
+                        <div>
+                          <small>
+                            {lang === "es" ? "DEDO CORRECTO" : "CORRECT FINGER"}
+                          </small>
+                          <b>{fingerNames[activeFinger][lang]}</b>
+                        </div>
+                      </div>
+                      <div className="course-keyboard-wrap">
+                        {hands && (
+                          <div className="hand-guide" aria-hidden="true">
+                            <div className="guide-hand left-guide-hand">
+                              <div className="guide-palm" />
+                              {(
+                                [
+                                  "l-pinky",
+                                  "l-ring",
+                                  "l-middle",
+                                  "l-index",
+                                ] as FingerId[]
+                              ).map((finger) => (
+                                <span
+                                  key={finger}
+                                  className={`guide-finger ${finger} ${activeFinger === finger ? "finger-active" : ""} ${pressedFinger === finger ? "finger-pressed" : ""}`}
+                                >
+                                  <i />
+                                </span>
+                              ))}
+                              <span
+                                className={`guide-thumb left-thumb ${activeFinger === "thumb" ? "finger-active" : ""} ${pressedFinger === "thumb" ? "finger-pressed" : ""}`}
+                              >
+                                <i />
+                              </span>
+                            </div>
+                            <div className="guide-hand right-guide-hand">
+                              <div className="guide-palm" />
+                              {(
+                                [
+                                  "r-index",
+                                  "r-middle",
+                                  "r-ring",
+                                  "r-pinky",
+                                ] as FingerId[]
+                              ).map((finger) => (
+                                <span
+                                  key={finger}
+                                  className={`guide-finger ${finger} ${activeFinger === finger ? "finger-active" : ""} ${pressedFinger === finger ? "finger-pressed" : ""}`}
+                                >
+                                  <i />
+                                </span>
+                              ))}
+                              <span
+                                className={`guide-thumb right-thumb ${activeFinger === "thumb" ? "finger-active" : ""} ${pressedFinger === "thumb" ? "finger-pressed" : ""}`}
+                              >
+                                <i />
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        <div
+                          className="course-keyboard"
+                          aria-label={
+                            lang === "es"
+                              ? "Teclado español completo"
+                              : "Full English keyboard"
+                          }
+                        >
+                          {typingKeyboard[lang].map((row, rowIndex) => (
+                            <div
+                              className={`physical-row row-${rowIndex}`}
+                              key={rowIndex}
+                            >
+                              {row.map((key, keyIndex) => {
+                                const active = visualKeyMatches(
+                                  key,
+                                  courseCurrent,
+                                );
+                                const shiftActive =
+                                  key.wide === "shift" &&
+                                  needsShift(courseCurrent);
+                                return (
+                                  <span
+                                    className={`${key.wide ? `key-${key.wide}` : ""} ${active || shiftActive ? "active" : ""}`}
+                                    key={`${key.label}-${keyIndex}`}
+                                  >
+                                    {key.label
+                                      .split("\n")
+                                      .map((part, partIndex) => (
+                                        <i key={partIndex}>{part}</i>
+                                      ))}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          ))}
+                          <div className="physical-row space-row">
+                            <span
+                              className={`course-space ${courseCurrent === " " ? "active" : ""}`}
+                            >
+                              <i>{lang === "es" ? "ESPACIO" : "SPACE"}</i>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="course-live-stats">
+                        <span>
+                          <b>
+                            {courseLesson === 1
+                              ? `${courseTyped}/${courseTarget.length}`
+                              : `${liveAccuracy}%`}
+                          </b>
+                          <small>
+                            {courseLesson === 1
+                              ? lang === "es"
+                                ? "Teclas ubicadas"
+                                : "Keys found"
+                              : t.accuracy}
+                          </small>
+                        </span>
+                        <span>
+                          <b>
+                            {courseLesson === 18
+                              ? Math.round(
+                                  courseTyped /
+                                    5 /
+                                    (Math.max(1, courseElapsedSeconds) / 60),
+                                )
+                              : courseMistakes}
+                          </b>
+                          <small>
+                            {courseLesson === 18
+                              ? lang === "es"
+                                ? "Palabras/min"
+                                : "Words/min"
+                              : lang === "es"
+                                ? "Intentos"
+                                : "Attempts"}
+                          </small>
+                        </span>
+                        <span>
+                          <b>
+                            {courseTyped}/{courseTarget.length}
+                          </b>
+                          <small>
+                            {lang === "es" ? "Progreso" : "Progress"}
+                          </small>
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div
+                      className={`course-result ${courseResult.passed ? "passed" : "retry"}`}
+                    >
+                      <div className="result-lumi">
+                        {courseResult.passed ? "🌟" : "💪"}
+                      </div>
+                      <span>
+                        {courseResult.passed
+                          ? lang === "es"
+                            ? "¡LECCIÓN COMPLETADA!"
+                            : "LESSON COMPLETE!"
+                          : lang === "es"
+                            ? "¡CASI LO LOGRAS!"
+                            : "ALMOST THERE!"}
+                      </span>
+                      <h2>
+                        {courseResult.passed
+                          ? lang === "es"
+                            ? `¡Excelente, ${activeChild.name}!`
+                            : `Great job, ${activeChild.name}!`
+                          : lang === "es"
+                            ? "Vamos a intentarlo otra vez"
+                            : "Let's try one more time"}
+                      </h2>
+                      <p>
+                        {courseResult.passed
+                          ? lang === "es"
+                            ? "Tu avance quedó guardado y abriste una nueva lección."
+                            : "Your progress is saved and a new lesson is unlocked."
+                          : lang === "es"
+                            ? "Practica más despacio para alcanzar 80% de precisión."
+                            : "Slow down to reach 80% accuracy."}
+                      </p>
+                      <div
+                        className={`result-score ${courseResult.wpm !== undefined ? "with-wpm" : ""}`}
+                      >
+                        <span>
+                          <b>{courseResult.accuracy}%</b>
+                          <small>{t.accuracy}</small>
+                        </span>
+                        {courseResult.wpm !== undefined && (
+                          <span>
+                            <b>{courseResult.wpm}</b>
+                            <small>
+                              {lang === "es" ? "Palabras/min" : "Words/min"}
+                            </small>
+                          </span>
+                        )}
+                        <span>
+                          <b>
+                            {courseResult.stars
+                              ? "★".repeat(courseResult.stars)
+                              : "—"}
+                          </b>
+                          <small>{t.stars}</small>
+                        </span>
+                      </div>
+                      <button
+                        disabled={courseBusy}
+                        className="button primary"
+                        onClick={() =>
+                          courseResult.passed && courseLesson < 18
+                            ? startCourseLesson(courseLesson + 1)
+                            : startCourseLesson(
+                                courseLesson,
+                                !courseResult.passed,
+                              )
+                        }
+                      >
+                        {courseBusy
+                          ? lang === "es"
+                            ? "Guardando…"
+                            : "Saving…"
+                          : courseResult.passed && courseLesson < 18
+                            ? lang === "es"
+                              ? "Siguiente lección"
+                              : "Next lesson"
+                            : courseResult.passed
+                              ? lang === "es"
+                                ? "Repetir reto"
+                                : "Repeat challenge"
+                              : lang === "es"
+                                ? "Practicar con otro ejercicio"
+                                : "Practice with another exercise"}
+                      </button>
+                      <small className="enter-hint">
+                        ↵{" "}
+                        {lang === "es"
+                          ? "También puedes presionar Enter"
+                          : "You can also press Enter"}
+                      </small>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          );
+        })()}
+
+      {purchaseLesson && account && (
+        <div className="modal-backdrop purchase-backdrop" onMouseDown={() => setPurchaseLesson(null)}>
+          <section className="purchase-panel" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="purchase-close" onClick={() => setPurchaseLesson(null)}>×</button>
+            <span className="section-kicker">COMPRA SEGURA · LUMI ACADEMY</span>
+            <h2>{lang === "es" ? purchaseLesson.titleEs : purchaseLesson.titleEn}</h2>
+            <p>{purchaseLesson.creatorName || "Lumi Academy"}</p>
+            <div className="purchase-price"><b>{purchaseLesson.price} Bs</b><small>{lang === "es" ? "Acceso para un estudiante" : "Access for one student"}</small></div>
+            <label>
+              {lang === "es" ? "¿Quién realizará el curso?" : "Who will take the course?"}
+              <select value={purchaseChildId} onChange={(event) => setPurchaseChildId(event.target.value)}>
+                {children.map((child) => <option value={child.id} key={child.id}>{child.avatar} {child.name}</option>)}
+              </select>
+            </label>
+            <div className="payment-options">
+              <button className={paymentMethod === "qr" ? "selected" : ""} onClick={() => setPaymentMethod("qr")}><span>▦</span><b>Pago QR</b><small>{lang === "es" ? "Confirmación manual" : "Manual confirmation"}</small></button>
+              <button className={paymentMethod === "cash" ? "selected" : ""} onClick={() => setPaymentMethod("cash")}><span>💵</span><b>{lang === "es" ? "Efectivo" : "Cash"}</b><small>{lang === "es" ? "Registrar entrega" : "Register payment"}</small></button>
+            </div>
+            <aside className="commission-note"><span>Lumi Academy 10%: {(purchaseLesson.price * .1).toFixed(2)} Bs</span><span>Maestro 90%: {(purchaseLesson.price * .9).toFixed(2)} Bs</span></aside>
+            {purchaseMessage && <p className="purchase-message">{purchaseMessage}</p>}
+            <button className="button primary purchase-submit" disabled={purchaseBusy} onClick={() => void createCoursePurchase()}>{purchaseBusy ? "Registrando…" : lang === "es" ? "Registrar solicitud de compra" : "Register purchase request"}</button>
+            <small className="purchase-help">{lang === "es" ? "El curso se habilitará después de confirmar el pago." : "The course will unlock after payment confirmation."}</small>
+          </section>
+        </div>
+      )}
+
+      {adminOpen && isCourseCreator && (
+        <div
+          className="modal-backdrop admin-backdrop"
+          onMouseDown={() => setAdminOpen(false)}
+        >
+          <section
+            className="admin-panel"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <span className="section-kicker">
+                  LUMI ACADEMY · {isAdmin ? "ADMINISTRACIÓN" : "DOCENTES"}
+                </span>
+                <h2>{isAdmin
+                  ? lang === "es" ? "Reportes de Lumi Academy" : "Lumi Academy reports"
+                  : lang === "es" ? "Mis cursos y ganancias" : "My courses and earnings"}</h2>
+                <p>
+                  {account?.email} ·{" "}
+                  {isAdmin
+                    ? lang === "es"
+                      ? "Administrador general"
+                      : "General administrator"
+                    : lang === "es"
+                      ? "Docente creador"
+                      : "Teacher creator"}
+                </p>
+              </div>
+              <div className="admin-header-actions">
+                <button
+                  className="admin-signout"
+                  onClick={() => void signOut(auth)}
+                >
+                  ↪ {lang === "es" ? "Cerrar sesión" : "Sign out"}
+                </button>
+                <button
+                  className="admin-close"
+                  aria-label={lang === "es" ? "Cerrar panel" : "Close panel"}
+                  onClick={() => setAdminOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+            </header>
+            <div className={`admin-layout ${isAdmin ? "owner-only-reports" : "teacher-course-panel"}`}>
+              <section className="sales-report-panel">
+                <div className="report-card-grid">
+                  <article><span>💳</span><small>VENTAS CONFIRMADAS</small><b>{reportTotals.sales.toFixed(2)} Bs</b></article>
+                  <article><span>✦</span><small>COMISIÓN LUMI · 10%</small><b>{reportTotals.platform.toFixed(2)} Bs</b></article>
+                  <article><span>🧑‍🏫</span><small>MAESTROS · 90%</small><b>{reportTotals.teachers.toFixed(2)} Bs</b></article>
+                  <article><span>⏳</span><small>PAGOS PENDIENTES</small><b>{reportTotals.pending}</b></article>
+                </div>
+                <div className="sales-table-wrap">
+                  <h3>{isAdmin ? "VENTAS Y SOLICITUDES" : "MIS VENTAS"}</h3>
+                  {purchases.length === 0 ? <p className="admin-empty">Aún no existen ventas registradas.</p> : (
+                    <div className="sales-table">
+                      {purchases.map((purchase) => (
+                        <article key={purchase.id}>
+                          <div><b>{purchase.courseTitle}</b><small>{purchase.childName} · {purchase.buyerEmail}</small></div>
+                          <span>{purchase.paymentMethod === "qr" ? "QR" : "EFECTIVO"}</span>
+                          <strong>{purchase.price.toFixed(2)} Bs</strong>
+                          <em className={`status-${purchase.status}`}>{purchase.status === "pending" ? "PENDIENTE" : purchase.status === "confirmed" ? "CONFIRMADO" : purchase.status.toUpperCase()}</em>
+                          {isAdmin && purchase.status === "pending" && <div className="sale-actions"><button onClick={() => void updatePurchaseStatus(purchase, "confirmed")}>✓ Confirmar</button><button onClick={() => void updatePurchaseStatus(purchase, "rejected")}>Rechazar</button></div>}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+              <aside>
+                <button className="button primary" onClick={newHistoryDraft}>
+                  ＋ {lang === "es" ? "Nueva lección" : "New lesson"}
+                </button>
+                {isAdmin && (
+                  <section className="teacher-manager">
+                    <h3>DOCENTES CREADORES</h3>
+                    <input placeholder="Nombre de la maestra" value={teacherName} onChange={(event) => setTeacherName(event.target.value)} />
+                    <input type="email" placeholder="correo@ejemplo.com" value={teacherEmail} onChange={(event) => setTeacherEmail(event.target.value)} />
+                    <button className="teacher-add" onClick={() => void saveCourseCreator()}>＋ Autorizar maestra</button>
+                    {courseCreators.map((creator) => (
+                      <button className="teacher-row" key={creator.email} onClick={() => void toggleCourseCreator(creator)}>
+                        <span>{creator.active ? "🟢" : "⚪"}</span><div><b>{creator.name}</b><small>{creator.email}</small></div>
+                      </button>
+                    ))}
+                  </section>
+                )}
+                <h3>
+                  {lang === "es" ? "Lecciones guardadas" : "Saved lessons"}
+                </h3>
+                {editableHistoryLessons.length === 0 && (
+                  <p className="admin-empty">
+                    {lang === "es"
+                      ? "Aún no hay lecciones guardadas. Crea la primera."
+                      : "No saved lessons yet. Create the first one."}
+                  </p>
+                )}
+                {editableHistoryLessons.map((lesson) => (
+                  <button
+                    className={adminEditingId === lesson.id ? "selected" : ""}
+                    key={lesson.id}
+                    onClick={() => editHistoryLesson(lesson)}
+                  >
+                    <span>{lesson.published ? "🟢" : "⚪"}</span>
+                    <div>
+                      <b>{lesson.titleEs}</b>
+                      <small>
+                        {lesson.country} · {lesson.questions.length} preguntas
+                      </small>
+                    </div>
+                  </button>
+                ))}
+              </aside>
+              <main className="admin-editor">
+                <div className="admin-form-grid">
+                  <label>
+                    {lang === "es" ? "Orden" : "Order"}
+                    <input
+                      type="number"
+                      min="1"
+                      value={historyDraft.order}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          order: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    {lang === "es" ? "País o región" : "Country or region"}
+                    <input
+                      value={historyDraft.country}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          country: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    {lang === "es" ? "Precio por estudiante (Bs)" : "Price per student (Bs)"}
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={historyDraft.price}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          price: Math.max(0, Number(e.target.value)),
+                        })
+                      }
+                    />
+                    <small>90% maestro · 10% Lumi Academy</small>
+                  </label>
+                  <label>
+                    {lang === "es" ? "Nivel" : "Level"}
+                    <select
+                      value={historyDraft.level}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          level: e.target.value as HistoryLesson["level"],
+                        })
+                      }
+                    >
+                      <option value="both">Primaria y secundaria</option>
+                      <option value="primary">Primaria</option>
+                      <option value="secondary">Secundaria</option>
+                    </select>
+                  </label>
+                  <label className="publish-check">
+                    <input
+                      type="checkbox"
+                      checked={historyDraft.published}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          published: e.target.checked,
+                        })
+                      }
+                    />
+                    {lang === "es"
+                      ? "Publicar para estudiantes"
+                      : "Publish for students"}
+                  </label>
+                </div>
+                <label>
+                  {lang === "es" ? "Título en español" : "Spanish title"}
+                  <input
+                    value={historyDraft.titleEs}
+                    onChange={(e) =>
+                      setHistoryDraft({
+                        ...historyDraft,
+                        titleEs: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  {lang === "es" ? "Título en inglés" : "English title"}
+                  <input
+                    value={historyDraft.titleEn}
+                    onChange={(e) =>
+                      setHistoryDraft({
+                        ...historyDraft,
+                        titleEn: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  {lang === "es"
+                    ? "Enlace del video de YouTube"
+                    : "YouTube video link"}
+                  <input
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={historyDraft.youtubeUrl}
+                    onChange={(e) =>
+                      setHistoryDraft({
+                        ...historyDraft,
+                        youtubeUrl: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                {historyDraft.youtubeUrl && (
+                  <div className="history-video-preview">
+                    {youtubeEmbed(historyDraft.youtubeUrl) ? (
+                      <iframe src={youtubeEmbed(historyDraft.youtubeUrl)} title="Vista previa del video" allowFullScreen />
+                    ) : (
+                      <p className="form-error">No reconocemos este enlace. Copia el enlace desde “Compartir” en YouTube.</p>
+                    )}
+                  </div>
+                )}
+                <div className="admin-form-grid">
+                  <label>
+                    {lang === "es"
+                      ? "Descripción en español"
+                      : "Spanish description"}
+                    <textarea
+                      value={historyDraft.descriptionEs}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          descriptionEs: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    {lang === "es"
+                      ? "Descripción en inglés"
+                      : "English description"}
+                    <textarea
+                      value={historyDraft.descriptionEn}
+                      onChange={(e) =>
+                        setHistoryDraft({
+                          ...historyDraft,
+                          descriptionEn: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="question-editor-head">
+                  <h3>{lang === "es" ? "Cuestionario" : "Questionnaire"}</h3>
+                  <button
+                    onClick={() =>
+                      setHistoryDraft({
+                        ...historyDraft,
+                        questions: [
+                          ...historyDraft.questions,
+                          {
+                            question: "",
+                            options: ["", "", ""],
+                            answer: 0,
+                            explanation: "",
+                          },
+                        ],
+                      })
+                    }
+                  >
+                    ＋ {lang === "es" ? "Agregar pregunta" : "Add question"}
+                  </button>
+                </div>
+                {historyDraft.questions.map((question, qIndex) => (
+                  <section className="admin-question" key={qIndex}>
+                    <header>
+                      <b>
+                        {lang === "es"
+                          ? `Pregunta ${qIndex + 1}`
+                          : `Question ${qIndex + 1}`}
+                      </b>
+                      {historyDraft.questions.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setHistoryDraft({
+                              ...historyDraft,
+                              questions: historyDraft.questions.filter(
+                                (_, index) => index !== qIndex,
+                              ),
+                            })
+                          }
+                        >
+                          Eliminar
+                        </button>
+                      )}
+                    </header>
+                    <input
+                      placeholder={
+                        lang === "es"
+                          ? "Escribe la pregunta"
+                          : "Write the question"
+                      }
+                      value={question.question}
+                      onChange={(e) => {
+                        const questions = [...historyDraft.questions];
+                        questions[qIndex] = {
+                          ...question,
+                          question: e.target.value,
+                        };
+                        setHistoryDraft({ ...historyDraft, questions });
+                      }}
+                    />
+                    {question.options.map((option, oIndex) => (
+                      <label className="answer-option" key={oIndex}>
+                        <input
+                          type="radio"
+                          name={`answer-${qIndex}`}
+                          checked={question.answer === oIndex}
+                          onChange={() => {
+                            const questions = [...historyDraft.questions];
+                            questions[qIndex] = { ...question, answer: oIndex };
+                            setHistoryDraft({ ...historyDraft, questions });
+                          }}
+                        />
+                        <input
+                          placeholder={`${lang === "es" ? "Opción" : "Option"} ${oIndex + 1}`}
+                          value={option}
+                          onChange={(e) => {
+                            const questions = [...historyDraft.questions];
+                            const options = [...question.options];
+                            options[oIndex] = e.target.value;
+                            questions[qIndex] = { ...question, options };
+                            setHistoryDraft({ ...historyDraft, questions });
+                          }}
+                        />
+                      </label>
+                    ))}
+                    <textarea
+                      placeholder={
+                        lang === "es"
+                          ? "Explicación que verá el estudiante"
+                          : "Explanation shown to the student"
+                      }
+                      value={question.explanation}
+                      onChange={(e) => {
+                        const questions = [...historyDraft.questions];
+                        questions[qIndex] = {
+                          ...question,
+                          explanation: e.target.value,
+                        };
+                        setHistoryDraft({ ...historyDraft, questions });
+                      }}
+                    />
+                  </section>
+                ))}
+                {adminMessage && (
+                  <p className="admin-message">{adminMessage}</p>
+                )}
+                <div className="admin-save-row">
+                  {adminEditingId && (
+                    <button
+                      className="admin-delete"
+                      onClick={() => void removeHistoryLesson(adminEditingId)}
+                    >
+                      {lang === "es" ? "Eliminar lección" : "Delete lesson"}
+                    </button>
+                  )}
+                  <button
+                    className="button primary"
+                    disabled={adminBusy}
+                    onClick={() => void saveHistoryLesson()}
+                  >
+                    {adminBusy
+                      ? lang === "es"
+                        ? "Guardando…"
+                        : "Saving…"
+                      : lang === "es"
+                        ? "Guardar lección"
+                        : "Save lesson"}
+                  </button>
+                </div>
+              </main>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {familyOpen && account && !isCourseCreator && (
+        <div
+          className="modal-backdrop family-backdrop"
+          onMouseDown={() => setFamilyOpen(false)}
+        >
+          <aside
+            className="family-panel"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="settings-head family-heading">
+              <div>
+                <span className="section-kicker">
+                  {lang === "es" ? "MI CUENTA LUMI" : "MY LUMI ACCOUNT"}
+                </span>
+                <h2>
+                  {lang === "es"
+                    ? `Hola, ${account.displayName || "familia"}`
+                    : `Hello, ${account.displayName || "family"}`}
+                </h2>
+                <p>
+                  {account.email} ·{" "}
+                  {lang === "es" ? "Cuenta familiar" : "Family account"}
+                </p>
+              </div>
+              <button onClick={() => setFamilyOpen(false)}>×</button>
+            </div>
+            <div className="family-summary">
+              <span>
+                <b>{children.length}</b>
+                <small>{lang === "es" ? "Estudiantes" : "Students"}</small>
+              </span>
+              <span>
+                <b>
+                  {children.reduce(
+                    (total, child) =>
+                      total + (child.completedLessons?.length || 0),
+                    0,
+                  )}
+                </b>
+                <small>
+                  {lang === "es"
+                    ? "Lecciones completadas"
+                    : "Completed lessons"}
+                </small>
+              </span>
+              <span>
+                <b>
+                  {children.reduce((total, child) => total + child.stars, 0)}
+                </b>
+                <small>{t.stars}</small>
+              </span>
+            </div>
+            {purchases.length > 0 && (
+              <section className="family-purchases">
+                <h3>{lang === "es" ? "Mis compras y accesos" : "My purchases and access"}</h3>
+                {purchases.map((purchase) => (
+                  <article key={purchase.id}>
+                    <div><b>{purchase.courseTitle}</b><small>{purchase.childName} · {purchase.paymentMethod === "qr" ? "QR" : lang === "es" ? "Efectivo" : "Cash"}</small></div>
+                    <strong>{purchase.price.toFixed(2)} Bs</strong>
+                    <span className={`status-${purchase.status}`}>{purchase.status === "pending" ? lang === "es" ? "Pendiente" : "Pending" : purchase.status === "confirmed" ? lang === "es" ? "Acceso habilitado" : "Access enabled" : purchase.status}</span>
+                  </article>
+                ))}
+              </section>
+            )}
+            {children.length > 0 && (
+              <>
+                <div className="family-section-title">
+                  <div>
+                    <h3>
+                      {lang === "es"
+                        ? "Estudiantes inscritos"
+                        : "Enrolled students"}
+                    </h3>
+                    <p>
+                      {lang === "es"
+                        ? "Elige un estudiante para ver sus materias, configurar su teclado y continuar aprendiendo."
+                        : "Choose a student to see subjects, configure their keyboard and continue learning."}
+                    </p>
+                  </div>
+                </div>
+                <div className="children-grid">
+                  {children.map((child) => {
+                    const completed = child.completedLessons?.length || 0;
+                    const progress = Math.round((completed / 18) * 100);
+                    return (
+                      <button
+                        className="child-card progress-child-card"
+                        onClick={() => enterChildSpace(child)}
+                        key={child.id}
+                      >
+                        <span>{child.avatar}</span>
+                        <div className="child-card-main">
+                          <div>
+                            <b>{child.name}</b>
+                            <em>
+                              {child.gradeBand === "secondary"
+                                ? lang === "es"
+                                  ? "Secundaria"
+                                  : "Secondary"
+                                : lang === "es"
+                                  ? "Primaria"
+                                  : "Primary"}
+                            </em>
+                          </div>
+                          <small>
+                            {child.age} {lang === "es" ? "años" : "years"} ·{" "}
+                            {lang === "es"
+                              ? `Lección ${Math.max(1, child.level)} de 18`
+                              : `Lesson ${Math.max(1, child.level)} of 18`}
+                          </small>
+                          <div className="child-progress">
+                            <i style={{ width: `${progress}%` }} />
+                          </div>
+                          <small className="child-progress-label">
+                            <b>{progress}%</b>{" "}
+                            {lang === "es" ? "de Dactilografía" : "of Typing"}
+                          </small>
+                          <div className="child-subject-pills">
+                            <span>
+                              ⌨ {lang === "es" ? "Dactilografía" : "Typing"}
+                            </span>
+                            <span className="future-subject">
+                              + {lang === "es" ? "Materias" : "Subjects"}
+                            </span>
+                          </div>
+                        </div>
+                        <i>→</i>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            <form className="child-form" onSubmit={addChildProfile}>
+              <h3>
+                {children.length === 0
+                  ? lang === "es"
+                    ? "Crea el primer perfil infantil"
+                    : "Create the first child profile"
+                  : lang === "es"
+                    ? "Agregar perfil infantil"
+                    : "Add child profile"}
+              </h3>
+              <div className="child-form-row">
+                <label>
+                  {lang === "es" ? "Nombre" : "Name"}
+                  <input
+                    value={childName}
+                    onChange={(event) => setChildName(event.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  {lang === "es" ? "Edad" : "Age"}
+                  <input
+                    type="number"
+                    min="4"
+                    max="18"
+                    value={childAge}
+                    onChange={(event) => setChildAge(event.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+              <label className="grade-label">
+                {lang === "es" ? "Etapa educativa" : "Education stage"}
+              </label>
+              <div className="grade-choice">
+                <button
+                  type="button"
+                  className={childGradeBand === "primary" ? "selected" : ""}
+                  onClick={() => setChildGradeBand("primary")}
+                >
+                  <span>🎒</span>
+                  <b>{lang === "es" ? "Primaria" : "Primary"}</b>
+                  <small>
+                    {lang === "es"
+                      ? "Aprendizaje fundamental"
+                      : "Foundational learning"}
+                  </small>
+                </button>
+                <button
+                  type="button"
+                  className={childGradeBand === "secondary" ? "selected" : ""}
+                  onClick={() => setChildGradeBand("secondary")}
+                >
+                  <span>🎓</span>
+                  <b>{lang === "es" ? "Secundaria" : "Secondary"}</b>
+                  <small>
+                    {lang === "es"
+                      ? "Retos y habilidades avanzadas"
+                      : "Advanced skills"}
+                  </small>
+                </button>
+              </div>
+              <div className="avatar-choice">
+                {["🌟", "🚀", "🦊", "🐼", "🌈"].map((avatar) => (
+                  <button
+                    type="button"
+                    className={childAvatar === avatar ? "selected" : ""}
+                    onClick={() => setChildAvatar(avatar)}
+                    key={avatar}
+                  >
+                    {avatar}
+                  </button>
+                ))}
+              </div>
+              <button disabled={profileBusy} className="button primary">
+                {profileBusy
+                  ? lang === "es"
+                    ? "Guardando…"
+                    : "Saving…"
+                  : lang === "es"
+                    ? "Agregar estudiante"
+                    : "Add student"}
+              </button>
+            </form>
+            <button className="signout-button" onClick={() => signOut(auth)}>
+              {lang === "es" ? "Cerrar sesión" : "Sign out"}
+            </button>
+          </aside>
+        </div>
+      )}
+    </main>
+  );
+}
