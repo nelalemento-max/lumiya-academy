@@ -4234,22 +4234,6 @@ export default function Home() {
         })()}
       </section>
 
-      <section className="education-ads" aria-labelledby="education-ads-title">
-        <div className="education-ads-heading">
-          <div>
-            <span className="section-kicker">{lang === "es" ? "COMUNIDAD EDUCATIVA" : "EDUCATION COMMUNITY"}</span>
-            <h2 id="education-ads-title">{lang === "es" ? "Recomendaciones y oportunidades educativas" : "Educational recommendations and opportunities"}</h2>
-            <p>{lang === "es" ? "Un espacio reservado para instituciones, materiales, talleres y servicios que aporten al aprendizaje." : "A space for institutions, learning resources, workshops and services that support education."}</p>
-          </div>
-          <span className="ad-transparency">{lang === "es" ? "PUBLICIDAD EDUCATIVA" : "EDUCATIONAL ADVERTISING"}</span>
-        </div>
-        <div className="education-ad-grid">
-          <article className="education-ad-featured"><span>📚</span><div><small>{lang === "es" ? "ESPACIO DESTACADO" : "FEATURED SPACE"}</small><h3>{lang === "es" ? "Haz visible tu propuesta educativa" : "Showcase your educational offering"}</h3><p>{lang === "es" ? "Promociona cursos, libros, talleres o servicios adecuados para familias y estudiantes." : "Promote courses, books, workshops or services for families and students."}</p></div><button onClick={() => { window.location.href = "mailto:nelalemento@gmail.com?subject=Publicidad%20educativa%20en%20Lumi%20Academy"; }}>{lang === "es" ? "Consultar espacio" : "Ask about this space"}</button></article>
-          <article className="education-ad-slot"><span>🏫</span><b>{lang === "es" ? "Instituciones educativas" : "Educational institutions"}</b><small>{lang === "es" ? "Espacio disponible" : "Space available"}</small></article>
-          <article className="education-ad-slot"><span>🎨</span><b>{lang === "es" ? "Talleres y actividades" : "Workshops and activities"}</b><small>{lang === "es" ? "Espacio disponible" : "Space available"}</small></article>
-        </div>
-      </section>
-
       <section className={`practice-section ${worlds[world]}`} id="practice">
         <div className="section-heading">
           <span className="section-kicker">LUMI ACADEMY</span>
