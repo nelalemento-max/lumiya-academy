@@ -80,12 +80,26 @@ type HistoryLesson = {
   creatorName?: string;
   price: number;
 };
+type CourseOffer = {
+  id: string;
+  titleEs: string;
+  titleEn: string;
+  descriptionEs: string;
+  descriptionEn: string;
+  icon: string;
+  color: string;
+  creatorEmail?: string;
+  creatorName: string;
+  price: number;
+  providerType: "lumi" | "teacher";
+};
 type CurriculumBoardItem = {
   id: string;
   icon: string;
   title: string;
   detail: string;
   color: string;
+  offer?: CourseOffer;
   lesson?: HistoryLesson;
 };
 type CoursePurchase = {
@@ -103,6 +117,7 @@ type CoursePurchase = {
   price: number;
   platformAmount: number;
   teacherAmount: number;
+  providerType?: "lumi" | "teacher";
   createdAt?: unknown;
 };
 type CourseCreator = {
@@ -114,6 +129,13 @@ type CourseCreator = {
 };
 
 const ADMIN_EMAILS = ["nelalemento@gmail.com"];
+const lumiCourseOffers: CourseOffer[] = [
+  { id: "typing", icon: "⌨", color: "purple", titleEs: "Dactilografía", titleEn: "Typing", descriptionEs: "18 lecciones · Precisión, velocidad y palabras por minuto", descriptionEn: "18 lessons · Accuracy, speed and words per minute", creatorEmail: ADMIN_EMAILS[0], creatorName: "Lumi Academy", price: 0, providerType: "lumi" },
+  { id: "reading", icon: "📖", color: "turquoise", titleEs: "Lectura", titleEn: "Reading", descriptionEs: "18 lecciones · Sonidos, palabras y comprensión", descriptionEn: "18 lessons · Sounds, words and comprehension", creatorEmail: ADMIN_EMAILS[0], creatorName: "Lumi Academy", price: 0, providerType: "lumi" },
+  { id: "math", icon: "🔢", color: "yellow", titleEs: "Matemáticas", titleEn: "Mathematics", descriptionEs: "36 lecciones · Retos, lógica y resolución", descriptionEn: "36 lessons · Challenges, logic and problem solving", creatorEmail: ADMIN_EMAILS[0], creatorName: "Lumi Academy", price: 0, providerType: "lumi" },
+  { id: "english", icon: "🌎", color: "coral", titleEs: "Inglés", titleEn: "English", descriptionEs: "18 lecciones · Vocabulario, escucha y pronunciación", descriptionEn: "18 lessons · Vocabulary, listening and pronunciation", creatorEmail: ADMIN_EMAILS[0], creatorName: "Lumi Academy", price: 0, providerType: "lumi" },
+  { id: "history", icon: "🏛️", color: "blue", titleEs: "Historia y cultura", titleEn: "History and culture", descriptionEs: "Videos, cuestionarios y viajes por diferentes países", descriptionEn: "Videos, quizzes and journeys through different countries", creatorEmail: ADMIN_EMAILS[0], creatorName: "Lumi Academy", price: 0, providerType: "lumi" },
+];
 const sampleHistoryLesson: HistoryLesson = {
   id: "bolivia-independencia",
   order: 1,
@@ -2360,11 +2382,12 @@ export default function Home() {
   const [historyFeedback, setHistoryFeedback] = useState("");
   const [historyDone, setHistoryDone] = useState(false);
   const [purchases, setPurchases] = useState<CoursePurchase[]>([]);
-  const [purchaseLesson, setPurchaseLesson] = useState<HistoryLesson | null>(null);
+  const [purchaseLesson, setPurchaseLesson] = useState<CourseOffer | null>(null);
   const [purchaseChildId, setPurchaseChildId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qr">("qr");
   const [purchaseMessage, setPurchaseMessage] = useState("");
   const [purchaseBusy, setPurchaseBusy] = useState(false);
+  const [reviewAmounts, setReviewAmounts] = useState<Record<string, string>>({});
   const [adminOpen, setAdminOpen] = useState(false);
   const [creatorRole, setCreatorRole] = useState<"owner" | "teacher" | null>(
     null,
@@ -2413,6 +2436,8 @@ export default function Home() {
       )
       .map((purchase) => purchase.courseId),
   );
+  const hasCourseAccess = (courseId: string) =>
+    isAdmin || creatorRole === "teacher" || confirmedCourseIds.has(courseId);
   const reportTotals = purchases.reduce(
     (totals, purchase) => {
       if (purchase.status === "confirmed") {
@@ -2700,6 +2725,18 @@ export default function Home() {
     setHistoryLesson(null);
     setHistoryDone(false);
   }
+  function openLumiCourse(courseId: string) {
+    if (!account) return openAccount("login");
+    if (!activeChild) {
+      setFamilyOpen(true);
+      return;
+    }
+    if (courseId === "reading") return openReadingCourse();
+    if (courseId === "math") return openMathCourse();
+    if (courseId === "english") return openEnglishCourse();
+    if (courseId === "history") return openHistoryCourse();
+    setFamilyOpen(true);
+  }
   function startHistoryLesson(lesson: HistoryLesson) {
     setHistoryLesson(lesson);
     setHistoryQuestion(0);
@@ -2880,14 +2917,31 @@ export default function Home() {
     return lesson.price <= 0 || isAdmin || lesson.creatorEmail === account?.email?.toLowerCase() || confirmedCourseIds.has(lesson.id);
   }
 
-  function beginCoursePurchase(lesson: HistoryLesson) {
+  function historyCourseOffer(lesson: HistoryLesson): CourseOffer {
+    const isLumi = !lesson.creatorEmail || ADMIN_EMAILS.includes(lesson.creatorEmail.toLowerCase());
+    return {
+      id: lesson.id,
+      icon: "🏛️",
+      color: "blue",
+      titleEs: lesson.titleEs,
+      titleEn: lesson.titleEn,
+      descriptionEs: lesson.descriptionEs,
+      descriptionEn: lesson.descriptionEn,
+      creatorEmail: lesson.creatorEmail || ADMIN_EMAILS[0],
+      creatorName: lesson.creatorName || "Lumi Academy",
+      price: lesson.price,
+      providerType: isLumi ? "lumi" : "teacher",
+    };
+  }
+
+  function beginCoursePurchase(course: CourseOffer | HistoryLesson) {
     if (!account) return openAccount("login");
     if (isAdmin || creatorRole === "teacher") return;
     if (!children.length) {
       setFamilyOpen(true);
       return;
     }
-    setPurchaseLesson(lesson);
+    setPurchaseLesson("providerType" in course ? course : historyCourseOffer(course));
     setPurchaseChildId(activeChild?.id || children[0].id);
     setPaymentMethod("qr");
     setPurchaseMessage("");
@@ -2926,16 +2980,17 @@ export default function Home() {
         paymentMethod,
         status: "pending",
         price,
-        platformAmount: Math.round(price * 10) / 100,
-        teacherAmount: Math.round(price * 90) / 100,
+        providerType: purchaseLesson.providerType,
+        platformAmount: purchaseLesson.providerType === "lumi" ? price : Math.round(price * 10) / 100,
+        teacherAmount: purchaseLesson.providerType === "lumi" ? 0 : Math.round(price * 90) / 100,
         createdAt: serverTimestamp(),
       });
       await loadPurchases(account);
-      setPurchaseMessage(
-        paymentMethod === "qr"
+      setPurchaseMessage(purchaseLesson.providerType === "teacher"
+        ? "Solicitud registrada. Coordina el pago con el profesor. El dueño habilitará el acceso cuando el profesor confirme el pago y entregue el 10% a Lumi Academy."
+        : paymentMethod === "qr"
           ? "Solicitud registrada. Realiza el pago QR y espera la confirmación de Lumi Academy."
-          : "Solicitud registrada. El acceso se habilitará cuando Lumi Academy confirme el pago en efectivo.",
-      );
+          : "Solicitud registrada. El acceso se habilitará cuando Lumi Academy confirme el pago en efectivo.");
     } finally {
       setPurchaseBusy(false);
     }
@@ -2943,8 +2998,20 @@ export default function Home() {
 
   async function updatePurchaseStatus(purchase: CoursePurchase, status: "confirmed" | "rejected" | "refunded") {
     if (!isAdmin) return;
+    const amount = status === "confirmed"
+      ? Number(reviewAmounts[purchase.id] || purchase.price)
+      : purchase.price;
+    if (status === "confirmed" && (!Number.isFinite(amount) || amount <= 0)) {
+      setAdminMessage("Indica el monto pagado antes de habilitar el curso.");
+      return;
+    }
+    const providerType = purchase.providerType || (purchase.teacherName === "Lumi Academy" ? "lumi" : "teacher");
     await updateDoc(doc(db, "coursePurchases", purchase.id), {
       status,
+      price: amount,
+      providerType,
+      platformAmount: providerType === "lumi" ? amount : Math.round(amount * 10) / 100,
+      teacherAmount: providerType === "lumi" ? 0 : Math.round(amount * 90) / 100,
       reviewedAt: serverTimestamp(),
       reviewedBy: account?.email?.toLowerCase() || "",
     });
@@ -4150,26 +4217,37 @@ export default function Home() {
           </label>
         </div>
         {(() => {
-          const baseCurricula: CurriculumBoardItem[] = [
-            { id: "typing", icon: "⌨", title: lang === "es" ? "Dactilografía" : "Typing", detail: lang === "es" ? "18 lecciones · Precisión, velocidad y palabras por minuto" : "18 lessons · Accuracy, speed and words per minute", color: "purple" },
-            { id: "reading", icon: "📖", title: lang === "es" ? "Lectura" : "Reading", detail: lang === "es" ? "18 lecciones · Sonidos, palabras y comprensión" : "18 lessons · Sounds, words and comprehension", color: "turquoise" },
-            { id: "math", icon: "🔢", title: lang === "es" ? "Matemáticas" : "Mathematics", detail: lang === "es" ? "36 lecciones · Retos, lógica y resolución" : "36 lessons · Challenges, logic and problem solving", color: "yellow" },
-            { id: "english", icon: "🌎", title: lang === "es" ? "Inglés" : "English", detail: lang === "es" ? "18 lecciones · Vocabulario, escucha y pronunciación" : "18 lessons · Vocabulary, listening and pronunciation", color: "coral" },
-          ];
-          const teacherCurricula: CurriculumBoardItem[] = visibleHistoryLessons.map((lesson) => ({ id: lesson.id, icon: "🏛️", title: lang === "es" ? lesson.titleEs : lesson.titleEn, detail: `${lesson.country} · ${lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Gratis" : "Free"} · ${lesson.creatorName || "Lumi Academy"}`, color: "blue", lesson }));
+          const baseCurricula: CurriculumBoardItem[] = lumiCourseOffers.map((offer) => ({ id: offer.id, icon: offer.icon, title: lang === "es" ? offer.titleEs : offer.titleEn, detail: `${lang === "es" ? offer.descriptionEs : offer.descriptionEn} · Lumi Academy`, color: offer.color, offer }));
+          const teacherCurricula: CurriculumBoardItem[] = visibleHistoryLessons.map((lesson) => ({ id: lesson.id, icon: "🎓", title: lang === "es" ? lesson.titleEs : lesson.titleEn, detail: `${lesson.country} · ${lesson.price > 0 ? `${lesson.price} Bs` : lang === "es" ? "Precio coordinado" : "Price arranged"} · ${lesson.creatorName || "Lumi Academy"}`, color: "blue", lesson, offer: historyCourseOffer(lesson) }));
           const boardItems = [...baseCurricula, ...teacherCurricula].filter((item) => `${item.title} ${item.detail}`.toLocaleLowerCase().includes(curriculumSearch.trim().toLocaleLowerCase()));
           return <div className="curriculum-board-shell">
             <div className="curriculum-scroll">
               {boardItems.map((item) => <article className={`curriculum-card curriculum-${item.color}`} key={item.id}>
                 <span className="curriculum-icon">{item.icon}</span>
-                <div><small>{lang === "es" ? "CURSO DISPONIBLE" : "AVAILABLE COURSE"}</small><h3>{item.title}</h3><p>{item.detail}</p></div>
-                <button onClick={() => item.lesson ? (item.lesson.price > 0 && !hasHistoryAccess(item.lesson) ? beginCoursePurchase(item.lesson) : activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(item.lesson!), 0)) : account ? setFamilyOpen(true) : openAccount("login")) : account ? setFamilyOpen(true) : openAccount("login")}>{lang === "es" ? "Ver curso →" : "View course →"}</button>
+                <div><small>{lang === "es" ? "MUESTRA DEL CURSO" : "COURSE PREVIEW"}</small><h3>{item.title}</h3><p>{item.detail}</p></div>
+                <button onClick={() => item.lesson && hasHistoryAccess(item.lesson) ? (activeChild ? (openHistoryCourse(), window.setTimeout(() => startHistoryLesson(item.lesson!), 0)) : account ? setFamilyOpen(true) : openAccount("login")) : item.offer && hasCourseAccess(item.offer.id) ? openLumiCourse(item.offer.id) : item.offer ? beginCoursePurchase(item.offer) : openAccount("login")}>{item.offer && hasCourseAccess(item.offer.id) ? (lang === "es" ? "Entrar al curso →" : "Enter course →") : (lang === "es" ? "Ver muestra y solicitar →" : "Preview and request →")}</button>
               </article>)}
               {boardItems.length === 0 && <div className="curriculum-empty"><span>🔎</span><b>{lang === "es" ? "No encontramos ese curso" : "We couldn't find that course"}</b><p>{lang === "es" ? "Prueba buscando otra materia o palabra." : "Try another subject or keyword."}</p></div>}
             </div>
             <div className="curriculum-scroll-hint"><span>↔</span>{lang === "es" ? "Desliza para ver más currículos" : "Scroll to see more curricula"}</div>
           </div>;
         })()}
+      </section>
+
+      <section className="education-ads" aria-labelledby="education-ads-title">
+        <div className="education-ads-heading">
+          <div>
+            <span className="section-kicker">{lang === "es" ? "COMUNIDAD EDUCATIVA" : "EDUCATION COMMUNITY"}</span>
+            <h2 id="education-ads-title">{lang === "es" ? "Recomendaciones y oportunidades educativas" : "Educational recommendations and opportunities"}</h2>
+            <p>{lang === "es" ? "Un espacio reservado para instituciones, materiales, talleres y servicios que aporten al aprendizaje." : "A space for institutions, learning resources, workshops and services that support education."}</p>
+          </div>
+          <span className="ad-transparency">{lang === "es" ? "PUBLICIDAD EDUCATIVA" : "EDUCATIONAL ADVERTISING"}</span>
+        </div>
+        <div className="education-ad-grid">
+          <article className="education-ad-featured"><span>📚</span><div><small>{lang === "es" ? "ESPACIO DESTACADO" : "FEATURED SPACE"}</small><h3>{lang === "es" ? "Haz visible tu propuesta educativa" : "Showcase your educational offering"}</h3><p>{lang === "es" ? "Promociona cursos, libros, talleres o servicios adecuados para familias y estudiantes." : "Promote courses, books, workshops or services for families and students."}</p></div><button onClick={() => { window.location.href = "mailto:nelalemento@gmail.com?subject=Publicidad%20educativa%20en%20Lumi%20Academy"; }}>{lang === "es" ? "Consultar espacio" : "Ask about this space"}</button></article>
+          <article className="education-ad-slot"><span>🏫</span><b>{lang === "es" ? "Instituciones educativas" : "Educational institutions"}</b><small>{lang === "es" ? "Espacio disponible" : "Space available"}</small></article>
+          <article className="education-ad-slot"><span>🎨</span><b>{lang === "es" ? "Talleres y actividades" : "Workshops and activities"}</b><small>{lang === "es" ? "Espacio disponible" : "Space available"}</small></article>
+        </div>
       </section>
 
       <section className={`practice-section ${worlds[world]}`} id="practice">
@@ -4833,16 +4911,18 @@ export default function Home() {
                 <h3>{lang === "es" ? "Mis materias" : "My subjects"}</h3>
               </div>
               <div className="subject-tabs">
-                <button className="active">
+                <button className="active" onClick={() => hasCourseAccess("typing") ? undefined : beginCoursePurchase(lumiCourseOffers[0])}>
                   <span>⌨</span>
                   <b>{lang === "es" ? "Dactilografía" : "Typing"}</b>
-                  <small>{lang === "es" ? "En curso" : "In progress"}</small>
+                  <small>{hasCourseAccess("typing") ? (lang === "es" ? "En curso" : "In progress") : (lang === "es" ? "🔒 Requiere acceso" : "🔒 Access required")}</small>
                 </button>
-                <button className="reading-subject" onClick={openReadingCourse}>
+                <button className="reading-subject" onClick={() => hasCourseAccess("reading") ? openReadingCourse() : beginCoursePurchase(lumiCourseOffers[1])}>
                   <span>📖</span>
                   <b>{lang === "es" ? "Lectura" : "Reading"}</b>
                   <small>
-                    {activeChild.readingAssessmentScore === undefined
+                    {!hasCourseAccess("reading")
+                      ? lang === "es" ? "🔒 Requiere acceso" : "🔒 Access required"
+                      : activeChild.readingAssessmentScore === undefined
                       ? lang === "es"
                         ? "Evaluación inicial"
                         : "Initial assessment"
@@ -4851,11 +4931,13 @@ export default function Home() {
                         : `${activeChild.readingCompletedLessons?.length || 0} of 18`}
                   </small>
                 </button>
-                <button className="math-subject" onClick={openMathCourse}>
+                <button className="math-subject" onClick={() => hasCourseAccess("math") ? openMathCourse() : beginCoursePurchase(lumiCourseOffers[2])}>
                   <span>🔢</span>
                   <b>{lang === "es" ? "Matemáticas" : "Mathematics"}</b>
                   <small>
-                    {activeChild.mathAssessmentScore === undefined
+                    {!hasCourseAccess("math")
+                      ? lang === "es" ? "🔒 Requiere acceso" : "🔒 Access required"
+                      : activeChild.mathAssessmentScore === undefined
                       ? lang === "es"
                         ? "Evaluación inicial"
                         : "Initial assessment"
@@ -4864,11 +4946,13 @@ export default function Home() {
                         : `${activeChild.mathCompletedLessons?.length || 0} of 36`}
                   </small>
                 </button>
-                <button className="english-subject" onClick={openEnglishCourse}>
+                <button className="english-subject" onClick={() => hasCourseAccess("english") ? openEnglishCourse() : beginCoursePurchase(lumiCourseOffers[3])}>
                   <span>🌎</span>
                   <b>{lang === "es" ? "Inglés" : "English"}</b>
                   <small>
-                    {activeChild.englishAssessmentScore === undefined
+                    {!hasCourseAccess("english")
+                      ? lang === "es" ? "🔒 Requiere acceso" : "🔒 Access required"
+                      : activeChild.englishAssessmentScore === undefined
                       ? lang === "es"
                         ? "Evaluación inicial"
                         : "Initial assessment"
@@ -4877,10 +4961,12 @@ export default function Home() {
                         : `${activeChild.englishCompletedLessons?.length || 0} of 18`}
                   </small>
                 </button>
-                <button className="history-subject" onClick={openHistoryCourse}>
+                <button className="history-subject" onClick={() => hasCourseAccess("history") ? openHistoryCourse() : beginCoursePurchase(lumiCourseOffers[4])}>
                   <span>🏛️</span>
                   <b>
-                    {lang === "es"
+                    {!hasCourseAccess("history")
+                      ? lang === "es" ? "🔒 Requiere acceso" : "🔒 Access required"
+                      : lang === "es"
                       ? "Historia y cultura"
                       : "History and culture"}
                   </b>
@@ -4893,7 +4979,7 @@ export default function Home() {
               </div>
             </section>
 
-            <div className="student-content-grid">
+            {hasCourseAccess("typing") ? <div className="student-content-grid">
               <section className="learning-map-card">
                 <div className="map-heading">
                   <div>
@@ -5004,7 +5090,15 @@ export default function Home() {
                   </div>
                 </section>
               </aside>
-            </div>
+            </div> : <section className="course-access-lock">
+              <span>🔒</span>
+              <div>
+                <small>LUMI ACADEMY</small>
+                <h3>{lang === "es" ? "Este curso todavía no está habilitado" : "This course is not enabled yet"}</h3>
+                <p>{lang === "es" ? "Puedes conocer la muestra en nuestra pizarra. Después del pago, el administrador habilitará el curso para este estudiante." : "Explore the preview on our board. After payment, the administrator will enable the course for this student."}</p>
+              </div>
+              <button className="button primary" onClick={() => beginCoursePurchase(lumiCourseOffers[0])}>{lang === "es" ? "Solicitar Dactilografía" : "Request Typing"}</button>
+            </section>}
           </section>
         </div>
       )}
@@ -6819,7 +6913,8 @@ export default function Home() {
             <span className="section-kicker">COMPRA SEGURA · LUMI ACADEMY</span>
             <h2>{lang === "es" ? purchaseLesson.titleEs : purchaseLesson.titleEn}</h2>
             <p>{purchaseLesson.creatorName || "Lumi Academy"}</p>
-            <div className="purchase-price"><b>{purchaseLesson.price} Bs</b><small>{lang === "es" ? "Acceso para un estudiante" : "Access for one student"}</small></div>
+            <div className="purchase-price"><b>{purchaseLesson.price > 0 ? `${purchaseLesson.price} Bs` : lang === "es" ? "Precio coordinado" : "Price arranged"}</b><small>{lang === "es" ? "Acceso individual para el estudiante seleccionado" : "Individual access for the selected student"}</small></div>
+            <p className="purchase-preview-copy">{lang === "es" ? purchaseLesson.descriptionEs : purchaseLesson.descriptionEn}</p>
             <label>
               {lang === "es" ? "¿Quién realizará el curso?" : "Who will take the course?"}
               <select value={purchaseChildId} onChange={(event) => setPurchaseChildId(event.target.value)}>
@@ -6830,7 +6925,11 @@ export default function Home() {
               <button className={paymentMethod === "qr" ? "selected" : ""} onClick={() => setPaymentMethod("qr")}><span>▦</span><b>Pago QR</b><small>{lang === "es" ? "Confirmación manual" : "Manual confirmation"}</small></button>
               <button className={paymentMethod === "cash" ? "selected" : ""} onClick={() => setPaymentMethod("cash")}><span>💵</span><b>{lang === "es" ? "Efectivo" : "Cash"}</b><small>{lang === "es" ? "Registrar entrega" : "Register payment"}</small></button>
             </div>
-            <aside className="commission-note"><span>Lumi Academy 10%: {(purchaseLesson.price * .1).toFixed(2)} Bs</span><span>Maestro 90%: {(purchaseLesson.price * .9).toFixed(2)} Bs</span></aside>
+            {purchaseLesson.providerType === "teacher" ? (
+              <aside className="commission-note"><span>Lumi Academy 10%: {(purchaseLesson.price * .1).toFixed(2)} Bs</span><span>Profesor 90%: {(purchaseLesson.price * .9).toFixed(2)} Bs</span></aside>
+            ) : (
+              <aside className="commission-note lumi-owned-note"><span>✦ Curso propio de Lumi Academy</span><span>Habilitación por el administrador</span></aside>
+            )}
             {purchaseMessage && <p className="purchase-message">{purchaseMessage}</p>}
             <button className="button primary purchase-submit" disabled={purchaseBusy} onClick={() => void createCoursePurchase()}>{purchaseBusy ? "Registrando…" : lang === "es" ? "Registrar solicitud de compra" : "Register purchase request"}</button>
             <small className="purchase-help">{lang === "es" ? "El curso se habilitará después de confirmar el pago." : "The course will unlock after payment confirmation."}</small>
@@ -6900,7 +6999,10 @@ export default function Home() {
                           <span>{purchase.paymentMethod === "qr" ? "QR" : "EFECTIVO"}</span>
                           <strong>{purchase.price.toFixed(2)} Bs</strong>
                           <em className={`status-${purchase.status}`}>{purchase.status === "pending" ? "PENDIENTE" : purchase.status === "confirmed" ? "CONFIRMADO" : purchase.status.toUpperCase()}</em>
-                          {isAdmin && purchase.status === "pending" && <div className="sale-actions"><button onClick={() => void updatePurchaseStatus(purchase, "confirmed")}>✓ Confirmar</button><button onClick={() => void updatePurchaseStatus(purchase, "rejected")}>Rechazar</button></div>}
+                          {isAdmin && purchase.status === "pending" && <div className="sale-actions sale-review-actions">
+                            <label><span>Monto pagado</span><input type="number" min="0" step="0.01" placeholder={purchase.price > 0 ? String(purchase.price) : "Bs"} value={reviewAmounts[purchase.id] || ""} onChange={(event) => setReviewAmounts((current) => ({ ...current, [purchase.id]: event.target.value }))} /></label>
+                            <button onClick={() => void updatePurchaseStatus(purchase, "confirmed")}>✓ Habilitar</button><button onClick={() => void updatePurchaseStatus(purchase, "rejected")}>Rechazar</button>
+                          </div>}
                         </article>
                       ))}
                     </div>
